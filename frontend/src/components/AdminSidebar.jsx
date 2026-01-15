@@ -6,20 +6,18 @@ import {
     CheckCircle,
     Car,
     Users,
-    LogOut,
-    Menu
+    LogOut
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
-const AdminSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, isOpen, onClose }) => {
+const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, isOpen, onClose }) => {
 
     const itemsMenu = [
-        { id: 'summary', etiqueta: 'Resumen General', icono: LayoutDashboard },
-        { id: 'stats', etiqueta: 'Estadísticas BI', icono: PieChart },
-        { id: 'requests', etiqueta: 'Solicitudes Pendientes', icono: FileText },
-        { id: 'processed', etiqueta: 'Historial Procesado', icono: CheckCircle },
-        { id: 'vehicles', etiqueta: 'Gestión Vehículos', icono: Car },
-        { id: 'drivers', etiqueta: 'Gestión Choferes', icono: Users },
+        { id: 'resumen', etiqueta: 'Resumen General', icono: LayoutDashboard },
+        { id: 'estadisticas', etiqueta: 'Estadísticas BI', icono: PieChart },
+        { id: 'solicitudes', etiqueta: 'Solicitudes Pendientes', icono: FileText },
+        { id: 'procesadas', etiqueta: 'Historial Procesado', icono: CheckCircle },
+        { id: 'vehiculos', etiqueta: 'Gestión Vehículos', icono: Car },
+        { id: 'choferes', etiqueta: 'Gestión Choferes', icono: Users },
     ];
 
     return (
@@ -83,7 +81,7 @@ const AdminSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, 
                     })}
                 </nav>
 
-                {/* Warning / Status Card (Optional decoration to make it look "Pro") */}
+                {/* System Status */}
                 <div className="px-6 py-4 hidden sm:block">
                     <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50 relative overflow-hidden group">
                         <div className="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl group-hover:bg-blue-500/30 transition-all"></div>
@@ -120,4 +118,4 @@ const AdminSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, 
     );
 };
 
-export default AdminSidebar;
+export default UserSidebar;

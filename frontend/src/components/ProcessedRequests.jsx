@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import API_URL from '../config/api';
 import { RefreshCw, Filter } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import RequestFilters from './common/RequestFilters';
 import RequestCard from './common/RequestCard';
 import RequestDetailModal from './common/RequestDetailModal';
 
+
+
 const ProcessedRequests = () => {
+    // Statics
     const [solicitudes, setSolicitudes] = useState([]);
     const [solicitudesFiltradas, setSolicitudesFiltradas] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -14,49 +17,13 @@ const ProcessedRequests = () => {
     const [detallesSolicitud, setDetallesSolicitud] = useState({ pasajeros: [], destinos: [] });
     const [cargandoDetalles, setCargandoDetalles] = useState(false);
 
-    // Estado de Filtros
+    // Filters
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
     const [mesFiltro, setMesFiltro] = useState(''); // YYYY-MM
     const [estadoFiltro, setEstadoFiltro] = useState('ALL'); // 'ALL', 'APROBADA', 'FINALIZADA', 'RECHAZADA'
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
-
-    useEffect(() => {
-        obtenerSolicitudes();
-    }, []);
-
-    // Lógica de Filtrado
-    useEffect(() => {
-        let resultado = solicitudes;
-
-        // 1. Búsqueda por texto
-        if (terminoBusqueda) {
-            const terminoMinuscula = terminoBusqueda.toLowerCase();
-            resultado = resultado.filter(req =>
-                req.sol_unidad.toLowerCase().includes(terminoMinuscula) ||
-                req.sol_nombresolicitante.toLowerCase().includes(terminoMinuscula) ||
-                req.sol_motivo.toLowerCase().includes(terminoMinuscula)
-            );
-        }
-
-        // 2. Filtro por Mes
-        if (mesFiltro) {
-            resultado = resultado.filter(req => {
-                const fecha = new Date(req.sol_fechasalida);
-                const mesStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
-                return mesStr === mesFiltro;
-            });
-        }
-
-        // 3. Filtro por Estado
-        if (estadoFiltro !== 'ALL') {
-            resultado = resultado.filter(req => req.sol_estado === estadoFiltro);
-        }
-
-        setSolicitudesFiltradas(resultado);
-    }, [solicitudes, terminoBusqueda, mesFiltro, estadoFiltro]);
-
-    const obtenerSolicitudes = async () => {
+    // Fetch processed requests
+    const obtenerSolicitudes = useCallback(async () => {
         setCargando(true);
         try {
             const respuesta = await axios.get(`${API_URL}/requests/processed`, { withCredentials: true });
@@ -67,8 +34,45 @@ const ProcessedRequests = () => {
         } finally {
             setCargando(false);
         }
-    };
+    }, []);
 
+    // Initial load
+    useEffect(() => {
+        obtenerSolicitudes();
+    }, [obtenerSolicitudes]);
+
+    // Apply filters
+    useEffect(() => {
+        let resultado = solicitudes;
+
+        // Text Filter
+        if (terminoBusqueda) {
+            const terminoMinuscula = terminoBusqueda.toLowerCase();
+            resultado = resultado.filter(req =>
+                req.sol_unidad.toLowerCase().includes(terminoMinuscula) ||
+                req.sol_nombresolicitante.toLowerCase().includes(terminoMinuscula) ||
+                req.sol_motivo.toLowerCase().includes(terminoMinuscula)
+            );
+        }
+
+        // Month Filter
+        if (mesFiltro) {
+            resultado = resultado.filter(req => {
+                const fecha = new Date(req.sol_fechasalida);
+                const mesStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
+                return mesStr === mesFiltro;
+            });
+        }
+
+        // Status Filter
+        if (estadoFiltro !== 'ALL') {
+            resultado = resultado.filter(req => req.sol_estado === estadoFiltro);
+        }
+
+        setSolicitudesFiltradas(resultado);
+    }, [solicitudes, terminoBusqueda, mesFiltro, estadoFiltro]);
+
+    // View request details
     const verDetalles = async (req) => {
         setSolicitudSeleccionada(req);
         setCargandoDetalles(true);
@@ -82,6 +86,7 @@ const ProcessedRequests = () => {
         }
     };
 
+    // Clear all filters
     const limpiarFiltros = () => {
         setTerminoBusqueda('');
         setMesFiltro('');
@@ -113,6 +118,7 @@ const ProcessedRequests = () => {
                 </div>
             </div>
 
+            {/* Filter Bar */}
             <RequestFilters
                 terminoBusqueda={terminoBusqueda}
                 setTerminoBusqueda={setTerminoBusqueda}
@@ -157,7 +163,7 @@ const ProcessedRequests = () => {
                 )}
             </div>
 
-            {/* MODAL DE DETALLES (ReadOnly) */}
+            {/* Detail Modal */}
             <RequestDetailModal
                 solicitud={solicitudSeleccionada}
                 detalles={detallesSolicitud}

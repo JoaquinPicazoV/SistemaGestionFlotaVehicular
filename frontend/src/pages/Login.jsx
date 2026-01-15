@@ -1,21 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import API_URL from '../config/api';
 import { User, ShieldCheck, ArrowLeft, Key, Building2, Mail, Loader2, Sparkles } from 'lucide-react';
 
 const Login = () => {
     const navigate = useNavigate();
-    const [userType, setUserType] = useState('funcionario'); // 'funcionario' | 'admin'
+    const [userType, setUserType] = useState('funcionario');
     const [credentials, setCredentials] = useState({ identifier: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
-
-    // Estado para controlar la animación de salida/entrada del formulario
     const [formVisible, setFormVisible] = useState(true);
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
-    // Manejar cambio de pestaña con transición suave
+
     const handleTypeChange = (type) => {
         if (type === userType) return;
         setFormVisible(false);
@@ -42,7 +40,6 @@ const Login = () => {
                 navigate('/dashboard');
             }
         } catch (err) {
-            // ... (Error handling remains same but with better UI feedback below)
             if (err.response && err.response.data) {
                 setError(err.response.data.error || 'Error al iniciar sesión');
             } else {
@@ -53,7 +50,6 @@ const Login = () => {
         }
     };
 
-    // Colores dinámicos según el tipo de usuario
     const theme = userType === 'funcionario'
         ? {
             bg: 'bg-slate-900',
@@ -73,13 +69,12 @@ const Login = () => {
     return (
         <div className={`min-h-screen ${theme.bg} flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-700`}>
 
-            {/* --- BACKGROUND EFFECTS --- */}
+            {/* Efectos de Fondo */}
             <div className={`absolute top-[-20%] left-[-10%] w-[50%] h-[50%] ${theme.blobTop} rounded-full blur-[120px] animate-pulse duration-1000`} />
             <div className={`absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] ${theme.blobBottom} rounded-full blur-[120px] animate-pulse delay-700 duration-1000`} />
 
             <div className="w-full max-w-lg relative z-10 perspective-1000">
 
-                {/* Título Flotante */}
                 <div className="text-center mb-8 animate-fade-in-down">
                     <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
                         Bienvenido al <span className={`text-transparent bg-clip-text bg-gradient-to-r ${theme.gradient}`}>Portal SLEP</span>
@@ -87,10 +82,9 @@ const Login = () => {
                     <p className="text-slate-400 text-sm">Gestiona tus solicitudes de transporte de forma segura.</p>
                 </div>
 
-                {/* --- MAIN CARD --- */}
                 <div className="bg-white/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl shadow-black/20 overflow-hidden transform transition-all duration-500 hover:shadow-black/30">
 
-                    {/* TABS SWITCHER */}
+                    {/* Selector Notorio de Tipo de Usuario */}
                     <div className="flex p-2 bg-slate-100/50 gap-2">
                         <button
                             onClick={() => handleTypeChange('funcionario')}
@@ -121,7 +115,6 @@ const Login = () => {
                         </button>
                     </div>
 
-                    {/* FORM AREA */}
                     <div className={`p-8 transition-opacity duration-200 ${formVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
 
                         <div className="flex items-center gap-4 mb-8">

@@ -9,14 +9,16 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+import API_URL from '../config/api';
 const COLORES = ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
 
 const StatisticsBI = () => {
-    const [pestanaActiva, setPestanaActiva] = useState('flota'); // flota | demanda | geo | ops
+    // Statics
+    const [pestanaActiva, setPestanaActiva] = useState('flota'); // flota | demanda | territorio | operaciones
     const [datos, setDatos] = useState(null);
     const [cargando, setCargando] = useState(true);
 
+    // Load BI Data
     useEffect(() => {
         const cargarBI = async () => {
             try {
@@ -34,12 +36,12 @@ const StatisticsBI = () => {
     if (cargando) return <div className="p-10 text-center text-slate-400">Cargando Tableros BI...</div>;
     if (!datos) return <div className="p-10 text-center text-red-400">Error cargando datos.</div>;
 
-    // --- RENDERIZADORES DE TABLEROS ---
+    // --- DASHBOARDS RENDERS ---
 
-    // TABLERO 1: FLOTA
+    // 1. FLEET
     const TableroFlota = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
-            {/* KPI Desgaste */}
+            {/* KPI Wear */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-1 flex items-center gap-2">
                     <Activity size={20} className="text-amber-500" /> Desgaste de Vehículos
@@ -47,7 +49,7 @@ const StatisticsBI = () => {
                 <p className="text-xs text-slate-400 mb-6">Kilometraje acumulado por unidad (Top 5)</p>
                 <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart layout="vertical" data={datos.fleet.desgaste}>
+                        <BarChart layout="vertical" data={datos.flota.desgaste}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                             <XAxis type="number" hide />
                             <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} />
@@ -59,12 +61,12 @@ const StatisticsBI = () => {
                 <div className="mt-4 p-3 bg-amber-50 rounded-lg text-xs text-amber-800 flex gap-2">
                     <AlertTriangle size={16} />
                     <span>
-                        <strong>Insight:</strong> La unidad con más uso ({datos.fleet.desgaste[0]?.name}) requiere revisión prioritaria.
+                        <strong>Insight:</strong> La unidad con más uso ({datos.flota.desgaste[0]?.name}) requiere revisión prioritaria.
                     </span>
                 </div>
             </div>
 
-            {/* KPI Ociosidad */}
+            {/* KPI Usage */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-1 flex items-center gap-2">
                     <Truck size={20} className="text-blue-500" /> Distribución de Uso
@@ -73,8 +75,8 @@ const StatisticsBI = () => {
                 <div className="h-64 flex justify-center">
                     <ResponsiveContainer width={300} height="100%">
                         <PieChart>
-                            <Pie data={datos.fleet.uso} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
-                                {datos.fleet.uso.map((entry, index) => (
+                            <Pie data={datos.flota.uso} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                                {datos.flota.uso.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORES[index % COLORES.length]} />
                                 ))}
                             </Pie>
@@ -87,15 +89,15 @@ const StatisticsBI = () => {
         </div>
     );
 
-    // TABLERO 2: DEMANDA
+    // 2. DEMAND
     const TableroDemanda = () => {
-        const total = datos.demand.kpi_rechazo.total || 1;
-        const rechazadas = datos.demand.kpi_rechazo.rechazadas || 0;
+        const total = datos.demanda.kpi_rechazo.total || 1;
+        const rechazadas = datos.demanda.kpi_rechazo.rechazadas || 0;
         const tasa = Math.round((rechazadas / total) * 100);
 
         return (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
-                {/* Gauge Tasa Rechazo */}
+                {/* Gauge Rate */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
                     <h3 className="text-lg font-bold text-slate-700 mb-4">Tasa de Rechazo</h3>
                     <div className="relative w-40 h-40 flex items-center justify-center">
@@ -105,13 +107,13 @@ const StatisticsBI = () => {
                     <p className="text-xs text-slate-400 mt-2">KP Crítico: {tasa > 15 ? 'ALERTA (Falta Flota)' : 'Saludable'}</p>
                 </div>
 
-                {/* Pareto Unidades */}
+                {/* Units Pareto */}
                 <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                     <h3 className="text-lg font-bold text-slate-700 mb-1">Solicitudes por Unidad</h3>
                     <p className="text-xs text-slate-400 mb-4">¿Quién usa más el servicio?</p>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={datos.demand.unidades}>
+                            <BarChart data={datos.demanda.unidades}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
                                 <YAxis />
@@ -122,11 +124,11 @@ const StatisticsBI = () => {
                     </div>
                 </div>
 
-                {/* Motivos */}
+                {/* Motives */}
                 <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                     <h3 className="text-lg font-bold text-slate-700 mb-4">Motivos de Viaje</h3>
                     <div className="flex flex-wrap gap-2">
-                        {datos.demand.motivos.map((m, idx) => (
+                        {datos.demanda.motivos.map((m, idx) => (
                             <div key={idx} className="px-4 py-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center gap-2">
                                 <span className="text-sm font-medium text-slate-600">{m.name}</span>
                                 <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{m.value}</span>
@@ -138,7 +140,7 @@ const StatisticsBI = () => {
         );
     };
 
-    // TABLERO 3: GEO
+    // 3. GEO
     const TableroGeo = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -147,7 +149,7 @@ const StatisticsBI = () => {
                 </h3>
                 <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart layout="vertical" data={datos.geo.comunas}>
+                        <BarChart layout="vertical" data={datos.territorio.comunas}>
                             <XAxis type="number" hide />
                             <YAxis dataKey="name" type="category" width={100} />
                             <Tooltip />
@@ -169,7 +171,7 @@ const StatisticsBI = () => {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {datos.geo.lugares.map((l, idx) => (
+                            {datos.territorio.lugares.map((l, idx) => (
                                 <tr key={idx} className="hover:bg-slate-50">
                                     <td className="px-4 py-3 font-medium text-slate-700">{l.nombre}</td>
                                     <td className="px-4 py-3 text-slate-500">{l.comuna}</td>
@@ -183,7 +185,7 @@ const StatisticsBI = () => {
         </div>
     );
 
-    // TABLERO 4: OPS
+    // 4. OPS
     const TableroOps = () => (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -193,7 +195,7 @@ const StatisticsBI = () => {
                 <p className="text-xs text-slate-400 mb-4">Tendencia anual de demanda</p>
                 <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={datos.ops.tendencia}>
+                        <LineChart data={datos.operaciones.tendencia}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
                             <YAxis />
@@ -210,7 +212,7 @@ const StatisticsBI = () => {
                 </h3>
                 <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={datos.ops.choferes}>
+                        <BarChart data={datos.operaciones.choferes}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, angle: -10 }} interval={0} />
                             <YAxis />
@@ -226,8 +228,8 @@ const StatisticsBI = () => {
     const pestanas = [
         { id: 'flota', etiqueta: 'Gestión Flota', icono: Truck },
         { id: 'demanda', etiqueta: 'Demanda', icono: ClipboardList },
-        { id: 'geo', etiqueta: 'Territorio', icono: Map },
-        { id: 'ops', etiqueta: 'Operaciones', icono: CheckCircle2 },
+        { id: 'territorio', etiqueta: 'Territorio', icono: Map },
+        { id: 'operaciones', etiqueta: 'Operaciones', icono: CheckCircle2 },
     ];
 
     return (
@@ -238,7 +240,7 @@ const StatisticsBI = () => {
                 <p className="text-slate-500 mt-1">Toma de decisiones basada en datos reales.</p>
             </div>
 
-            {/* Navegación Pestanas */}
+            {/* Navigation Tabs */}
             <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 mb-6">
                 {pestanas.map((p) => (
                     <button
@@ -255,7 +257,7 @@ const StatisticsBI = () => {
                 ))}
             </div>
 
-            {/* Renderizar Tablero Activo */}
+            {/* Render Active Dashboard */}
             <motion.div
                 key={pestanaActiva}
                 initial={{ opacity: 0, x: 20 }}
@@ -264,8 +266,8 @@ const StatisticsBI = () => {
             >
                 {pestanaActiva === 'flota' && <TableroFlota />}
                 {pestanaActiva === 'demanda' && <TableroDemanda />}
-                {pestanaActiva === 'geo' && <TableroGeo />}
-                {pestanaActiva === 'ops' && <TableroOps />}
+                {pestanaActiva === 'territorio' && <TableroGeo />}
+                {pestanaActiva === 'operaciones' && <TableroOps />}
             </motion.div>
         </div>
     );

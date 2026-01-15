@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
+import API_URL from '../config/api';
 import { RefreshCw, Clock, CheckCircle, XCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import RequestFilters from './common/RequestFilters';
@@ -25,11 +26,24 @@ const PendingRequests = () => {
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
     const [mesFiltro, setMesFiltro] = useState(''); // YYYY-MM
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
+
+    const obtenerSolicitudes = useCallback(async () => {
+        setCargando(true);
+        try {
+            const respuesta = await axios.get(`${API_URL}/requests/pending`, { withCredentials: true });
+            setSolicitudes(respuesta.data);
+            setSolicitudesFiltradas(respuesta.data);
+        } catch (error) {
+            console.error("Error cargando solicitudes:", error);
+        } finally {
+            setCargando(false);
+        }
+    }, [API_URL]);
 
     useEffect(() => {
         obtenerSolicitudes();
-    }, []);
+    }, [obtenerSolicitudes]);
 
     useEffect(() => {
         let resultado = solicitudes;
@@ -55,19 +69,6 @@ const PendingRequests = () => {
 
         setSolicitudesFiltradas(resultado);
     }, [solicitudes, terminoBusqueda, mesFiltro]);
-
-    const obtenerSolicitudes = async () => {
-        setCargando(true);
-        try {
-            const respuesta = await axios.get(`${API_URL}/requests/pending`, { withCredentials: true });
-            setSolicitudes(respuesta.data);
-            setSolicitudesFiltradas(respuesta.data);
-        } catch (error) {
-            console.error("Error cargando solicitudes:", error);
-        } finally {
-            setCargando(false);
-        }
-    };
 
     const verDetalles = async (req) => {
         setSolicitudSeleccionada(req);
@@ -133,7 +134,11 @@ const PendingRequests = () => {
             obtenerSolicitudes(); // Actualizar lista
         } catch (error) {
             console.error("Error procesando solicitud:", error);
-            alert("Error procesando la solicitud.");
+            if (error.response && error.response.data && error.response.data.error) {
+                alert(error.response.data.error);
+            } else {
+                alert("Error procesando la solicitud.");
+            }
         } finally {
             setProcesando(false);
         }

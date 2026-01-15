@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
     LayoutGrid,
     Clock,
@@ -15,7 +15,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
     const [mesFiltro, setMesFiltro] = useState('');
     const [estadoFiltro, setEstadoFiltro] = useState('ALL');
-    const [solicitudesFiltradas, setSolicitudesFiltradas] = useState([]);
+
 
     // Calcular estadísticas localmente
     const estadisticas = {
@@ -24,7 +24,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
     };
 
     // Lógica de filtrado
-    useEffect(() => {
+    const solicitudesFiltradas = useMemo(() => {
         let resultado = solicitudes;
 
         // 1. Búsqueda por texto (Motivo)
@@ -47,7 +47,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
             resultado = resultado.filter(req => req.sol_estado === estadoFiltro);
         }
 
-        setSolicitudesFiltradas(resultado);
+        return resultado;
     }, [solicitudes, terminoBusqueda, mesFiltro, estadoFiltro]);
 
     const limpiarFiltros = () => {

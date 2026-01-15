@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import API_URL from '../config/api';
 import {
     ChevronRight,
     Sparkles,
@@ -16,7 +17,7 @@ import {
 } from 'lucide-react';
 
 const UserRequestForm = ({ alCancelar, alCompletar }) => {
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+
 
     const [comunas, setComunas] = useState([]);
     const [tiposPasajero, setTiposPasajero] = useState([]);

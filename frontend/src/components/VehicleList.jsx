@@ -1,18 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Truck, AlertCircle, CheckCircle, Pencil, Trash2, X, Save, Search, Filter, RefreshCw, ChevronDown } from 'lucide-react';
+import API_URL from '../config/api';
+import { Truck, AlertCircle, CheckCircle, Pencil, Trash2, X, Save, Search, RefreshCw, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const VehicleList = () => {
+    const [vehiculoViajes, setVehiculoViajes] = useState(null);
+    const [viajes, setViajes] = useState([]);
+    const [cargandoViajes, setCargandoViajes] = useState(false);
+
+    // Restaurar estados originales
     const [vehiculos, setVehiculos] = useState([]);
     const [vehiculosFiltrados, setVehiculosFiltrados] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [vehiculoEditando, setVehiculoEditando] = useState(null);
     const [mensajeError, setMensajeError] = useState(null);
-
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
-    const [estadoFiltro, setEstadoFiltro] = useState('ALL'); // 'ALL', 'DISPONIBLE', 'EN RUTA', 'MANTENCION'
-
+    const [estadoFiltro, setEstadoFiltro] = useState('ALL');
     const [creando, setCreando] = useState(false);
     const [nuevoVehiculo, setNuevoVehiculo] = useState({
         vehi_patente: '',
@@ -22,9 +26,9 @@ const VehicleList = () => {
         vehi_estado: 'DISPONIBLE'
     });
 
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
-    const obtenerVehiculos = async () => {
+
+    const obtenerVehiculos = useCallback(async () => {
         setCargando(true);
         try {
             const respuesta = await axios.get(`${API_URL}/vehicles`, { withCredentials: true });
@@ -35,16 +39,15 @@ const VehicleList = () => {
         } finally {
             setCargando(false);
         }
-    };
+    }, [API_URL]);
 
     useEffect(() => {
         obtenerVehiculos();
-    }, []);
+    }, [obtenerVehiculos]);
 
     useEffect(() => {
         let resultado = vehiculos;
 
-        // 1. Buscador (Marca, Modelo, Patente, Capacidad)
         if (terminoBusqueda) {
             const terminoMinuscula = terminoBusqueda.toLowerCase();
             resultado = resultado.filter(v =>
@@ -81,7 +84,7 @@ const VehicleList = () => {
         try {
             await axios.put(`${API_URL}/vehicles/${vehiculoEditando.vehi_patente}`, vehiculoEditando, { withCredentials: true });
             setVehiculoEditando(null);
-            obtenerVehiculos(); // Recargar datos
+            obtenerVehiculos();
         } catch (error) {
             console.error(error);
             alert('Error al actualizar');
@@ -107,6 +110,20 @@ const VehicleList = () => {
             console.error(error);
             setMensajeError(error.response?.data?.error || 'Error al crear vehículo');
             setTimeout(() => setMensajeError(null), 3000);
+        }
+    };
+
+    const verViajes = async (vehiculo) => {
+        setVehiculoViajes(vehiculo);
+        setCargandoViajes(true);
+        try {
+            const res = await axios.get(`${API_URL}/vehicles/${vehiculo.vehi_patente}/trips`, { withCredentials: true });
+            setViajes(res.data);
+        } catch (error) {
+            console.error("Error cargando viajes:", error);
+            alert("No se pudieron cargar los viajes.");
+        } finally {
+            setCargandoViajes(false);
         }
     };
 
@@ -209,6 +226,7 @@ const VehicleList = () => {
                                 <th className="p-5 font-bold">Patente</th>
                                 <th className="p-5 font-bold">Capacidad</th>
                                 <th className="p-5 font-bold">Estado</th>
+                                <th className="p-5 font-bold">Próximos Viajes</th>
                                 <th className="p-5 font-bold text-right">Acciones</th>
                             </tr>
                         </thead>
@@ -239,6 +257,14 @@ const VehicleList = () => {
                                                 {v.vehi_estado}
                                             </span>
                                         </td>
+                                        <td className="p-5">
+                                            <button
+                                                onClick={() => verViajes(v)}
+                                                className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors border border-blue-100"
+                                            >
+                                                Ver Itinerario
+                                            </button>
+                                        </td>
                                         <td className="p-5 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <button
@@ -261,7 +287,7 @@ const VehicleList = () => {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan="5" className="py-20 text-center">
+                                    <td colSpan="6" className="py-20 text-center">
                                         <div className="flex flex-col items-center justify-center">
                                             <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 text-slate-300">
                                                 <Search size={32} />
@@ -496,6 +522,77 @@ const VehicleList = () => {
                                     </button>
                                 </div>
                             </form>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* MODAL VER VIAJES */}
+            <AnimatePresence>
+                {vehiculoViajes && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-xl">Próximos Viajes</h3>
+                                    <p className="text-sm text-slate-500 font-medium">Asignaciones para {vehiculoViajes.vehi_modelo} ({vehiculoViajes.vehi_patente})</p>
+                                </div>
+                                <button onClick={() => setVehiculoViajes(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
+                            </div>
+
+                            <div className="p-0 overflow-y-auto custom-scrollbar">
+                                {cargandoViajes ? (
+                                    <div className="p-12 text-center text-slate-400">
+                                        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4 mx-auto"></div>
+                                        Cargando itinerario...
+                                    </div>
+                                ) : viajes.length > 0 ? (
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50 sticky top-0 z-10 text-xs text-slate-500 uppercase font-bold tracking-wider">
+                                            <tr>
+                                                <th className="p-4 border-b border-slate-100">Fecha Salida</th>
+                                                <th className="p-4 border-b border-slate-100">Destino/Motivo</th>
+                                                <th className="p-4 border-b border-slate-100">Unidad</th>
+                                                <th className="p-4 border-b border-slate-100">Regreso Est.</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
+                                            {viajes.map((v) => (
+                                                <tr key={v.sol_id} className="hover:bg-slate-50/50">
+                                                    <td className="p-4 font-bold text-slate-800">
+                                                        {new Date(v.sol_fechasalida).toLocaleDateString()} <br />
+                                                        <span className="text-xs text-blue-600 font-mono bg-blue-50 px-1 py-0.5 rounded">{new Date(v.sol_fechasalida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="font-medium text-slate-800 mb-0.5">{v.sol_motivo}</div>
+                                                        <div className="text-xs text-slate-400">ID: {v.sol_id.slice(0, 8)}...</div>
+                                                    </td>
+                                                    <td className="p-4 text-xs font-bold uppercase">{v.sol_unidad}</td>
+                                                    <td className="p-4 font-mono text-xs">
+                                                        {new Date(v.sol_fechallegada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="p-16 text-center text-slate-400">
+                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                            <Search size={24} />
+                                        </div>
+                                        <p className="font-medium">No tiene viajes próximos asignados.</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+                                <button
+                                    onClick={() => setVehiculoViajes(null)}
+                                    className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-colors"
+                                >
+                                    Cerrar
+                                </button>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
