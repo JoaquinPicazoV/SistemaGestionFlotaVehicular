@@ -431,7 +431,6 @@ const DriverList = () => {
                                                     </td>
                                                     <td className="p-4">
                                                         <div className="font-medium text-slate-800 mb-0.5">{v.sol_motivo}</div>
-                                                        <div className="text-xs text-slate-400">ID: {v.sol_id.slice(0, 8)}...</div>
                                                     </td>
                                                     <td className="p-4 text-xs font-bold uppercase">{v.sol_unidad}</td>
                                                     <td className="p-4 font-mono text-xs">

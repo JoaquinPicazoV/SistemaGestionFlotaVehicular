@@ -10,6 +10,15 @@ body {
     color: #0f172a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Hardware acceleration for smoother scrolling and animations */
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+}
+
+/* Force hardware acceleration for common animated containers */
+.transition-all, .transition-transform, .animate-float, .animate-fade-in-down, .glass, .glass-dark {
+    will-change: transform, opacity;
+    transform: translateZ(0); 
 }
 
 /* Custom Scrollbar */

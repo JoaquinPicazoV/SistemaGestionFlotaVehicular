@@ -1,38 +1,38 @@
 const pool = require('../../db');
 const crypto = require('crypto');
 
-exports.getPending = async (req, res) => {
+exports.obtenerPendientes = async (req, res) => {
     try {
-        const [rows] = await pool.query(`
+        const [solicitudes] = await pool.query(`
             SELECT * FROM SOLICITUDES 
             WHERE sol_estado = 'PENDIENTE' 
             ORDER BY sol_fechasalida ASC
         `);
-        res.json(rows);
+        res.json(solicitudes);
     } catch (error) {
-        console.error("Error fetching pending requests:", error);
+        console.error("Error obteniendo solicitudes pendientes:", error);
         res.status(500).json({ error: 'Error al obtener solicitudes pendientes' });
     }
 };
 
-exports.approve = async (req, res) => {
+exports.aprobarSolicitud = async (req, res) => {
     const { id } = req.params;
     const { sol_patentevehiculofk, sol_correochoferfk, sol_kmestimado } = req.body;
 
     try {
-        const [currentReq] = await pool.query(
+        const [solicitudActual] = await pool.query(
             "SELECT sol_fechasalida, sol_fechallegada FROM SOLICITUDES WHERE sol_id = ?",
             [id]
         );
 
-        if (currentReq.length === 0) {
+        if (solicitudActual.length === 0) {
             return res.status(404).json({ error: 'Solicitud no encontrada' });
         }
 
-        const { sol_fechasalida, sol_fechallegada } = currentReq[0];
+        const { sol_fechasalida, sol_fechallegada } = solicitudActual[0];
 
         // Verificar conflictos de horario con vehículo o chofer
-        const [conflicts] = await pool.query(`
+        const [conflictos] = await pool.query(`
             SELECT sol_id, sol_patentevehiculofk, sol_correochoferfk 
             FROM SOLICITUDES 
             WHERE sol_estado = 'APROBADA' 
@@ -50,16 +50,16 @@ exports.approve = async (req, res) => {
             sol_fechallegada, sol_fechasalida
         ]);
 
-        if (conflicts.length > 0) {
-            const conflict = conflicts[0];
-            let msg = 'Conflicto de horario: ';
-            if (conflict.sol_patentevehiculofk === sol_patentevehiculofk) {
-                msg += `El vehículo ${sol_patentevehiculofk} ya está ocupado en ese horario. `;
+        if (conflictos.length > 0) {
+            const conflicto = conflictos[0];
+            let mensaje = 'Conflicto de horario: ';
+            if (conflicto.sol_patentevehiculofk === sol_patentevehiculofk) {
+                mensaje += `El vehículo ${sol_patentevehiculofk} ya está ocupado en ese horario. `;
             }
-            if (conflict.sol_correochoferfk === sol_correochoferfk) {
-                msg += `El chofer ya tiene un viaje asignado en ese horario.`;
+            if (conflicto.sol_correochoferfk === sol_correochoferfk) {
+                mensaje += `El chofer ya tiene un viaje asignado en ese horario.`;
             }
-            return res.status(409).json({ error: msg });
+            return res.status(409).json({ error: mensaje });
         }
 
         await pool.query(
@@ -70,12 +70,12 @@ exports.approve = async (req, res) => {
         );
         res.json({ message: 'Solicitud aprobada correctamente' });
     } catch (error) {
-        console.error("Error approving request:", error);
+        console.error("Error aprobando solicitud:", error);
         res.status(500).json({ error: 'Error al aprobar solicitud' });
     }
 };
 
-exports.reject = async (req, res) => {
+exports.rechazarSolicitud = async (req, res) => {
     const { id } = req.params;
     const { sol_observacionrechazo } = req.body;
 
@@ -88,26 +88,26 @@ exports.reject = async (req, res) => {
         );
         res.json({ message: 'Solicitud rechazada correctamente' });
     } catch (error) {
-        console.error("Error rejecting request:", error);
+        console.error("Error rechazando solicitud:", error);
         res.status(500).json({ error: 'Error al rechazar solicitud' });
     }
 };
 
-exports.getProcessed = async (req, res) => {
+exports.obtenerProcesadas = async (req, res) => {
     try {
-        const [rows] = await pool.query(`
+        const [solicitudes] = await pool.query(`
             SELECT * FROM SOLICITUDES 
             WHERE sol_estado IN ('APROBADA', 'FINALIZADA', 'RECHAZADA') 
             ORDER BY sol_fechasalida DESC
         `);
-        res.json(rows);
+        res.json(solicitudes);
     } catch (error) {
-        console.error("Error fetching processed requests:", error);
+        console.error("Error obteniendo solicitudes procesadas:", error);
         res.status(500).json({ error: 'Error al obtener solicitudes procesadas' });
     }
 };
 
-exports.getDetails = async (req, res) => {
+exports.obtenerDetalles = async (req, res) => {
     const { id } = req.params;
     try {
         const [pasajeros] = await pool.query(`
@@ -127,15 +127,15 @@ exports.getDetails = async (req, res) => {
 
         res.json({ pasajeros, destinos });
     } catch (error) {
-        console.error("Error fetching request details:", error);
+        console.error("Error obteniendo detalles de solicitud:", error);
         res.status(500).json({ error: 'Error al obtener detalles' });
     }
 };
 
-exports.create = async (req, res) => {
-    const conn = await pool.getConnection();
+exports.crearSolicitud = async (req, res) => {
+    const conexion = await pool.getConnection();
     try {
-        await conn.beginTransaction();
+        await conexion.beginTransaction();
 
         const {
             sol_fechasalida,
@@ -152,7 +152,7 @@ exports.create = async (req, res) => {
         const sol_id = crypto.randomUUID();
 
         // Insertar solicitud
-        await conn.query(`
+        await conexion.query(`
             INSERT INTO SOLICITUDES (
                 sol_id, sol_nombresolicitante, sol_fechasalida, sol_fechallegada, sol_estado,
                 sol_unidad, sol_motivo, sol_itinerario, sol_tipo, sol_requierechofer, 
@@ -173,76 +173,76 @@ exports.create = async (req, res) => {
 
         // Insertar pasajeros
         if (pasajeros && pasajeros.length > 0) {
-            const passengerValues = pasajeros.map(p => [p.nombre, sol_id, p.tipo || 1]);
-            await conn.query(
+            const valoresPasajeros = pasajeros.map(p => [p.nombre, sol_id, p.tipo || 1]);
+            await conexion.query(
                 `INSERT INTO PASAJEROS (pas_nombre, pas_idsolicitudfk, pas_idtipofk) VALUES ?`,
-                [passengerValues]
+                [valoresPasajeros]
             );
         }
 
         // Insertar destinos
         if (destinos && destinos.length > 0) {
             for (const d of destinos) {
-                let lugarId = d.lugar_id;
+                let idLugar = d.lugar_id;
 
-                if (!lugarId && d.lugar_nombre && d.comuna_id) {
-                    const [existing] = await conn.query(
+                if (!idLugar && d.lugar_nombre && d.comuna_id) {
+                    const [existente] = await conexion.query(
                         'SELECT lug_id FROM LUGAR WHERE lug_nombre = ? AND lug_comunafk = ?',
                         [d.lugar_nombre, d.comuna_id]
                     );
 
-                    if (existing.length > 0) {
-                        lugarId = existing[0].lug_id;
+                    if (existente.length > 0) {
+                        idLugar = existente[0].lug_id;
                     } else {
-                        const [resLugar] = await conn.query(
+                        const [resLugar] = await conexion.query(
                             'INSERT INTO LUGAR (lug_nombre, lug_comunafk) VALUES (?, ?)',
                             [d.lugar_nombre, d.comuna_id]
                         );
-                        lugarId = resLugar.insertId;
+                        idLugar = resLugar.insertId;
                     }
                 }
 
-                if (lugarId) {
-                    await conn.query(
+                if (idLugar) {
+                    await conexion.query(
                         'INSERT INTO SOLICITUD_DESTINO (sde_solicitudfk, sde_lugarfk) VALUES (?, ?)',
-                        [sol_id, lugarId]
+                        [sol_id, idLugar]
                     );
                 }
             }
         }
 
-        await conn.commit();
+        await conexion.commit();
         res.json({ message: 'Solicitud creada exitosamente', id: sol_id });
 
     } catch (error) {
-        await conn.rollback();
-        console.error("Error creating request:", error);
+        await conexion.rollback();
+        console.error("Error creando solicitud:", error);
         res.status(500).json({ error: 'Error al crear la solicitud: ' + error.message });
     } finally {
-        conn.release();
+        conexion.release();
     }
 };
 
-exports.getMyRequests = async (req, res) => {
+exports.obtenerMisSolicitudes = async (req, res) => {
     try {
-        let query = "SELECT * FROM SOLICITUDES WHERE 1=1";
-        const params = [];
+        let consulta = "SELECT * FROM SOLICITUDES WHERE 1=1";
+        const parametros = [];
 
         if (req.user.role === 'funcionario') {
-            query += " AND (sol_idusuariofk = ? AND sol_unidad = ?)";
-            params.push(req.user.id);
-            params.push(req.user.name);
+            consulta += " AND (sol_idusuariofk = ? AND sol_unidad = ?)";
+            parametros.push(req.user.id);
+            parametros.push(req.user.name);
         } else {
-            query += " AND sol_idadminfk = ?";
-            params.push(req.user.id);
+            consulta += " AND sol_idadminfk = ?";
+            parametros.push(req.user.id);
         }
 
-        query += " ORDER BY sol_fechasalida DESC";
+        consulta += " ORDER BY sol_fechasalida DESC";
 
-        const [rows] = await pool.query(query, params);
-        res.json(rows);
+        const [solicitudes] = await pool.query(consulta, parametros);
+        res.json(solicitudes);
     } catch (error) {
-        console.error("Error fetching my requests:", error);
+        console.error("Error obteniendo mis solicitudes:", error);
         res.status(500).json({ error: 'Error al obtener mis solicitudes' });
     }
 };

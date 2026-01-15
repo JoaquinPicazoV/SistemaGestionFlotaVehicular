@@ -5,16 +5,16 @@ const verifyToken = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validate');
 const { body } = require('express-validator');
 
-const createDriverValidation = [
+const validacionCrearChofer = [
     body('cho_correoinstitucional').isEmail().withMessage('Correo inválido'),
     body('cho_nombre').trim().notEmpty(),
     validate
 ];
 
-router.get('/', verifyToken, driverController.getAll);
-router.post('/', verifyToken, createDriverValidation, driverController.create);
-router.put('/:email', verifyToken, driverController.update);
-router.delete('/:email', verifyToken, driverController.delete);
-router.get('/:email/trips', verifyToken, driverController.getTrips);
+router.get('/', verifyToken, driverController.obtenerTodos);
+router.post('/', verifyToken, validacionCrearChofer, driverController.crearChofer);
+router.put('/:email', verifyToken, driverController.actualizarChofer);
+router.delete('/:email', verifyToken, driverController.eliminarChofer);
+router.get('/:email/trips', verifyToken, driverController.obtenerViajes);
 
 module.exports = router;

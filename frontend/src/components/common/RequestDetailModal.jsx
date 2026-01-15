@@ -9,7 +9,8 @@ const RequestDetailModal = ({
     cargandoDetalles,
     alCerrar,
     titulo = "Detalle de Solicitud",
-    accionesPie = null
+    accionesPie = null,
+    mostrarId = true
 }) => {
     if (!solicitud) return null;
 
@@ -27,7 +28,7 @@ const RequestDetailModal = ({
                         <div>
                             <h3 className="font-bold text-slate-800 text-xl">{titulo}</h3>
                             <div className="flex items-center gap-2 mt-1">
-                                <p className="font-mono text-slate-400 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">#{solicitud.sol_id.substring(0, 8)}</p>
+                                {mostrarId && <p className="font-mono text-slate-400 text-xs bg-white px-2 py-0.5 rounded border border-slate-200">#{solicitud.sol_id.substring(0, 8)}</p>}
                                 <StatusBadge estado={solicitud.sol_estado} />
                             </div>
                         </div>

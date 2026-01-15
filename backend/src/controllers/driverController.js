@@ -1,16 +1,16 @@
 const pool = require('../../db');
 
-exports.getAll = async (req, res) => {
+exports.obtenerTodos = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM CHOFER');
-        res.json(rows);
+        const [choferes] = await pool.query('SELECT * FROM CHOFER');
+        res.json(choferes);
     } catch (error) {
-        console.error("Error fetching drivers:", error);
+        console.error("Error obteniendo choferes:", error);
         res.status(500).json({ error: 'Error al obtener choferes' });
     }
 };
 
-exports.create = async (req, res) => {
+exports.crearChofer = async (req, res) => {
     const { cho_correoinstitucional, cho_nombre, cho_activo } = req.body;
     try {
         await pool.query(
@@ -22,12 +22,12 @@ exports.create = async (req, res) => {
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'El correo institucional ya está registrado.' });
         }
-        console.error("Error creating driver:", error);
+        console.error("Error creando chofer:", error);
         res.status(500).json({ error: 'Error al crear chofer' });
     }
 };
 
-exports.update = async (req, res) => {
+exports.actualizarChofer = async (req, res) => {
     const { email } = req.params;
     const { cho_nombre, cho_activo } = req.body;
     try {
@@ -37,12 +37,12 @@ exports.update = async (req, res) => {
         );
         res.json({ message: 'Chofer actualizado' });
     } catch (error) {
-        console.error("Error updating driver:", error);
+        console.error("Error actualizando chofer:", error);
         res.status(500).json({ error: 'Error al actualizar chofer' });
     }
 };
 
-exports.delete = async (req, res) => {
+exports.eliminarChofer = async (req, res) => {
     const { email } = req.params;
     try {
         await pool.query('DELETE FROM CHOFER WHERE cho_correoinstitucional=?', [email]);
@@ -51,15 +51,15 @@ exports.delete = async (req, res) => {
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
             return res.status(400).json({ error: 'No se puede eliminar: El chofer tiene viajes asociados.' });
         }
-        console.error("Error deleting driver:", error);
+        console.error("Error eliminando chofer:", error);
         res.status(500).json({ error: 'Error al eliminar chofer' });
     }
 };
 
-exports.getTrips = async (req, res) => {
+exports.obtenerViajes = async (req, res) => {
     const { email } = req.params;
     try {
-        const [rows] = await pool.query(`
+        const [viajes] = await pool.query(`
             SELECT sol_id, sol_unidad, sol_motivo, sol_fechasalida, sol_fechallegada, sol_kmestimado
             FROM SOLICITUDES
             WHERE sol_correochoferfk = ?
@@ -68,9 +68,9 @@ exports.getTrips = async (req, res) => {
             ORDER BY sol_fechasalida ASC
             LIMIT 10
         `, [email]);
-        res.json(rows);
+        res.json(viajes);
     } catch (error) {
-        console.error("Error fetching driver trips:", error);
+        console.error("Error obteniendo viajes de chofer:", error);
         res.status(500).json({ error: 'Error al obtener viajes del chofer' });
     }
 };

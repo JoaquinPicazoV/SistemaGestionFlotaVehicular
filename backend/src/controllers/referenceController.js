@@ -1,21 +1,21 @@
 const pool = require('../../db');
 
-exports.getComunas = async (req, res) => {
+exports.obtenerComunas = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM COMUNA');
-        res.json(rows);
+        const [filas] = await pool.query('SELECT * FROM COMUNA');
+        res.json(filas);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al obtener datos' });
     }
 };
 
-exports.getPassengerTypes = async (req, res) => {
+exports.obtenerTiposPasajero = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM TIPO_PASAJERO');
-        res.json(rows);
+        const [filas] = await pool.query('SELECT * FROM TIPO_PASAJERO');
+        res.json(filas);
     } catch (error) {
-        console.error("Error fetching passenger types:", error);
+        console.error("Error obteniendo tipos de pasajero:", error);
         res.status(500).json({ error: 'Error al obtener tipos de pasajero' });
     }
 };

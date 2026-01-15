@@ -1,16 +1,16 @@
 const pool = require('../../db');
 
-exports.getAll = async (req, res) => {
+exports.obtenerTodos = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT * FROM VEHICULO');
-        res.json(rows);
+        const [vehiculos] = await pool.query('SELECT * FROM VEHICULO');
+        res.json(vehiculos);
     } catch (error) {
-        console.error("Error fetching vehicles:", error);
+        console.error("Error obteniendo vehículos:", error);
         res.status(500).json({ error: 'Error al obtener vehículos' });
     }
 };
 
-exports.create = async (req, res) => {
+exports.crearVehiculo = async (req, res) => {
     const { vehi_patente, vehi_marca, vehi_modelo, vehi_capacidad, vehi_estado } = req.body;
     try {
         await pool.query(
@@ -22,12 +22,12 @@ exports.create = async (req, res) => {
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(409).json({ error: 'La patente ya está registrada.' });
         }
-        console.error("Error creating vehicle:", error);
+        console.error("Error creando vehículo:", error);
         res.status(500).json({ error: 'Error al crear vehículo' });
     }
 };
 
-exports.update = async (req, res) => {
+exports.actualizarVehiculo = async (req, res) => {
     const { patente } = req.params;
     const { vehi_marca, vehi_modelo, vehi_capacidad, vehi_estado } = req.body;
     try {
@@ -37,12 +37,12 @@ exports.update = async (req, res) => {
         );
         res.json({ message: 'Vehículo actualizado' });
     } catch (error) {
-        console.error("Error updating vehicle:", error);
+        console.error("Error actualizando vehículo:", error);
         res.status(500).json({ error: 'Error al actualizar vehículo' });
     }
 };
 
-exports.delete = async (req, res) => {
+exports.eliminarVehiculo = async (req, res) => {
     const { patente } = req.params;
     try {
         await pool.query('DELETE FROM VEHICULO WHERE vehi_patente=?', [patente]);
@@ -51,15 +51,15 @@ exports.delete = async (req, res) => {
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
             return res.status(400).json({ error: 'No se puede eliminar: El vehículo tiene solicitudes asociadas.' });
         }
-        console.error("Error deleting vehicle:", error);
+        console.error("Error eliminando vehículo:", error);
         res.status(500).json({ error: 'Error al eliminar vehículo' });
     }
 };
 
-exports.getTrips = async (req, res) => {
+exports.obtenerViajes = async (req, res) => {
     const { patente } = req.params;
     try {
-        const [rows] = await pool.query(`
+        const [viajes] = await pool.query(`
             SELECT sol_id, sol_unidad, sol_motivo, sol_fechasalida, sol_fechallegada, sol_kmestimado
             FROM SOLICITUDES
             WHERE sol_patentevehiculofk = ?
@@ -68,9 +68,9 @@ exports.getTrips = async (req, res) => {
             ORDER BY sol_fechasalida ASC
             LIMIT 10
         `, [patente]);
-        res.json(rows);
+        res.json(viajes);
     } catch (error) {
-        console.error("Error fetching vehicle trips:", error);
+        console.error("Error obteniendo viajes de vehículo:", error);
         res.status(500).json({ error: 'Error al obtener viajes del vehículo' });
     }
 };

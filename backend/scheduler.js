@@ -67,6 +67,25 @@ const initScheduler = () => {
                 }
             }
 
+            // 3. Rechazar solicitudes PENDIENTES cuya hora de salida ya pasó
+            const [expiredRequests] = await connection.query(`
+                SELECT sol_id
+                FROM SOLICITUDES
+                WHERE sol_estado = 'PENDIENTE'
+                AND sol_fechasalida < ?
+                FOR UPDATE
+            `, [nowLocalStr]);
+
+            if (expiredRequests.length > 0) {
+                const ids = expiredRequests.map(r => r.sol_id);
+
+                await connection.query(
+                    `UPDATE SOLICITUDES SET sol_estado = 'RECHAZADA', sol_observacionrechazo = 'Solicitud expirada automáticamente' WHERE sol_id IN (?)`,
+                    [ids]
+                );
+                console.log(`🚫 Cron: ${ids.length} solicitudes pendientes expiradas y rechazadas.`);
+            }
+
             await connection.commit();
 
         } catch (error) {

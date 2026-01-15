@@ -101,10 +101,14 @@ const StatisticsBI = () => {
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
                     <h3 className="text-lg font-bold text-slate-700 mb-4">Tasa de Rechazo</h3>
                     <div className="relative w-40 h-40 flex items-center justify-center">
-                        <div className={`w-full h-full rounded-full border-[12px] ${tasa > 15 ? 'border-red-500' : 'border-emerald-500'} opacity-20 absolute`}></div>
+                        <div className="w-full h-full rounded-full border-[12px] border-slate-100 absolute"></div>
+                        <div className={`w-full h-full rounded-full border-[12px] ${tasa > 15 ? 'border-red-500' : 'border-emerald-500'} opacity-100 absolute`}
+                            style={{ clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%)`, transform: `rotate(${(tasa / 100) * 180}deg)` }}>
+                        </div>
+                        {/* Simple circle visualization for now, removed complex KPI text */}
+                        <div className="w-full h-full rounded-full border-[12px] border-indigo-500 opacity-20 absolute"></div>
                         <div className="text-4xl font-black text-slate-800">{tasa}%</div>
                     </div>
-                    <p className="text-xs text-slate-400 mt-2">KPI Crítico: {tasa > 15 ? 'ALERTA (Falta Flota)' : 'Saludable'}</p>
                 </div>
 
                 {/* Units Pareto */}
@@ -124,25 +128,14 @@ const StatisticsBI = () => {
                     </div>
                 </div>
 
-                {/* Motives */}
-                <div className="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 className="text-lg font-bold text-slate-700 mb-4">Motivos de Viaje</h3>
-                    <div className="flex flex-wrap gap-2">
-                        {datos.demanda.motivos.map((m, idx) => (
-                            <div key={idx} className="px-4 py-2 rounded-lg bg-slate-50 border border-slate-100 flex items-center gap-2">
-                                <span className="text-sm font-medium text-slate-600">{m.name}</span>
-                                <span className="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-0.5 rounded">{m.value}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+
             </div>
         );
     };
 
     // 3. GEO
     const TableroGeo = () => (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+        <div className="grid grid-cols-1 gap-6 pt-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <Map size={20} className="text-emerald-500" /> Mapa de Calor (Comunas)
@@ -156,30 +149,6 @@ const StatisticsBI = () => {
                             <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
-                </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <h3 className="text-lg font-bold text-slate-700 mb-4">Top 10 Lugares Visitados</h3>
-                <div className="overflow-auto h-80 custom-scrollbar">
-                    <table className="w-full text-sm text-left">
-                        <thead className="text-xs text-slate-400 uppercase bg-slate-50 sticky top-0">
-                            <tr>
-                                <th className="px-4 py-3">Lugar</th>
-                                <th className="px-4 py-3">Comuna</th>
-                                <th className="px-4 py-3 text-right">Visitas</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {datos.territorio.lugares.map((l, idx) => (
-                                <tr key={idx} className="hover:bg-slate-50">
-                                    <td className="px-4 py-3 font-medium text-slate-700">{l.nombre}</td>
-                                    <td className="px-4 py-3 text-slate-500">{l.comuna}</td>
-                                    <td className="px-4 py-3 text-right font-bold text-blue-600">{l.visitas}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
                 </div>
             </div>
         </div>

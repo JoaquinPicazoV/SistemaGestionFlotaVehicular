@@ -7,7 +7,7 @@ const pool = mysql.createPool({
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'slep_flota_db',
     waitForConnections: true,
-    connectionLimit: 10,
+    connectionLimit: 100,
     queueLimit: 0
 });
 
@@ -15,10 +15,10 @@ const pool = mysql.createPool({
 pool.getConnection()
     .then(connection => {
         pool.releaseConnection(connection);
-        console.log('✅ BD MySQL Conectada Exitosamente');
+        console.log('BD MySQL Conectada Exitosamente');
     })
     .catch(err => {
-        console.error('❌ Error conectando a la BD:', err.message);
+        console.error('Error conectando a la BD:', err.message);
     });
 
 module.exports = pool;

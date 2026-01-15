@@ -191,6 +191,7 @@ const PendingRequests = () => {
                             alAccionar={verDetalles}
                             etiquetaAccion="Revisar"
                             variante="pendiente"
+                            mostrarId={false}
                         />
                     ))
                 ) : (
@@ -217,6 +218,7 @@ const PendingRequests = () => {
                 cargandoDetalles={cargandoDetalles}
                 alCerrar={() => setSolicitudSeleccionada(null)}
                 titulo="Revisar Solicitud"
+                mostrarId={false}
                 accionesPie={
                     <>
                         <button

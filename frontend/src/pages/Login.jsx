@@ -6,34 +6,34 @@ import { User, ShieldCheck, ArrowLeft, Key, Building2, Mail, Loader2, Sparkles }
 
 const Login = () => {
     const navigate = useNavigate();
-    const [userType, setUserType] = useState('funcionario');
-    const [credentials, setCredentials] = useState({ identifier: '', password: '' });
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [formVisible, setFormVisible] = useState(true);
+    const [tipoUsuario, setTipoUsuario] = useState('funcionario');
+    const [credenciales, setCredenciales] = useState({ identifier: '', password: '' });
+    const [cargando, setCargando] = useState(false);
+    const [mensajeError, setMensajeError] = useState(null);
+    const [formularioVisible, setFormularioVisible] = useState(true);
 
 
 
-    const handleTypeChange = (type) => {
-        if (type === userType) return;
-        setFormVisible(false);
+    const cambiarTipoUsuario = (tipo) => {
+        if (tipo === tipoUsuario) return;
+        setFormularioVisible(false);
         setTimeout(() => {
-            setUserType(type);
-            setError(null);
-            setCredentials({ identifier: '', password: '' });
-            setFormVisible(true);
+            setTipoUsuario(tipo);
+            setMensajeError(null);
+            setCredenciales({ identifier: '', password: '' });
+            setFormularioVisible(true);
         }, 200);
     };
 
-    const handleSubmit = async (e) => {
+    const manejarEnvio = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setError(null);
+        setCargando(true);
+        setMensajeError(null);
 
         try {
             const response = await axios.post(`${API_URL}/auth/login`, {
-                email: credentials.identifier,
-                password: credentials.password
+                email: credenciales.identifier,
+                password: credenciales.password
             }, { withCredentials: true });
 
             if (response.status === 200) {
@@ -41,16 +41,16 @@ const Login = () => {
             }
         } catch (err) {
             if (err.response && err.response.data) {
-                setError(err.response.data.error || 'Error al iniciar sesión');
+                setMensajeError(err.response.data.error || 'Error al iniciar sesión');
             } else {
-                setError('Error de conexión. Intenta más tarde.');
+                setMensajeError('Error de conexión. Intenta más tarde.');
             }
         } finally {
-            setLoading(false);
+            setCargando(false);
         }
     };
 
-    const theme = userType === 'funcionario'
+    const tema = tipoUsuario === 'funcionario'
         ? {
             bg: 'bg-slate-900',
             gradient: 'from-blue-600 to-cyan-500',
@@ -67,17 +67,17 @@ const Login = () => {
         };
 
     return (
-        <div className={`min-h-screen ${theme.bg} flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-700`}>
+        <div className={`min-h-screen ${tema.bg} flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-700`}>
 
             {/* Efectos de Fondo */}
-            <div className={`absolute top-[-20%] left-[-10%] w-[50%] h-[50%] ${theme.blobTop} rounded-full blur-[120px] animate-pulse duration-1000`} />
-            <div className={`absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] ${theme.blobBottom} rounded-full blur-[120px] animate-pulse delay-700 duration-1000`} />
+            <div className={`absolute top-[-20%] left-[-10%] w-[50%] h-[50%] ${tema.blobTop} rounded-full blur-[120px] animate-pulse duration-1000`} />
+            <div className={`absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] ${tema.blobBottom} rounded-full blur-[120px] animate-pulse delay-700 duration-1000`} />
 
             <div className="w-full max-w-lg relative z-10 perspective-1000">
 
                 <div className="text-center mb-8 animate-fade-in-down">
                     <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
-                        Bienvenido al <span className={`text-transparent bg-clip-text bg-gradient-to-r ${theme.gradient}`}>Portal SLEP</span>
+                        Bienvenido al <span className={`text-transparent bg-clip-text bg-gradient-to-r ${tema.gradient}`}>Portal SLEP</span>
                     </h1>
                     <p className="text-slate-400 text-sm">Gestiona tus solicitudes de transporte de forma segura.</p>
                 </div>
@@ -87,75 +87,75 @@ const Login = () => {
                     {/* Selector Notorio de Tipo de Usuario */}
                     <div className="flex p-2 bg-slate-100/50 gap-2">
                         <button
-                            onClick={() => handleTypeChange('funcionario')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 relative overflow-hidden ${userType === 'funcionario'
+                            onClick={() => cambiarTipoUsuario('funcionario')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 relative overflow-hidden ${tipoUsuario === 'funcionario'
                                 ? 'bg-white text-blue-600 shadow-md transform scale-[1.02]'
                                 : 'text-slate-500 hover:bg-white/50 hover:text-slate-700'
                                 } `}
                         >
-                            <Building2 size={18} className={userType === 'funcionario' ? 'animate-bounce-subtle' : ''} />
+                            <Building2 size={18} className={tipoUsuario === 'funcionario' ? 'animate-bounce-subtle' : ''} />
                             <span className="relative z-10">Unidad</span>
-                            {userType === 'funcionario' && (
+                            {tipoUsuario === 'funcionario' && (
                                 <div className="absolute inset-0 bg-blue-50/50 z-0"></div>
                             )}
                         </button>
 
                         <button
-                            onClick={() => handleTypeChange('admin')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 relative overflow-hidden ${userType === 'admin'
+                            onClick={() => cambiarTipoUsuario('admin')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all duration-300 relative overflow-hidden ${tipoUsuario === 'admin'
                                 ? 'bg-white text-indigo-600 shadow-md transform scale-[1.02]'
                                 : 'text-slate-500 hover:bg-white/50 hover:text-slate-700'
                                 } `}
                         >
-                            <ShieldCheck size={18} className={userType === 'admin' ? 'animate-bounce-subtle' : ''} />
+                            <ShieldCheck size={18} className={tipoUsuario === 'admin' ? 'animate-bounce-subtle' : ''} />
                             <span className="relative z-10">Administrador</span>
-                            {userType === 'admin' && (
+                            {tipoUsuario === 'admin' && (
                                 <div className="absolute inset-0 bg-indigo-50/50 z-0"></div>
                             )}
                         </button>
                     </div>
 
-                    <div className={`p-8 transition-opacity duration-200 ${formVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                    <div className={`p-8 transition-opacity duration-200 ${formularioVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
 
                         <div className="flex items-center gap-4 mb-8">
-                            <div className={`p-3 rounded-2xl bg-gradient-to-br ${theme.gradient} text-white shadow-lg transform rotate-3`}>
-                                {userType === 'funcionario' ? <Sparkles size={24} /> : <Key size={24} />}
+                            <div className={`p-3 rounded-2xl bg-gradient-to-br ${tema.gradient} text-white shadow-lg transform rotate-3`}>
+                                {tipoUsuario === 'funcionario' ? <Sparkles size={24} /> : <Key size={24} />}
                             </div>
                             <div>
                                 <h2 className="text-xl font-bold text-slate-800">
-                                    {userType === 'funcionario' ? 'Ingreso Unidades' : 'Panel de Control'}
+                                    {tipoUsuario === 'funcionario' ? 'Ingreso Unidades' : 'Panel de Control'}
                                 </h2>
                                 <p className="text-xs text-slate-500 font-medium">
-                                    {userType === 'funcionario' ? 'Credenciales de unidad' : 'Acceso restringido'}
+                                    {tipoUsuario === 'funcionario' ? 'Credenciales de unidad' : 'Acceso restringido'}
                                 </p>
                             </div>
                         </div>
 
-                        {error && (
+                        {mensajeError && (
                             <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-600 text-sm flex items-center gap-3 animate-shake">
                                 <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                                {error}
+                                {mensajeError}
                             </div>
                         )}
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
+                        <form onSubmit={manejarEnvio} className="space-y-5">
 
                             <div className="group">
                                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">
-                                    {userType === 'funcionario' ? 'Usuario de Unidad' : 'Correo Institucional'}
+                                    {tipoUsuario === 'funcionario' ? 'Usuario de Unidad' : 'Correo Institucional'}
                                 </label>
                                 <div className="relative transform transition-all duration-200 group-focus-within:scale-[1.01]">
                                     <div className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
-                                        {userType === 'funcionario' ? <User size={20} /> : <Mail size={20} />}
+                                        {tipoUsuario === 'funcionario' ? <User size={20} /> : <Mail size={20} />}
                                     </div>
                                     <input
-                                        type={userType === 'funcionario' ? "text" : "email"}
+                                        type={tipoUsuario === 'funcionario' ? "text" : "email"}
                                         required
                                         autoFocus
                                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-700 placeholder:text-slate-300"
-                                        placeholder={userType === 'funcionario' ? "Ej: Finanzas" : "usuario@dominio.cl"}
-                                        value={credentials.identifier}
-                                        onChange={(e) => setCredentials({ ...credentials, identifier: e.target.value })}
+                                        placeholder={tipoUsuario === 'funcionario' ? "Ej: Finanzas" : "usuario@dominio.cl"}
+                                        value={credenciales.identifier}
+                                        onChange={(e) => setCredenciales({ ...credenciales, identifier: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -171,8 +171,8 @@ const Login = () => {
                                         required
                                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-700 placeholder:text-slate-300"
                                         placeholder="••••••••••••••••"
-                                        value={credentials.password}
-                                        onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+                                        value={credenciales.password}
+                                        onChange={(e) => setCredenciales({ ...credenciales, password: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -180,10 +180,10 @@ const Login = () => {
                             <div className="pt-2">
                                 <button
                                     type="submit"
-                                    disabled={loading}
-                                    className={`w-full py-4 rounded-xl font-bold text-white shadow-xl ${theme.btnShadow} transform transition-all duration-200 hover:-translate-y-1 active:scale-[0.98] bg-gradient-to-r ${theme.gradient} flex items-center justify-center gap-2`}
+                                    disabled={cargando}
+                                    className={`w-full py-4 rounded-xl font-bold text-white shadow-xl ${tema.btnShadow} transform transition-all duration-200 hover:-translate-y-1 active:scale-[0.98] bg-gradient-to-r ${tema.gradient} flex items-center justify-center gap-2`}
                                 >
-                                    {loading ? <Loader2 size={20} className="animate-spin" /> : 'Iniciar Sesión'}
+                                    {cargando ? <Loader2 size={20} className="animate-spin" /> : 'Iniciar Sesión'}
                                 </button>
                             </div>
 

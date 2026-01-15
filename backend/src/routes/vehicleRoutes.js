@@ -5,7 +5,7 @@ const verifyToken = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validate');
 const { body, param } = require('express-validator');
 
-const createVehicleValidation = [
+const validacionCrearVehiculo = [
     body('vehi_patente').trim().notEmpty().withMessage('Patente requerida').isLength({ min: 6, max: 8 }),
     body('vehi_marca').trim().notEmpty(),
     body('vehi_modelo').trim().notEmpty(),
@@ -14,7 +14,7 @@ const createVehicleValidation = [
     validate
 ];
 
-const updateVehicleValidation = [
+const validacionActualizarVehiculo = [
     param('patente').notEmpty(),
     body('vehi_marca').optional().trim(),
     body('vehi_modelo').optional().trim(),
@@ -23,10 +23,10 @@ const updateVehicleValidation = [
     validate
 ];
 
-router.get('/', verifyToken, vehicleController.getAll);
-router.post('/', verifyToken, createVehicleValidation, vehicleController.create);
-router.put('/:patente', verifyToken, updateVehicleValidation, vehicleController.update);
-router.delete('/:patente', verifyToken, vehicleController.delete);
-router.get('/:patente/trips', verifyToken, vehicleController.getTrips);
+router.get('/', verifyToken, vehicleController.obtenerTodos);
+router.post('/', verifyToken, validacionCrearVehiculo, vehicleController.crearVehiculo);
+router.put('/:patente', verifyToken, validacionActualizarVehiculo, vehicleController.actualizarVehiculo);
+router.delete('/:patente', verifyToken, vehicleController.eliminarVehiculo);
+router.get('/:patente/trips', verifyToken, vehicleController.obtenerViajes);
 
 module.exports = router;

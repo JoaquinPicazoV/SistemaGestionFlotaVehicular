@@ -101,7 +101,7 @@ const ProcessedRequests = () => {
     );
 
     return (
-        <div className="p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Solicitudes Procesadas</h2>
@@ -137,6 +137,7 @@ const ProcessedRequests = () => {
                             key={req.sol_id}
                             solicitud={req}
                             alAccionar={verDetalles}
+                            mostrarId={false}
                             contenidoExtra={
                                 <div className="hidden md:block text-right">
                                     <div className="text-xs font-bold text-slate-400 uppercase">Hora Salida</div>
@@ -169,6 +170,7 @@ const ProcessedRequests = () => {
                 detalles={detallesSolicitud}
                 cargandoDetalles={cargandoDetalles}
                 alCerrar={() => setSolicitudSeleccionada(null)}
+                mostrarId={false}
                 accionesPie={
                     <div className="w-full flex justify-end">
                         <button onClick={() => setSolicitudSeleccionada(null)} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-colors text-sm shadow-sm">

@@ -1,6 +1,6 @@
 const pool = require('../../db');
 
-exports.getBI = async (req, res) => {
+exports.obtenerBI = async (req, res) => {
     try {
         const [
             [desgasteVehiculos],
@@ -71,7 +71,7 @@ exports.getBI = async (req, res) => {
             pool.query(`
                 SELECT c.cho_nombre as name, COUNT(s.sol_id) as viajes
                 FROM CHOFER c
-                LEFT JOIN SOLICITUDES s ON c.cho_correoinstitucional = s.sol_correochoferfk AND s.sol_estado = 'FINALIZADA'
+                LEFT JOIN SOLICITUDES s ON c.cho_correoinstitucional = s.sol_correochoferfk AND s.sol_estado IN ('FINALIZADA', 'APROBADA')
                 GROUP BY c.cho_correoinstitucional
                 ORDER BY viajes DESC
             `)
@@ -94,13 +94,13 @@ exports.getBI = async (req, res) => {
     }
 };
 
-exports.getSummary = async (req, res) => {
+exports.obtenerResumen = async (req, res) => {
     try {
-        const [pendingReqs] = await pool.query("SELECT COUNT(*) as count FROM SOLICITUDES WHERE sol_estado = 'PENDIENTE'");
-        const [vehiclesRoute] = await pool.query("SELECT COUNT(*) as count FROM VEHICULO WHERE vehi_estado = 'EN RUTA'");
-        const [activeDrivers] = await pool.query("SELECT COUNT(*) as count FROM CHOFER WHERE cho_activo = 1");
+        const [solicitudesPendientes] = await pool.query("SELECT COUNT(*) as count FROM SOLICITUDES WHERE sol_estado = 'PENDIENTE'");
+        const [vehiculosEnRuta] = await pool.query("SELECT COUNT(*) as count FROM VEHICULO WHERE vehi_estado = 'EN RUTA'");
+        const [choferesActivos] = await pool.query("SELECT COUNT(*) as count FROM CHOFER WHERE cho_activo = 1");
 
-        const [upcomingTrips] = await pool.query(`
+        const [proximosViajes] = await pool.query(`
             SELECT sol_unidad, sol_fechasalida, sol_motivo 
             FROM SOLICITUDES 
             WHERE sol_estado = 'APROBADA' 
@@ -109,9 +109,9 @@ exports.getSummary = async (req, res) => {
             LIMIT 5
         `);
 
-        const [fleetStatus] = await pool.query("SELECT vehi_estado as name, COUNT(*) as value FROM VEHICULO GROUP BY vehi_estado");
+        const [estadoFlota] = await pool.query("SELECT vehi_estado as name, COUNT(*) as value FROM VEHICULO GROUP BY vehi_estado");
 
-        const [kmStats] = await pool.query(`
+        const [estadisticasKm] = await pool.query(`
             SELECT COALESCE(SUM(sol_kmestimado), 0) as totalKm 
             FROM SOLICITUDES 
             WHERE sol_estado = 'FINALIZADA' 
@@ -119,7 +119,7 @@ exports.getSummary = async (req, res) => {
             AND sol_fechasalida <= LAST_DAY(NOW())
         `);
 
-        const [passengerStats] = await pool.query(`
+        const [estadisticasPasajeros] = await pool.query(`
             SELECT COUNT(*) as totalPassengers
             FROM PASAJEROS p
             JOIN SOLICITUDES s ON p.pas_idsolicitudfk = s.sol_id
@@ -128,7 +128,7 @@ exports.getSummary = async (req, res) => {
             AND s.sol_fechasalida <= LAST_DAY(NOW())
         `);
 
-        const [topUnits] = await pool.query(`
+        const [unidadesTop] = await pool.query(`
             SELECT sol_unidad, COUNT(*) as trips
             FROM SOLICITUDES
             WHERE sol_estado = 'FINALIZADA'
@@ -138,17 +138,17 @@ exports.getSummary = async (req, res) => {
         `);
 
         res.json({
-            solicitudesPendientes: pendingReqs[0].count,
-            vehiculosEnRuta: vehiclesRoute[0].count,
-            choferesActivos: activeDrivers[0].count,
-            kmMesActual: kmStats[0].totalKm,
-            pasajerosMes: passengerStats[0].totalPassengers,
-            unidadesTop: topUnits,
-            proximosViajes: upcomingTrips,
-            estadoFlota: fleetStatus
+            solicitudesPendientes: solicitudesPendientes[0].count,
+            vehiculosEnRuta: vehiculosEnRuta[0].count,
+            choferesActivos: choferesActivos[0].count,
+            kmMesActual: estadisticasKm[0].totalKm,
+            pasajerosMes: estadisticasPasajeros[0].totalPassengers,
+            unidadesTop: unidadesTop,
+            proximosViajes: proximosViajes,
+            estadoFlota: estadoFlota
         });
     } catch (error) {
-        console.error("Error fetching summary stats:", error);
+        console.error("Error obteniendo resumen:", error);
         res.status(500).json({ error: 'Error al obtener estadísticas generales' });
     }
 };
