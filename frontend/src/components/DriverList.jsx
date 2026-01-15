@@ -134,23 +134,23 @@ const DriverList = () => {
     );
 
     return (
-        <div className="p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
             {mensajeError && (
-                <div className="absolute top-4 right-8 bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50 animate-bounce">
-                    <AlertCircle size={18} /> {mensajeError}
+                <div className="absolute top-4 right-4 md:right-8 bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50 animate-bounce max-w-[90%]">
+                    <AlertCircle size={18} className="flex-shrink-0" /> <span className="text-sm">{mensajeError}</span>
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 md:mb-8">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Cuerpo de Conductores</h2>
                     <p className="text-slate-500 text-sm mt-1">Gestión del personal y disponibilidad operativa.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full md:w-auto">
                     <button onClick={obtenerChoferes} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Actualizar">
                         <RefreshCw size={18} />
                     </button>
-                    <button onClick={() => setCreando(true)} className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg shadow-slate-900/10 flex items-center gap-2">
+                    <button onClick={() => setCreando(true)} className="flex-1 md:flex-none justify-center bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg shadow-slate-900/10 flex items-center gap-2">
                         + Nuevo Chofer
                     </button>
                 </div>
@@ -193,7 +193,8 @@ const DriverList = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* DESKTOP VIEW: TABLE */}
+            <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[600px]">
                         <thead>
@@ -263,6 +264,58 @@ const DriverList = () => {
                         </tbody>
                     </table>
                 </div>
+            </div>
+
+            {/* MOBILE VIEW: CARDS */}
+            <div className="md:hidden space-y-4">
+                {choferesFiltrados.length > 0 ? (
+                    choferesFiltrados.map((d) => (
+                        <div key={d.cho_correoinstitucional} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                            <div className="flex  items-start justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
+                                        <User size={24} />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-slate-800 text-base">{d.cho_nombre}</div>
+                                        <div className="text-xs text-slate-500 font-medium">{d.cho_correoinstitucional}</div>
+                                    </div>
+                                </div>
+                                <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border flex items-center gap-1.5 ${d.cho_activo ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${d.cho_activo ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
+                                    {d.cho_activo ? 'ACTIVO' : 'INACTIVO'}
+                                </span>
+                            </div>
+
+                            <button
+                                onClick={() => verViajes(d)}
+                                className="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors border border-blue-100 mb-4"
+                            >
+                                Ver Itinerario
+                            </button>
+
+                            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                                <button
+                                    onClick={() => setChoferEditando(d)}
+                                    className="flex-1 py-2 text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg text-xs font-bold transition-colors border border-transparent hover:border-slate-200"
+                                >
+                                    Editar
+                                </button>
+                                <button
+                                    onClick={() => eliminarChofer(d.cho_correoinstitucional)}
+                                    className="px-3 py-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-transparent hover:border-red-200"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <div className="text-slate-400 mb-2"><Search className="mx-auto" size={24} /></div>
+                        <p className="text-sm text-slate-500 font-medium">No se encontraron conductores.</p>
+                    </div>
+                )}
             </div>
 
             {/* Create Modal */}

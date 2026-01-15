@@ -94,7 +94,7 @@ const Login = () => {
                                 } `}
                         >
                             <Building2 size={18} className={userType === 'funcionario' ? 'animate-bounce-subtle' : ''} />
-                            <span className="relative z-10">Unidad / Escuela</span>
+                            <span className="relative z-10">Unidad</span>
                             {userType === 'funcionario' && (
                                 <div className="absolute inset-0 bg-blue-50/50 z-0"></div>
                             )}
@@ -126,7 +126,7 @@ const Login = () => {
                                     {userType === 'funcionario' ? 'Ingreso Unidades' : 'Panel de Control'}
                                 </h2>
                                 <p className="text-xs text-slate-500 font-medium">
-                                    {userType === 'funcionario' ? 'Credenciales de establecimiento' : 'Acceso restringido'}
+                                    {userType === 'funcionario' ? 'Credenciales de unidad' : 'Acceso restringido'}
                                 </p>
                             </div>
                         </div>
@@ -153,7 +153,7 @@ const Login = () => {
                                         required
                                         autoFocus
                                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-700 placeholder:text-slate-300"
-                                        placeholder={userType === 'funcionario' ? "Ej: escuela.pelluco" : "admin@slep.cl"}
+                                        placeholder={userType === 'funcionario' ? "Ej: Finanzas" : "usuario@dominio.cl"}
                                         value={credentials.identifier}
                                         onChange={(e) => setCredentials({ ...credentials, identifier: e.target.value })}
                                     />
@@ -170,7 +170,7 @@ const Login = () => {
                                         type="password"
                                         required
                                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-700 placeholder:text-slate-300"
-                                        placeholder="••••••••"
+                                        placeholder="••••••••••••••••"
                                         value={credentials.password}
                                         onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
                                     />

@@ -149,25 +149,25 @@ const VehicleList = () => {
     );
 
     return (
-        <div className="p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
 
             {mensajeError && (
-                <div className="absolute top-4 right-8 bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50 animate-bounce">
-                    <AlertCircle size={18} /> {mensajeError}
+                <div className="absolute top-4 right-4 md:right-8 bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50 animate-bounce max-w-[90%]">
+                    <AlertCircle size={18} className="flex-shrink-0" /> <span className="text-sm">{mensajeError}</span>
                 </div>
             )}
 
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 md:mb-8">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Flota de Vehículos</h2>
                     <p className="text-slate-500 text-sm mt-1">Gestión y monitoreo de las unidades móviles.</p>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 w-full md:w-auto">
                     <button onClick={obtenerVehiculos} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Actualizar">
                         <RefreshCw size={18} />
                     </button>
-                    <button onClick={() => setCreando(true)} className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg shadow-slate-900/10 flex items-center gap-2">
+                    <button onClick={() => setCreando(true)} className="flex-1 md:flex-none justify-center bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg shadow-slate-900/10 flex items-center gap-2">
                         + Nuevo Vehículo
                     </button>
                 </div>
@@ -181,7 +181,7 @@ const VehicleList = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                         <input
                             type="text"
-                            placeholder="Buscar por marca, modelo, patente o capacidad..."
+                            placeholder="Buscar por marca, modelo, patente..."
                             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
                             value={terminoBusqueda}
                             onChange={(e) => setTerminoBusqueda(e.target.value)}
@@ -189,7 +189,7 @@ const VehicleList = () => {
                     </div>
 
                     {/* Filtros Rapidos */}
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <div className="relative min-w-[180px]">
                             <select
                                 className="w-full pl-3 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 focus:outline-none focus:border-blue-500 appearance-none cursor-pointer"
@@ -217,7 +217,8 @@ const VehicleList = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            {/* DESKTOP VIEW: TABLE */}
+            <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[700px]">
                         <thead>
@@ -310,6 +311,69 @@ const VehicleList = () => {
                 </div>
             </div>
 
+            {/* MOBILE VIEW: CARDS */}
+            <div className="md:hidden space-y-4">
+                {vehiculosFiltrados.length > 0 ? (
+                    vehiculosFiltrados.map((v) => (
+                        <div key={v.vehi_patente} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                        <Truck size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-slate-800">{v.vehi_modelo}</div>
+                                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wide">{v.vehi_marca}</div>
+                                    </div>
+                                </div>
+                                <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border flex items-center gap-1.5 ${obtenerColorEstado(v.vehi_estado)}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${v.vehi_estado === 'DISPONIBLE' ? 'bg-emerald-500' : v.vehi_estado === 'EN RUTA' ? 'bg-blue-500' : 'bg-orange-500'}`}></span>
+                                    {v.vehi_estado}
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Patente</span>
+                                    <span className="text-sm font-mono font-bold text-slate-700">{v.vehi_patente}</span>
+                                </div>
+                                <div className="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                    <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Capacidad</span>
+                                    <span className="text-sm font-bold text-slate-700">{v.vehi_capacidad} PAX</span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={() => verViajes(v)}
+                                className="w-full py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors border border-blue-100 mb-4"
+                            >
+                                Ver Itinerario
+                            </button>
+
+                            <div className="flex justify-end gap-2 border-t border-slate-100 pt-3">
+                                <button
+                                    onClick={() => setVehiculoEditando(v)}
+                                    className="flex-1 py-2 text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-lg text-xs font-bold transition-colors border border-transparent hover:border-slate-200"
+                                >
+                                    Editar
+                                </button>
+                                <button
+                                    onClick={() => eliminarVehiculo(v.vehi_patente)}
+                                    className="px-3 py-2 text-red-500 bg-red-50 hover:bg-red-100 rounded-lg transition-colors border border-transparent hover:border-red-200"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="text-center py-10 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        <div className="text-slate-400 mb-2"><Search className="mx-auto" size={24} /></div>
+                        <p className="text-sm text-slate-500 font-medium">No se encontraron vehículos.</p>
+                    </div>
+                )}
+            </div>
+
             <AnimatePresence>
                 {creando && (
                     <motion.div
@@ -322,16 +386,16 @@ const VehicleList = () => {
                             initial={{ scale: 0.95, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden"
+                            className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
                         >
-                            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div className="px-6 md:px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 flex-shrink-0">
                                 <h3 className="font-bold text-slate-800 text-xl">Nuevo Vehículo</h3>
                                 <button onClick={() => setCreando(false)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors">
                                     <X size={20} />
                                 </button>
                             </div>
 
-                            <form onSubmit={crearVehiculo} className="p-8 space-y-6">
+                            <form onSubmit={crearVehiculo} className="p-6 md:p-8 space-y-6 overflow-y-auto">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Patente</label>
                                     <input
@@ -344,7 +408,7 @@ const VehicleList = () => {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Marca</label>
                                         <input
@@ -369,7 +433,7 @@ const VehicleList = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Capacidad</label>
                                         <div className="relative">
@@ -390,12 +454,12 @@ const VehicleList = () => {
                                             <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs">
                                                 <CheckCircle size={12} strokeWidth={4} />
                                             </div>
-                                            <span className="text-sm font-bold text-emerald-800">Disponible (Predeterminado)</span>
+                                            <span className="text-sm font-bold text-emerald-800">Disponible (Pred.)</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="pt-6 flex gap-3 justify-end border-t border-slate-100">
+                                <div className="pt-6 flex gap-3 justify-end border-t border-slate-100 mt-auto flex-shrink-0">
                                     <button
                                         type="button"
                                         onClick={() => setCreando(false)}
@@ -430,17 +494,17 @@ const VehicleList = () => {
                             initial={{ scale: 0.95, opacity: 0, y: 20 }}
                             animate={{ scale: 1, opacity: 1, y: 0 }}
                             exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                            className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden"
+                            className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]"
                         >
-                            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div className="px-6 md:px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50 flex-shrink-0">
                                 <h3 className="font-bold text-slate-800 text-xl">Editar Vehículo</h3>
                                 <button onClick={() => setVehiculoEditando(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors">
                                     <X size={20} />
                                 </button>
                             </div>
 
-                            <form onSubmit={actualizarVehiculo} className="p-8 space-y-6">
-                                <div className="grid grid-cols-2 gap-6">
+                            <form onSubmit={actualizarVehiculo} className="p-6 md:p-8 space-y-6 overflow-y-auto">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Marca</label>
                                         <input
@@ -474,7 +538,7 @@ const VehicleList = () => {
                                     <p className="text-[10px] text-slate-400 italic">La patente es un identificador único y no puede modificarse.</p>
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                     <div className="space-y-2">
                                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Capacidad</label>
                                         <div className="relative">
@@ -506,7 +570,7 @@ const VehicleList = () => {
                                     </div>
                                 </div>
 
-                                <div className="pt-6 flex gap-3 justify-end border-t border-slate-100">
+                                <div className="pt-6 flex gap-3 justify-end border-t border-slate-100 mt-auto flex-shrink-0">
                                     <button
                                         type="button"
                                         onClick={() => setVehiculoEditando(null)}

@@ -4,7 +4,7 @@ import axios from 'axios';
 import {
     Bus,
     Map,
-    CalendarDays,
+    Zap,
     ChevronRight,
     Lock,
     ClipboardList
@@ -38,35 +38,35 @@ function Landing() {
             </div>
 
             {/* Navbar */}
-            <nav className="fixed w-full z-50 border-b border-white/10 bg-slate-900/60 backdrop-blur-xl">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg">
-                            <Bus size={20} className="text-white" />
+            <nav className="fixed w-full z-50 border-b border-white/10 bg-slate-900/60 backdrop-blur-xl transition-all duration-300">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex justify-between items-center">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg transition-all">
+                            <Bus className="text-white w-4 h-4 md:w-5 md:h-5" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="font-bold text-lg tracking-wide text-white leading-tight">
+                            <span className="font-bold text-base md:text-lg tracking-wide text-white leading-tight">
                                 Transporte<span className="text-blue-400">SLEP</span>
                             </span>
-                            <span className="text-xs text-slate-400 uppercase">Administración</span>
+                            <span className="text-[10px] md:text-xs uppercase text-blue-400">Llanquihue</span>
                         </div>
                     </div>
 
                     <button
                         onClick={() => navigate('/login')}
-                        className="group flex items-center gap-2 px-5 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all hover:bg-blue-600 hover:border-blue-500 cursor-pointer"
+                        className="group flex items-center gap-2 px-3 py-2 md:px-5 md:py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-all hover:bg-blue-600 hover:border-blue-500 cursor-pointer"
                     >
-                        <Lock size={16} className="text-blue-400 group-hover:text-white" />
-                        <span className="text-sm font-medium">Ingreso Funcionarios</span>
-                        <ChevronRight size={16} className="text-slate-500 group-hover:text-white" />
+                        <Lock className="text-blue-400 group-hover:text-white w-3 h-3 md:w-4 md:h-4" />
+                        <span className="text-xs md:text-sm font-medium">Ingreso <span className="hidden sm:inline">Funcionarios</span></span>
+                        <ChevronRight className="text-slate-500 group-hover:text-white w-3 h-3 md:w-4 md:h-4" />
                     </button>
                 </div>
             </nav>
 
             {/* Contenido Principal */}
-            <main className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
+            <main className="relative z-10 flex flex-col items-center justify-start md:justify-center min-h-screen px-4 text-center pt-24 pb-12 md:py-0">
 
-                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border mb-8 backdrop-blur-md ${enLinea
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border mb-6 md:mb-8 backdrop-blur-md transition-all ${enLinea
                     ? "bg-green-900/30 border-green-800 text-green-400"
                     : "bg-red-900/30 border-red-800 text-red-400"
                     }`}>
@@ -74,44 +74,44 @@ function Landing() {
                     <span className="text-xs font-medium">{estadoSistema}</span>
                 </div>
 
-                <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 max-w-4xl text-white">
-                    Sistema de Solicitud <br />
+                <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-4 md:mb-6 max-w-4xl text-white">
+                    Sistema de Solicitud <br className="hidden sm:block" />
                     <span className="text-blue-400">de Vehículos</span>
                 </h1>
 
-                <p className="text-lg text-slate-400 max-w-2xl mb-10 leading-relaxed">
-                    Plataforma interna del SLEP Llanquihue para reservar móviles institucionales.
-                    Úsala para coordinar cometidos funcionarios, salidas pedagógicas y traslados administrativos.
+                <p className="text-base md:text-lg text-slate-400 max-w-2xl mb-8 md:mb-10 leading-relaxed px-2">
+                    Plataforma del SLEP Llanquihue para reservar vehículos institucionales.
+                    Úsala para coordinar salidas de funcionarios, salidas pedagógicas y traslados administrativos.
                 </p>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl w-full mt-8">
-                    <div className="p-6 rounded-2xl bg-slate-800/50 border border-white/10 backdrop-blur-sm text-left">
-                        <Map className="text-blue-400 mb-4" size={28} />
-                        <h3 className="text-lg font-semibold text-white mb-2">Cobertura</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 max-w-5xl w-full mt-4 md:mt-8 px-2 md:px-0">
+                    <div className="p-5 md:p-6 rounded-2xl bg-slate-800/50 border border-white/10 backdrop-blur-sm text-left hover:bg-slate-800/70 transition-colors">
+                        <Map className="text-blue-400 mb-3 md:mb-4 w-6 h-6 md:w-7 md:h-7" />
+                        <h3 className="text-base md:text-lg font-semibold text-white mb-2">Cobertura</h3>
                         <p className="text-slate-400 text-sm">
-                            Solicitudes disponibles para las 5 comunas del territorio: Puerto Varas, Llanquihue, Frutillar, Fresia y Los Muermos.
+                            Solicitudes disponibles para las X comunas del territorio.
                         </p>
                     </div>
 
-                    <div className="p-6 rounded-2xl bg-slate-800/50 border border-white/10 backdrop-blur-sm text-left">
-                        <CalendarDays className="text-indigo-400 mb-4" size={28} />
-                        <h3 className="text-lg font-semibold text-white mb-2">Disponibilidad</h3>
+                    <div className="p-5 md:p-6 rounded-2xl bg-slate-800/50 border border-white/10 backdrop-blur-sm text-left hover:bg-slate-800/70 transition-colors">
+                        <Zap className="text-indigo-400 mb-3 md:mb-4 w-6 h-6 md:w-7 md:h-7" />
+                        <h3 className="text-base md:text-lg font-semibold text-white mb-2">Gestión Ágil</h3>
                         <p className="text-slate-400 text-sm">
-                            Revisa el calendario de la flota antes de crear tu solicitud para asegurar que existan choferes y vehículos libres.
+                            Simplificamos el proceso de solicitud de vehículos, eliminando trámites innecesarios y agilizando los tiempos de respuesta.
                         </p>
                     </div>
 
-                    <div className="p-6 rounded-2xl bg-slate-800/50 border border-white/10 backdrop-blur-sm text-left">
-                        <ClipboardList className="text-purple-400 mb-4" size={28} />
-                        <h3 className="text-lg font-semibold text-white mb-2">Mis Solicitudes</h3>
+                    <div className="p-5 md:p-6 rounded-2xl bg-slate-800/50 border border-white/10 backdrop-blur-sm text-left hover:bg-slate-800/70 transition-colors md:col-span-2 lg:col-span-1">
+                        <ClipboardList className="text-purple-400 mb-3 md:mb-4 w-6 h-6 md:w-7 md:h-7" />
+                        <h3 className="text-base md:text-lg font-semibold text-white mb-2">Control de Flota</h3>
                         <p className="text-slate-400 text-sm">
-                            Podrás ver el estado de tus peticiones (Pendiente, Aprobada o Rechazada) ingresando con tu cuenta institucional.
+                            La administración supervisa el uso de los vehículos y gestiona las solicitudes para garantizar un servicio eficiente y ordenado.
                         </p>
                     </div>
                 </div>
 
-                <footer className="absolute bottom-6 text-slate-600 text-xs">
-                    Uso exclusivo interno - SLEP Llanquihue 2026
+                <footer className="mt-12 md:absolute md:bottom-6 text-slate-600 text-xs text-center w-full">
+                    SLEP Llanquihue 2026
                 </footer>
 
             </main>

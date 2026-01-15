@@ -40,7 +40,7 @@ const StatisticsBI = () => {
 
     // 1. FLEET
     const TableroFlota = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
             {/* KPI Wear */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-1 flex items-center gap-2">
@@ -52,14 +52,14 @@ const StatisticsBI = () => {
                         <BarChart layout="vertical" data={datos.flota.desgaste}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                             <XAxis type="number" hide />
-                            <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 10 }} />
+                            <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 10 }} />
                             <Tooltip cursor={{ fill: 'transparent' }} />
                             <Bar dataKey="value" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                 <div className="mt-4 p-3 bg-amber-50 rounded-lg text-xs text-amber-800 flex gap-2">
-                    <AlertTriangle size={16} />
+                    <AlertTriangle size={16} className="flex-shrink-0" />
                     <span>
                         <strong>Insight:</strong> La unidad con más uso ({datos.flota.desgaste[0]?.name}) requiere revisión prioritaria.
                     </span>
@@ -73,7 +73,7 @@ const StatisticsBI = () => {
                 </h3>
                 <p className="text-xs text-slate-400 mb-6">Asignaciones totales por patente</p>
                 <div className="h-64 flex justify-center">
-                    <ResponsiveContainer width={300} height="100%">
+                    <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie data={datos.flota.uso} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
                                 {datos.flota.uso.map((entry, index) => (
@@ -96,7 +96,7 @@ const StatisticsBI = () => {
         const tasa = Math.round((rechazadas / total) * 100);
 
         return (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
                 {/* Gauge Rate */}
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
                     <h3 className="text-lg font-bold text-slate-700 mb-4">Tasa de Rechazo</h3>
@@ -104,11 +104,11 @@ const StatisticsBI = () => {
                         <div className={`w-full h-full rounded-full border-[12px] ${tasa > 15 ? 'border-red-500' : 'border-emerald-500'} opacity-20 absolute`}></div>
                         <div className="text-4xl font-black text-slate-800">{tasa}%</div>
                     </div>
-                    <p className="text-xs text-slate-400 mt-2">KP Crítico: {tasa > 15 ? 'ALERTA (Falta Flota)' : 'Saludable'}</p>
+                    <p className="text-xs text-slate-400 mt-2">KPI Crítico: {tasa > 15 ? 'ALERTA (Falta Flota)' : 'Saludable'}</p>
                 </div>
 
                 {/* Units Pareto */}
-                <div className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                     <h3 className="text-lg font-bold text-slate-700 mb-1">Solicitudes por Unidad</h3>
                     <p className="text-xs text-slate-400 mb-4">¿Quién usa más el servicio?</p>
                     <div className="h-64">
@@ -116,7 +116,7 @@ const StatisticsBI = () => {
                             <BarChart data={datos.demanda.unidades}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
-                                <YAxis />
+                                <YAxis width={30} />
                                 <Tooltip />
                                 <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
                             </BarChart>
@@ -125,7 +125,7 @@ const StatisticsBI = () => {
                 </div>
 
                 {/* Motives */}
-                <div className="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div className="md:col-span-2 lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                     <h3 className="text-lg font-bold text-slate-700 mb-4">Motivos de Viaje</h3>
                     <div className="flex flex-wrap gap-2">
                         {datos.demanda.motivos.map((m, idx) => (
@@ -142,7 +142,7 @@ const StatisticsBI = () => {
 
     // 3. GEO
     const TableroGeo = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
                     <Map size={20} className="text-emerald-500" /> Mapa de Calor (Comunas)
@@ -151,7 +151,7 @@ const StatisticsBI = () => {
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart layout="vertical" data={datos.territorio.comunas}>
                             <XAxis type="number" hide />
-                            <YAxis dataKey="name" type="category" width={100} />
+                            <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10 }} />
                             <Tooltip />
                             <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
                         </BarChart>
@@ -161,7 +161,7 @@ const StatisticsBI = () => {
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
                 <h3 className="text-lg font-bold text-slate-700 mb-4">Top 10 Lugares Visitados</h3>
-                <div className="overflow-auto h-80">
+                <div className="overflow-auto h-80 custom-scrollbar">
                     <table className="w-full text-sm text-left">
                         <thead className="text-xs text-slate-400 uppercase bg-slate-50 sticky top-0">
                             <tr>
@@ -187,7 +187,7 @@ const StatisticsBI = () => {
 
     // 4. OPS
     const TableroOps = () => (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-1 flex items-center gap-2">
                     <TrendingUp size={20} className="text-purple-500" /> Estacionalidad Mensual
@@ -198,7 +198,7 @@ const StatisticsBI = () => {
                         <LineChart data={datos.operaciones.tendencia}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="mes" tick={{ fontSize: 10 }} />
-                            <YAxis />
+                            <YAxis width={30} />
                             <Tooltip />
                             <Line type="monotone" dataKey="cantidad" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4 }} />
                         </LineChart>
@@ -215,7 +215,7 @@ const StatisticsBI = () => {
                         <BarChart data={datos.operaciones.choferes}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
                             <XAxis dataKey="name" tick={{ fontSize: 10, angle: -10 }} interval={0} />
-                            <YAxis />
+                            <YAxis width={30} />
                             <Tooltip />
                             <Bar dataKey="viajes" fill="#6366f1" radius={[4, 4, 0, 0]} />
                         </BarChart>
@@ -233,20 +233,20 @@ const StatisticsBI = () => {
     ];
 
     return (
-        <div className="p-8 w-full max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <div className="p-4 md:p-8 w-full max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
             {/* Header */}
-            <div className="mb-8">
-                <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight">Panel de Control BI</h2>
-                <p className="text-slate-500 mt-1">Toma de decisiones basada en datos reales.</p>
+            <div className="mb-6 md:mb-8">
+                <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Panel de Control BI</h2>
+                <p className="text-sm md:text-base text-slate-500 mt-1">Toma de decisiones basada en datos reales.</p>
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 mb-6">
+            <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 mb-6 custom-scrollbar">
                 {pestanas.map((p) => (
                     <button
                         key={p.id}
                         onClick={() => setPestanaActiva(p.id)}
-                        className={`flex items-center gap-2 px-6 py-3 rounded-t-xl font-bold transition-all whitespace-nowrap ${pestanaActiva === p.id
+                        className={`flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 rounded-t-xl font-bold transition-all whitespace-nowrap text-sm md:text-base ${pestanaActiva === p.id
                             ? 'bg-slate-900 text-white shadow-lg translate-y-[1px]'
                             : 'bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50'
                             }`}
