@@ -19,7 +19,7 @@ const Dashboard = () => {
     const [usuario, setUsuario] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [pestanaActiva, setPestanaActiva] = useState('resumen');
-    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [menuLateralAbierto, setMenuLateralAbierto] = useState(false);
     const [estadisticas, setEstadisticas] = useState({
         solicitudesPendientes: 0,
         vehiculosEnRuta: 0,
@@ -94,15 +94,15 @@ const Dashboard = () => {
                 setPestanaActiva={setPestanaActiva}
                 usuario={usuario}
                 cerrarSesion={cerrarSesion}
-                isOpen={sidebarOpen}
-                onClose={() => setSidebarOpen(false)}
+                isOpen={menuLateralAbierto}
+                onClose={() => setMenuLateralAbierto(false)}
             />
 
             <main className="flex-1 overflow-y-auto h-screen relative">
                 <header className="bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-8 py-4 flex items-center justify-between border-b border-slate-200/60">
                     <div className="flex items-center gap-4">
                         <button
-                            onClick={() => setSidebarOpen(true)}
+                            onClick={() => setMenuLateralAbierto(true)}
                             className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-xl md:hidden transition-colors"
                         >
                             <Menu size={24} />
@@ -215,7 +215,7 @@ const Dashboard = () => {
                                     {/* Unidades Más Activas */}
                                     <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
                                         <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
-                                            <TrendingUp size={16} className="text-blue-500" /> Top Unidades (Mes)
+                                            <TrendingUp size={16} className="text-blue-500" /> Top 3 Unidades (Mes)
                                         </h3>
                                         <div className="space-y-3">
                                             {estadisticas.unidadesTop && estadisticas.unidadesTop.length > 0 ? (

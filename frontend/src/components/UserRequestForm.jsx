@@ -43,6 +43,17 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
     const [nombrePasajero, setNombrePasajero] = useState('');
     const [tipoPasajero, setTipoPasajero] = useState('1');
     const [destinoActual, setDestinoActual] = useState({ comuna_id: '', lugar_nombre: '' });
+    const [lugaresDisponibles, setLugaresDisponibles] = useState([]);
+
+    useEffect(() => {
+        if (destinoActual.comuna_id) {
+            axios.get(`${API_URL}/places?comuna_id=${destinoActual.comuna_id}`, { withCredentials: true })
+                .then(res => setLugaresDisponibles(res.data))
+                .catch(err => console.error("Error cargando lugares:", err));
+        } else {
+            setLugaresDisponibles([]);
+        }
+    }, [destinoActual.comuna_id]);
 
     useEffect(() => {
         const obtenerDatosIniciales = async () => {
@@ -315,7 +326,7 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
 
                         <div className="space-y-5">
                             <div className="relative group">
-                                <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest">Solicitante Responsable</label>
+                                <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Solicitante Responsable</label>
                                 <input
                                     type="text"
                                     required
@@ -327,7 +338,7 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                             </div>
 
                             <div className="relative group">
-                                <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest">Motivo Principal</label>
+                                <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Motivo Principal</label>
                                 <input
                                     type="text"
                                     required
@@ -339,7 +350,7 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                             </div>
 
                             <div className="relative group">
-                                <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest">Detalle del Itinerario</label>
+                                <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Detalle del Itinerario</label>
                                 <textarea
                                     required
                                     placeholder="Ej: Salida desde escuela a las 08:00, primera parada en museo, regreso 16:00..."
@@ -366,12 +377,18 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                     </select>
                                     <input
                                         type="text"
+                                        list="lugares-comuna"
                                         placeholder="Lugar específico (Ej: Museo Regional)"
                                         className="w-full md:flex-1 p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-blue-500 transition-all text-sm font-medium"
                                         value={destinoActual.lugar_nombre}
                                         onChange={e => setDestinoActual({ ...destinoActual, lugar_nombre: e.target.value })}
                                         onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), agregarDestino())}
                                     />
+                                    <datalist id="lugares-comuna">
+                                        {lugaresDisponibles.map(l => (
+                                            <option key={l.lug_id} value={l.lug_nombre} />
+                                        ))}
+                                    </datalist>
                                     <button
                                         type="button"
                                         onClick={agregarDestino}

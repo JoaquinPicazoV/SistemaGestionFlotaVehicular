@@ -96,9 +96,12 @@ exports.rechazarSolicitud = async (req, res) => {
 exports.obtenerProcesadas = async (req, res) => {
     try {
         const [solicitudes] = await pool.query(`
-            SELECT * FROM SOLICITUDES 
-            WHERE sol_estado IN ('APROBADA', 'FINALIZADA', 'RECHAZADA') 
-            ORDER BY sol_fechasalida DESC
+            SELECT s.*, c.cho_nombre as nombre_chofer, v.vehi_marca, v.vehi_modelo, v.vehi_patente
+            FROM SOLICITUDES s
+            LEFT JOIN CHOFER c ON s.sol_correochoferfk = c.cho_correoinstitucional
+            LEFT JOIN VEHICULO v ON s.sol_patentevehiculofk = v.vehi_patente
+            WHERE s.sol_estado IN ('APROBADA', 'FINALIZADA', 'RECHAZADA') 
+            ORDER BY s.sol_fechasalida DESC
         `);
         res.json(solicitudes);
     } catch (error) {

@@ -145,7 +145,7 @@ const Login = () => {
                                     {tipoUsuario === 'funcionario' ? 'Usuario de Unidad' : 'Correo Institucional'}
                                 </label>
                                 <div className="relative transform transition-all duration-200 group-focus-within:scale-[1.01]">
-                                    <div className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                                    <div className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10">
                                         {tipoUsuario === 'funcionario' ? <User size={20} /> : <Mail size={20} />}
                                     </div>
                                     <input
@@ -163,7 +163,7 @@ const Login = () => {
                             <div className="group">
                                 <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 ml-1">Contraseña</label>
                                 <div className="relative transform transition-all duration-200 group-focus-within:scale-[1.01]">
-                                    <div className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors">
+                                    <div className="absolute left-4 top-3.5 text-slate-400 group-focus-within:text-blue-500 transition-colors z-10">
                                         <Key size={20} />
                                     </div>
                                     <input
@@ -200,7 +200,7 @@ const Login = () => {
                 </div>
 
                 <p className="text-center text-slate-500/40 text-xs mt-6 font-medium">
-                    &copy; 2026 SLEP Llanquihue • Sistema Seguro
+                    &copy; 2026 SLEP Llanquihue
                 </p>
 
             </div>

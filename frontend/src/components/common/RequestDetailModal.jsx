@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Clock, MapPin, User, CheckCircle, Archive } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, User, CheckCircle, Archive, Bus } from 'lucide-react';
 import StatusBadge from './StatusBadge';
 
 const RequestDetailModal = ({
@@ -65,6 +65,19 @@ const RequestDetailModal = ({
                                         </div>
                                     </div>
                                 </div>
+                                <div>
+                                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Fecha Llegada</h4>
+                                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 inline-block w-full">
+                                        <div className="flex items-center gap-2 text-slate-700 mb-1">
+                                            <Calendar size={16} className="text-red-500" />
+                                            <span className="font-bold">{new Date(solicitud.sol_fechallegada).toLocaleDateString('es-CL')}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 text-slate-500 text-xs">
+                                            <Clock size={14} />
+                                            {new Date(solicitud.sol_fechallegada).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} hrs
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="space-y-6">
@@ -77,9 +90,30 @@ const RequestDetailModal = ({
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
                                         <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Logística</h4>
-                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${solicitud.sol_requierechofer ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
-                                            {solicitud.sol_requierechofer ? 'CON CHOFER' : 'SIN CHOFER'}
-                                        </span>
+                                        <div className="flex flex-col gap-2 items-start">
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${solicitud.sol_requierechofer ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
+                                                {solicitud.sol_requierechofer ? 'CON CHOFER' : 'SIN CHOFER'}
+                                            </span>
+                                            {solicitud.nombre_chofer && (
+                                                <div className="flex items-center gap-2 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100">
+                                                    <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold">
+                                                        {solicitud.nombre_chofer.charAt(0)}
+                                                    </div>
+                                                    <span className="text-xs font-medium text-slate-700">{solicitud.nombre_chofer}</span>
+                                                </div>
+                                            )}
+                                            {solicitud.vehi_patente && (
+                                                <div className="flex items-center gap-2 bg-slate-50 px-2.5 py-1.5 rounded-lg border border-slate-100 mt-1">
+                                                    <div className="w-5 h-5 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-[10px] font-bold">
+                                                        <Bus size={10} />
+                                                    </div>
+                                                    <div className="flex flex-col leading-none">
+                                                        <span className="text-xs font-medium text-slate-700">{solicitud.vehi_marca} {solicitud.vehi_modelo}</span>
+                                                        <span className="text-[10px] text-slate-400 font-mono tracking-wider">{solicitud.vehi_patente}</span>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     {solicitud.sol_solicitanteasiste !== undefined && (
                                         <div>

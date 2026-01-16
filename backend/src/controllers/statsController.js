@@ -20,7 +20,7 @@ exports.obtenerBI = async (req, res) => {
                 LEFT JOIN SOLICITUDES s ON v.vehi_patente = s.sol_patentevehiculofk AND s.sol_estado = 'FINALIZADA'
                 GROUP BY v.vehi_patente
                 ORDER BY value DESC
-                LIMIT 5
+                LIMIT 3
             `),
             pool.query(`
                 SELECT v.vehi_patente as name, COUNT(s.sol_id) as value
@@ -39,6 +39,7 @@ exports.obtenerBI = async (req, res) => {
                 FROM SOLICITUDES
                 GROUP BY sol_unidad
                 ORDER BY value DESC
+                LIMIT 3
             `),
             pool.query(`SELECT sol_motivo as name, COUNT(*) as value FROM SOLICITUDES GROUP BY sol_motivo`),
             pool.query(`
@@ -134,7 +135,7 @@ exports.obtenerResumen = async (req, res) => {
             WHERE sol_estado = 'FINALIZADA'
             GROUP BY sol_unidad
             ORDER BY trips DESC
-            LIMIT 5
+            LIMIT 3
         `);
 
         res.json({

@@ -46,7 +46,7 @@ const StatisticsBI = () => {
                 <h3 className="text-lg font-bold text-slate-700 mb-1 flex items-center gap-2">
                     <Activity size={20} className="text-amber-500" /> Desgaste de Vehículos
                 </h3>
-                <p className="text-xs text-slate-400 mb-6">Kilometraje acumulado por unidad (Top 5)</p>
+                <p className="text-xs text-slate-400 mb-6">Kilometraje acumulado por unidad (Top 3)</p>
                 <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart layout="vertical" data={datos.flota.desgaste}>
