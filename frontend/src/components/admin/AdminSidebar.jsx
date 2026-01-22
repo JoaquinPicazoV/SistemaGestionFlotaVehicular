@@ -6,14 +6,18 @@ import {
     CheckCircle,
     Car,
     Users,
-    LogOut
+    LogOut,
+    Calendar
 } from 'lucide-react';
+
+import LogoSlep from '../../assets/LogoSLEP.png';
 
 const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, isOpen, onClose }) => {
 
     const itemsMenu = [
         { id: 'resumen', etiqueta: 'Resumen General', icono: LayoutDashboard },
         { id: 'estadisticas', etiqueta: 'Estadísticas BI', icono: PieChart },
+        { id: 'calendario', etiqueta: 'Calendario', icono: Calendar },
         { id: 'solicitudes', etiqueta: 'Solicitudes Pendientes', icono: FileText },
         { id: 'procesadas', etiqueta: 'Historial Procesado', icono: CheckCircle },
         { id: 'vehiculos', etiqueta: 'Gestión Vehículos', icono: Car },
@@ -37,14 +41,8 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
             `}>
                 {/* Header / Brand */}
                 <div className="p-8 pb-6 flex justify-between items-center">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                            <Car className="text-white" size={24} />
-                        </div>
-                        <div>
-                            <h1 className="text-xl font-bold text-white tracking-tight leading-none">Transporte</h1>
-                            <p className="text-xs text-blue-400 font-bold tracking-widest uppercase mt-1">SLEP Llanquihue</p>
-                        </div>
+                    <div className="flex items-center justify-center w-full">
+                        <img src={LogoSlep} alt="Logo" className="h-24 w-auto object-contain" />
                     </div>
                     {/* Close button for mobile */}
                     <button onClick={onClose} className="md:hidden text-slate-400 hover:text-white">

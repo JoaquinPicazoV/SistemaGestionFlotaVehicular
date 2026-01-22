@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import API_URL from '../config/api';
+import API_URL from '../../config/api';
 import { RefreshCw, Filter } from 'lucide-react';
-import RequestFilters from './common/RequestFilters';
-import RequestCard from './common/RequestCard';
-import RequestDetailModal from './common/RequestDetailModal';
+import RequestFilters from '../common/RequestFilters';
+import RequestCard from '../common/RequestCard';
+import RequestDetailModal from '../common/RequestDetailModal';
 
 
 

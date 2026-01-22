@@ -11,11 +11,27 @@ exports.obtenerTodos = async (req, res) => {
 };
 
 exports.crearVehiculo = async (req, res) => {
-    const { vehi_patente, vehi_marca, vehi_modelo, vehi_capacidad, vehi_estado } = req.body;
+    const {
+        vehi_patente, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_tipo,
+        vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga,
+        vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento,
+        vehi_poliza, vehi_multas, vehi_estado
+    } = req.body;
+
     try {
         await pool.query(
-            'INSERT INTO VEHICULO (vehi_patente, vehi_marca, vehi_modelo, vehi_capacidad, vehi_estado) VALUES (?, ?, ?, ?, ?)',
-            [vehi_patente, vehi_marca, vehi_modelo, vehi_capacidad, vehi_estado]
+            `INSERT INTO VEHICULO (
+                vehi_patente, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_tipo,
+                vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga,
+                vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento,
+                vehi_poliza, vehi_multas, vehi_estado
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                vehi_patente, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_tipo || 'Vehículo',
+                vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga,
+                vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento,
+                vehi_poliza, vehi_multas, vehi_estado || 'DISPONIBLE'
+            ]
         );
         res.json({ message: 'Vehículo creado exitosamente' });
     } catch (error) {
@@ -29,11 +45,28 @@ exports.crearVehiculo = async (req, res) => {
 
 exports.actualizarVehiculo = async (req, res) => {
     const { patente } = req.params;
-    const { vehi_marca, vehi_modelo, vehi_capacidad, vehi_estado } = req.body;
+    const {
+        vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_tipo,
+        vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga,
+        vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento,
+        vehi_poliza, vehi_multas, vehi_estado
+    } = req.body;
+
     try {
         await pool.query(
-            'UPDATE VEHICULO SET vehi_marca=?, vehi_modelo=?, vehi_capacidad=?, vehi_estado=? WHERE vehi_patente=?',
-            [vehi_marca, vehi_modelo, vehi_capacidad, vehi_estado, patente]
+            `UPDATE VEHICULO SET 
+                vehi_marca=?, vehi_modelo=?, vehi_anio=?, vehi_color=?, vehi_tipo=?,
+                vehi_motor=?, vehi_chasis=?, vehi_capacidad=?, vehi_capacidad_carga=?,
+                vehi_inventario=?, vehi_propietario=?, vehi_resolucion=?, vehi_lugaraparcamiento=?,
+                vehi_poliza=?, vehi_multas=?, vehi_estado=? 
+             WHERE vehi_patente=?`,
+            [
+                vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_tipo,
+                vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga,
+                vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento,
+                vehi_poliza, vehi_multas, vehi_estado,
+                patente
+            ]
         );
         res.json({ message: 'Vehículo actualizado' });
     } catch (error) {

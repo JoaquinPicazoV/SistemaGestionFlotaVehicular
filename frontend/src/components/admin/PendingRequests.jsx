@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import API_URL from '../config/api';
-import { RefreshCw, Clock, CheckCircle, XCircle, X } from 'lucide-react';
+import API_URL from '../../config/api';
+import { RefreshCw, Clock, CheckCircle, XCircle, X, ShieldCheck, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import RequestFilters from './common/RequestFilters';
-import RequestCard from './common/RequestCard';
-import RequestDetailModal from './common/RequestDetailModal';
+import RequestFilters from '../common/RequestFilters';
+import RequestCard from '../common/RequestCard';
+import RequestDetailModal from '../common/RequestDetailModal';
+import AdminExpressForm from './AdminExpressForm';
 
 const PendingRequests = () => {
     const [solicitudes, setSolicitudes] = useState([]);
@@ -14,19 +15,18 @@ const PendingRequests = () => {
     const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
     const [detallesSolicitud, setDetallesSolicitud] = useState({ pasajeros: [], destinos: [] });
     const [cargandoDetalles, setCargandoDetalles] = useState(false);
+    const [mostrarFormularioExpress, setMostrarFormularioExpress] = useState(false);
 
     const [modalAccion, setModalAccion] = useState(null);
     const [vehiculos, setVehiculos] = useState([]);
     const [choferes, setChoferes] = useState([]);
     const [asignacion, setAsignacion] = useState({ vehi_patente: '', cho_correo: '' });
-    const [kmEstimado, setKmEstimado] = useState('');
+    // const [kmEstimado, setKmEstimado] = useState(''); // REMOVED as per requirements
     const [motivoRechazo, setMotivoRechazo] = useState('');
     const [procesando, setProcesando] = useState(false);
 
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
     const [mesFiltro, setMesFiltro] = useState(''); // YYYY-MM
-
-
 
     const obtenerSolicitudes = useCallback(async () => {
         setCargando(true);
@@ -39,7 +39,7 @@ const PendingRequests = () => {
         } finally {
             setCargando(false);
         }
-    }, [API_URL]);
+    }, []);
 
     useEffect(() => {
         obtenerSolicitudes();
@@ -110,12 +110,10 @@ const PendingRequests = () => {
             if (modalAccion === 'APROBAR') {
                 if (!asignacion.vehi_patente) return alert("Selecciona un vehículo");
                 if (solicitudSeleccionada.sol_requierechofer && !asignacion.cho_correo) return alert("Selecciona un conductor");
-                if (!kmEstimado) return alert("Ingresa el kilometraje estimado");
 
                 await axios.put(`${API_URL}/requests/${solicitudSeleccionada.sol_id}/approve`, {
                     sol_patentevehiculofk: asignacion.vehi_patente,
-                    sol_correochoferfk: solicitudSeleccionada.sol_requierechofer ? asignacion.cho_correo : null,
-                    sol_kmestimado: kmEstimado
+                    sol_correochoferfk: solicitudSeleccionada.sol_requierechofer ? asignacion.cho_correo : null
                 }, { withCredentials: true });
             } else {
                 if (!motivoRechazo.trim()) return alert("Ingresa un motivo de rechazo");
@@ -127,17 +125,19 @@ const PendingRequests = () => {
             // Exito
             setModalAccion(null);
             setSolicitudSeleccionada(null);
-            setSolicitudSeleccionada(null);
             setAsignacion({ vehi_patente: '', cho_correo: '' });
-            setKmEstimado('');
             setMotivoRechazo('');
             obtenerSolicitudes(); // Actualizar lista
         } catch (error) {
             console.error("Error procesando solicitud:", error);
-            if (error.response && error.response.data && error.response.data.error) {
+            console.log("Response data:", error.response?.data);
+
+            if (error.response?.data?.error) {
                 alert(error.response.data.error);
+            } else if (error.message) {
+                alert(`Error: ${error.message}`);
             } else {
-                alert("Error procesando la solicitud.");
+                alert("Error desconocido al procesar la solicitud.");
             }
         } finally {
             setProcesando(false);
@@ -148,6 +148,19 @@ const PendingRequests = () => {
         setTerminoBusqueda('');
         setMesFiltro('');
     };
+
+    // --- RENDER FORMULARIO EXPRESS ---
+    if (mostrarFormularioExpress) {
+        return (
+            <AdminExpressForm
+                alCancelar={() => setMostrarFormularioExpress(false)}
+                alCompletar={() => {
+                    setMostrarFormularioExpress(false);
+                    obtenerSolicitudes();
+                }}
+            />
+        );
+    }
 
     if (cargando) return (
         <div className="p-12 text-center text-slate-500 flex flex-col items-center">
@@ -165,6 +178,16 @@ const PendingRequests = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setMostrarFormularioExpress(true)}
+                        className="pl-2 pr-4 py-2 bg-white border border-slate-200 hover:border-emerald-200 hover:bg-emerald-50/50 text-slate-700 rounded-full shadow-sm hover:shadow-md text-sm font-bold flex items-center gap-2 transition-all transform active:scale-95 group"
+                    >
+                        <div className="bg-emerald-100 text-emerald-600 p-1 rounded-full group-hover:scale-110 transition-transform">
+                            <Plus size={16} strokeWidth={3} />
+                        </div>
+                        <span className="group-hover:text-emerald-700 transition-colors">Nueva Solicitud Express</span>
+                    </button>
+                    <div className="h-8 w-[1px] bg-slate-200 mx-2"></div>
                     <button onClick={obtenerSolicitudes} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Actualizar">
                         <RefreshCw size={18} />
                     </button>
@@ -303,18 +326,6 @@ const PendingRequests = () => {
                                                 * Esta solicitud no requiere conductor (autonoma).
                                             </div>
                                         )}
-
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-bold text-slate-500 uppercase">Km Estimado (Ida + Vuelta)</label>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
-                                                placeholder="Ej: 45"
-                                                value={kmEstimado}
-                                                onChange={e => setKmEstimado(e.target.value)}
-                                            />
-                                        </div>
                                     </>
                                 ) : (
                                     <div className="space-y-2">

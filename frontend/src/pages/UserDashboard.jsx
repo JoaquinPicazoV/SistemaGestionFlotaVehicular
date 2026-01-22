@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import API_URL from '../config/api';
 
-import UserNavBar from '../components/UserNavBar';
-import UserRequestList from '../components/UserRequestList';
-import UserRequestForm from '../components/UserRequestForm';
+import UserNavBar from '../components/user/UserNavBar';
+import UserRequestList from '../components/user/UserRequestList';
+import UserRequestForm from '../components/user/UserRequestForm';
+import AdminCalendar from '../components/admin/AdminCalendar';
 
 const UserDashboard = ({ usuario, cerrarSesion }) => {
 
@@ -58,6 +59,10 @@ const UserDashboard = ({ usuario, cerrarSesion }) => {
                             obtenerSolicitudes();
                         }}
                     />
+                )}
+
+                {pestanaActiva === 'calendario' && (
+                    <AdminCalendar />
                 )}
             </main>
         </div>

@@ -5,12 +5,13 @@ import API_URL from '../config/api';
 import { ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { AlertCircle, TrendingUp, Menu, Users } from 'lucide-react';
 
-import StatisticsBI from '../components/StatisticsBI';
-import VehicleList from '../components/VehicleList';
-import DriverList from '../components/DriverList';
-import PendingRequests from '../components/PendingRequests';
-import ProcessedRequests from '../components/ProcessedRequests';
-import AdminSidebar from '../components/AdminSidebar';
+import StatisticsBI from '../components/admin/StatisticsBI';
+import VehicleList from '../components/admin/VehicleList';
+import DriverList from '../components/admin/DriverList';
+import PendingRequests from '../components/admin/PendingRequests';
+import ProcessedRequests from '../components/admin/ProcessedRequests';
+import AdminCalendar from '../components/admin/AdminCalendar';
+import AdminSidebar from '../components/admin/AdminSidebar';
 import LoadingScreen from '../components/common/LoadingScreen';
 import UserDashboard from './UserDashboard';
 
@@ -111,6 +112,7 @@ const Dashboard = () => {
                             <h2 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight line-clamp-1">
                                 {pestanaActiva === 'resumen' && `Hola, ${usuario?.name?.split(' ')[0] || 'Admin'}`}
                                 {pestanaActiva === 'estadisticas' && 'Inteligencia de Negocios'}
+                                {pestanaActiva === 'calendario' && 'Calendario de Reservas'}
                                 {pestanaActiva === 'vehiculos' && 'Gestión de Flota'}
                                 {pestanaActiva === 'choferes' && 'Gestión de Choferes'}
                                 {pestanaActiva === 'solicitudes' && 'Solicitudes Pendientes'}
@@ -271,6 +273,7 @@ const Dashboard = () => {
 
                     <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
                         {pestanaActiva === 'estadisticas' && <StatisticsBI />}
+                        {pestanaActiva === 'calendario' && <AdminCalendar />}
                         {pestanaActiva === 'vehiculos' && <VehicleList />}
                         {pestanaActiva === 'choferes' && <DriverList />}
                         {pestanaActiva === 'solicitudes' && <PendingRequests />}

@@ -12,6 +12,8 @@ import {
 
 import API_URL from '../config/api';
 
+import LogoSlep from '../assets/LogoSLEP.png';
+
 function Landing() {
     const navigate = useNavigate();
     const [estadoSistema, setEstadoSistema] = useState("Verificando...");
@@ -41,15 +43,7 @@ function Landing() {
             <nav className="fixed w-full z-50 border-b border-white/10 bg-slate-900/60 backdrop-blur-xl transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex justify-between items-center">
                     <div className="flex items-center gap-2 sm:gap-3">
-                        <div className="w-8 h-8 md:w-10 md:h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-lg transition-all">
-                            <Bus className="text-white w-4 h-4 md:w-5 md:h-5" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="font-bold text-base md:text-lg tracking-wide text-white leading-tight">
-                                Transporte<span className="text-blue-400">SLEP</span>
-                            </span>
-                            <span className="text-[10px] md:text-xs uppercase text-blue-400">Llanquihue</span>
-                        </div>
+                        <img src={LogoSlep} alt="Logo SLEP" className="h-16 md:h-20 w-auto object-contain" />
                     </div>
 
                     <button

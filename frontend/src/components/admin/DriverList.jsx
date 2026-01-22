@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import API_URL from '../config/api';
+import API_URL from '../../config/api';
 import { User, Pencil, Trash2, X, Save, AlertCircle, Search, RefreshCw, ChevronDown, CheckCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -330,11 +330,41 @@ const DriverList = () => {
                             <form onSubmit={crearChofer} className="p-8 space-y-6">
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre Completo</label>
-                                    <input type="text" placeholder="Ej: Juan Pérez" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700" value={nuevoChofer.cho_nombre} onChange={e => setNuevoChofer({ ...nuevoChofer, cho_nombre: e.target.value })} required />
+                                    <input
+                                        type="text"
+                                        placeholder="Ej: Juan Pérez"
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                                        value={nuevoChofer.cho_nombre}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(val)) {
+                                                setNuevoChofer({ ...nuevoChofer, cho_nombre: val });
+                                            }
+                                        }}
+                                        required
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Correo Institucional</label>
-                                    <input type="email" placeholder="ejemplo@slep.cl" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700" value={nuevoChofer.cho_correoinstitucional} onChange={e => setNuevoChofer({ ...nuevoChofer, cho_correoinstitucional: e.target.value })} required />
+                                    <div className="flex">
+                                        <input
+                                            type="text"
+                                            placeholder="nombre.apellido"
+                                            className="flex-1 px-4 py-2.5 border border-r-0 border-slate-200 rounded-l-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                                            value={nuevoChofer.cho_correoinstitucional.replace('@slepllanquihue.cl', '')}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                // Permitir solo caracteres válidos para email username
+                                                if (/^[a-zA-Z0-9.-]*$/.test(val)) {
+                                                    setNuevoChofer({ ...nuevoChofer, cho_correoinstitucional: val ? val + '@slepllanquihue.cl' : '' });
+                                                }
+                                            }}
+                                            required
+                                        />
+                                        <span className="inline-flex items-center px-4 border border-l-0 border-slate-200 bg-slate-50 text-slate-500 text-sm font-bold rounded-r-xl select-none">
+                                            @slepllanquihue.cl
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estado Inicial</label>
@@ -371,7 +401,18 @@ const DriverList = () => {
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre Completo</label>
-                                    <input type="text" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700" value={choferEditando.cho_nombre} onChange={e => setChoferEditando({ ...choferEditando, cho_nombre: e.target.value })} required />
+                                    <input
+                                        type="text"
+                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                                        value={choferEditando.cho_nombre}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(val)) {
+                                                setChoferEditando({ ...choferEditando, cho_nombre: val });
+                                            }
+                                        }}
+                                        required
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estado</label>

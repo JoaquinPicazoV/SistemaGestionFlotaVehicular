@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-import API_URL from '../config/api';
+import API_URL from '../../config/api';
 const COLORES = ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
 
 const StatisticsBI = () => {
@@ -138,13 +138,13 @@ const StatisticsBI = () => {
         <div className="grid grid-cols-1 gap-6 pt-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <Map size={20} className="text-emerald-500" /> Mapa de Calor (Comunas)
+                    <Map size={20} className="text-emerald-500" /> Establecimientos Más Visitados (Top 10)
                 </h3>
                 <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart layout="vertical" data={datos.territorio.comunas}>
                             <XAxis type="number" hide />
-                            <YAxis dataKey="name" type="category" width={80} tick={{ fontSize: 10 }} />
+                            <YAxis dataKey="name" type="category" width={220} tick={{ fontSize: 10 }} />
                             <Tooltip />
                             <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
                         </BarChart>

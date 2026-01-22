@@ -1,6 +1,10 @@
 const jwt = require('jsonwebtoken');
 
-const SECRET_KEY = process.env.JWT_SECRET || 'dev_secret_key_change_in_prod';
+const SECRET_KEY = process.env.JWT_SECRET;
+
+if (!SECRET_KEY) {
+    throw new Error('FATAL: JWT_SECRET no está definido en el entorno.');
+}
 
 const verifyToken = (req, res, next) => {
     const token = req.cookies.access_token;

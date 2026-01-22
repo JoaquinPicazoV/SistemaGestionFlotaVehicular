@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import API_URL from '../config/api';
+import API_URL from '../../config/api';
 import {
     ChevronRight,
     Sparkles,
@@ -13,7 +13,8 @@ import {
     XCircle,
     Users,
     Trash2,
-    ArrowRight
+    ArrowRight,
+    AlertCircle
 } from 'lucide-react';
 
 const UserRequestForm = ({ alCancelar, alCompletar }) => {
@@ -23,7 +24,7 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
     const [tiposPasajero, setTiposPasajero] = useState([]);
     const [enviando, setEnviando] = useState(false);
     const [mensajeExito, setMensajeExito] = useState('');
-    const submittingRef = useRef(false); // Ref para evitar doble click instantáneo
+    const peticionEnCurso = useRef(false); // Ref para evitar doble click instantáneo
 
     // Estado del Formulario
     const [datosFormulario, setDatosFormulario] = useState({
@@ -42,16 +43,27 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
 
     const [nombrePasajero, setNombrePasajero] = useState('');
     const [tipoPasajero, setTipoPasajero] = useState('1');
-    const [destinoActual, setDestinoActual] = useState({ comuna_id: '', lugar_nombre: '' });
+    const [destinoActual, setDestinoActual] = useState({ comuna_id: '', lugar_nombre: '', establecimiento_id: null });
     const [lugaresDisponibles, setLugaresDisponibles] = useState([]);
+
+    // Nuevo estado para controlar el tipo de entrada
+    const [tipoDestino, setTipoDestino] = useState('OFICIAL'); // 'OFICIAL' | 'OTRO'
+    const [establecimientosDisponibles, setEstablecimientosDisponibles] = useState([]);
 
     useEffect(() => {
         if (destinoActual.comuna_id) {
+            // Cargar lugares para sugerencias (modo libre)
             axios.get(`${API_URL}/places?comuna_id=${destinoActual.comuna_id}`, { withCredentials: true })
                 .then(res => setLugaresDisponibles(res.data))
                 .catch(err => console.error("Error cargando lugares:", err));
+
+            // Cargar establecimientos oficiales (modo estricto)
+            axios.get(`${API_URL}/establishments?comuna_id=${destinoActual.comuna_id}`, { withCredentials: true })
+                .then(res => setEstablecimientosDisponibles(res.data))
+                .catch(err => console.error("Error cargando establecimientos:", err));
         } else {
             setLugaresDisponibles([]);
+            setEstablecimientosDisponibles([]);
         }
     }, [destinoActual.comuna_id]);
 
@@ -91,12 +103,26 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
     };
 
     const agregarDestino = () => {
-        if (!destinoActual.comuna_id || !destinoActual.lugar_nombre.trim()) return;
+        if (!destinoActual.comuna_id) return;
+
+        let nuevoDestino = { ...destinoActual };
+
+        if (tipoDestino === 'OFICIAL') {
+            if (!nuevoDestino.establecimiento_id) return;
+            // Buscamos el nombre oficial para mostrarlo bien en la lista
+            const est = establecimientosDisponibles.find(e => e.est_id == nuevoDestino.establecimiento_id);
+            if (est) nuevoDestino.lugar_nombre = est.est_nombre;
+        } else {
+            if (!nuevoDestino.lugar_nombre.trim()) return;
+            nuevoDestino.establecimiento_id = null; // Asegurar que sea nulo si es libre
+        }
+
         setDatosFormulario(prev => ({
             ...prev,
-            destinos: [...prev.destinos, { ...destinoActual }]
+            destinos: [...prev.destinos, nuevoDestino]
         }));
-        setDestinoActual({ comuna_id: '', lugar_nombre: '' });
+        // Reset
+        setDestinoActual({ comuna_id: '', lugar_nombre: '', establecimiento_id: null });
     };
 
     const eliminarDestino = (idx) => {
@@ -110,8 +136,8 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
         e.preventDefault();
 
         // Evitar doble click inmediato
-        if (submittingRef.current) return;
-        submittingRef.current = true;
+        if (peticionEnCurso.current) return;
+        peticionEnCurso.current = true;
 
         setEnviando(true);
         setMensajeExito('');
@@ -120,21 +146,22 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
             const fechaSalida = `${datosFormulario.sol_fechasalida} ${datosFormulario.sol_timesalida}:00`;
             const fechaLlegada = `${datosFormulario.sol_fechallegada} ${datosFormulario.sol_timeallegada}:00`;
 
-            const payload = {
+            const datosSolicitud = {
                 sol_fechasalida: fechaSalida,
                 sol_fechallegada: fechaLlegada,
                 sol_motivo: datosFormulario.sol_motivo,
                 sol_itinerario: datosFormulario.sol_itinerario,
                 sol_nombresolicitante: datosFormulario.sol_nombresolicitante,
                 sol_tipo: datosFormulario.sol_tipo,
-                sol_requierechofer: datosFormulario.sol_tipo === 'COMETIDO' ? datosFormulario.sol_requierechofer : true,
+                sol_requierechofer: datosFormulario.sol_requierechofer,
+                sol_kmestimado: datosFormulario.sol_kmestimado,
                 pasajeros: datosFormulario.pasajeros,
                 destinos: datosFormulario.destinos
             };
 
-            // "Congelar" por 2 segundos para evitar duplicados (UX Request)
+            // Espera intencional para prevenir duplicados y mejorar UX
             await Promise.all([
-                axios.post(`${API_URL}/requests`, payload, { withCredentials: true }),
+                axios.post(`${API_URL}/requests`, datosSolicitud, { withCredentials: true }),
                 new Promise(resolve => setTimeout(resolve, 2000))
             ]);
 
@@ -149,6 +176,7 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                 sol_nombresolicitante: '',
                 sol_tipo: 'PEDAGOGICA',
                 sol_requierechofer: true,
+                sol_kmestimado: '', // RESET
                 pasajeros: [],
                 destinos: []
             });
@@ -163,7 +191,7 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
             alert("Hubo un error al crear la solicitud.");
         } finally {
             setEnviando(false);
-            submittingRef.current = false;
+            peticionEnCurso.current = false;
         }
     };
 
@@ -179,7 +207,7 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                 </button>
                 <div>
                     <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
-                        Nueva Solicitud <Sparkles size={18} className="text-amber-400" />
+                        Nueva Solicitud
                     </h2>
                     <p className="text-slate-500 text-sm">Ingresa los detalles para programar tu viaje.</p>
                 </div>
@@ -239,24 +267,22 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                             </div>
                         </div>
 
-                        {datosFormulario.sol_tipo === 'COMETIDO' && (
-                            <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-slate-50 to-white border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${datosFormulario.sol_requierechofer ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-400'}`}>
-                                        <User size={24} />
-                                    </div>
-                                    <div>
-                                        <div className="text-sm font-bold text-slate-900">Servicio de Conductor</div>
-                                        <div className="text-xs text-slate-500">Habilita esta opción si necesitas chofer profesional.</div>
-                                    </div>
+                        <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-slate-50 to-white border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+                            <div className="flex items-center gap-4">
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${datosFormulario.sol_requierechofer ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-400'}`}>
+                                    <User size={24} />
                                 </div>
-                                <label className="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" className="sr-only peer" checked={datosFormulario.sol_requierechofer} onChange={e => setDatosFormulario({ ...datosFormulario, sol_requierechofer: e.target.checked })} />
-                                    <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
-                                    <span className="ml-3 text-sm font-medium text-slate-700">{datosFormulario.sol_requierechofer ? 'SI' : 'NO'}</span>
-                                </label>
+                                <div>
+                                    <div className="text-sm font-bold text-slate-900">Servicio de Conductor</div>
+                                    <div className="text-xs text-slate-500">Habilita esta opción si necesitas chofer profesional.</div>
+                                </div>
                             </div>
-                        )}
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" className="sr-only peer" checked={datosFormulario.sol_requierechofer} onChange={e => setDatosFormulario({ ...datosFormulario, sol_requierechofer: e.target.checked })} />
+                                <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div>
+                                <span className="ml-3 text-sm font-medium text-slate-700">{datosFormulario.sol_requierechofer ? 'SI' : 'NO'}</span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -279,7 +305,10 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                             required
                                             className="w-full bg-white p-3 rounded-xl border border-emerald-100 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all shadow-sm"
                                             value={datosFormulario.sol_fechasalida}
-                                            onChange={e => setDatosFormulario({ ...datosFormulario, sol_fechasalida: e.target.value })}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                setDatosFormulario(prev => ({ ...prev, sol_fechasalida: val, sol_fechallegada: val > prev.sol_fechallegada ? val : prev.sol_fechallegada }));
+                                            }}
                                             min={new Date().toISOString().split('T')[0]}
                                         />
                                     </div>
@@ -289,7 +318,15 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                             required
                                             className="w-full bg-white p-3 rounded-xl border border-emerald-100 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all shadow-sm text-center"
                                             value={datosFormulario.sol_timesalida}
-                                            onChange={e => setDatosFormulario({ ...datosFormulario, sol_timesalida: e.target.value })}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                // Si es el mismo dia y la nueva salida es >= llegada actual, resetear llegada
+                                                if (datosFormulario.sol_fechasalida === datosFormulario.sol_fechallegada && datosFormulario.sol_timeallegada && val >= datosFormulario.sol_timeallegada) {
+                                                    setDatosFormulario(prev => ({ ...prev, sol_timesalida: val, sol_timeallegada: '' }));
+                                                } else {
+                                                    setDatosFormulario(prev => ({ ...prev, sol_timesalida: val }));
+                                                }
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -307,7 +344,7 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                             required
                                             className="w-full bg-white p-3 rounded-xl border border-red-100 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all shadow-sm"
                                             value={datosFormulario.sol_fechallegada}
-                                            onChange={e => setDatosFormulario({ ...datosFormulario, sol_fechallegada: e.target.value })}
+                                            onChange={e => setDatosFormulario(prev => ({ ...prev, sol_fechallegada: e.target.value }))}
                                             min={datosFormulario.sol_fechasalida || new Date().toISOString().split('T')[0]}
                                         />
                                     </div>
@@ -317,7 +354,15 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                             required
                                             className="w-full bg-white p-3 rounded-xl border border-red-100 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all shadow-sm text-center"
                                             value={datosFormulario.sol_timeallegada}
-                                            onChange={e => setDatosFormulario({ ...datosFormulario, sol_timeallegada: e.target.value })}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                // Validar consistencia temporal
+                                                if (datosFormulario.sol_fechasalida === datosFormulario.sol_fechallegada && datosFormulario.sol_timesalida && val <= datosFormulario.sol_timesalida) {
+                                                    alert("La hora de regreso debe ser posterior a la de salida.");
+                                                    return;
+                                                }
+                                                setDatosFormulario(prev => ({ ...prev, sol_timeallegada: val }));
+                                            }}
                                         />
                                     </div>
                                 </div>
@@ -333,8 +378,53 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                     placeholder="Nombre completo del responsable..."
                                     className="w-full p-4 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-300 text-base"
                                     value={datosFormulario.sol_nombresolicitante}
-                                    onChange={e => setDatosFormulario({ ...datosFormulario, sol_nombresolicitante: e.target.value })}
+                                    onChange={e => {
+                                        const nuevoNombre = e.target.value;
+                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(nuevoNombre)) {
+                                            setDatosFormulario(prev => ({
+                                                ...prev,
+                                                sol_nombresolicitante: nuevoNombre,
+                                                pasajeros: prev.pasajeros.map(p =>
+                                                    p.esSolicitante ? { ...p, nombre: nuevoNombre } : p
+                                                )
+                                            }));
+                                        }
+                                    }}
                                 />
+                                <div className="mt-3 flex items-center justify-end">
+                                    <label className="relative inline-flex items-center cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={datosFormulario.pasajeros.some(p => p.esSolicitante)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    if (!datosFormulario.sol_nombresolicitante.trim()) {
+                                                        alert("Por favor ingresa tu nombre primero.");
+                                                        return;
+                                                    }
+                                                    setDatosFormulario(prev => ({
+                                                        ...prev,
+                                                        pasajeros: [...prev.pasajeros, {
+                                                            nombre: prev.sol_nombresolicitante,
+                                                            tipo: 1,
+                                                            esSolicitante: true
+                                                        }]
+                                                    }));
+                                                } else {
+                                                    setDatosFormulario(prev => ({
+                                                        ...prev,
+                                                        pasajeros: prev.pasajeros.filter(p => !p.esSolicitante)
+                                                    }));
+                                                }
+                                            }}
+                                        />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 group-hover:bg-slate-300"></div>
+                                        <span className="ml-3 text-sm font-bold text-slate-500 group-hover:text-blue-600 transition-colors">
+                                            Asistiré al viaje (Agregarme a lista)
+                                        </span>
+                                    </label>
+                                </div>
                             </div>
 
                             <div className="relative group">
@@ -342,10 +432,15 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                 <input
                                     type="text"
                                     required
+                                    minLength={5}
+                                    maxLength={100}
                                     placeholder="Describe el motivo principal del viaje..."
                                     className="w-full p-4 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-300 text-base"
                                     value={datosFormulario.sol_motivo}
-                                    onChange={e => setDatosFormulario({ ...datosFormulario, sol_motivo: e.target.value })}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,;:\-/"'?!@#&()º]*$/.test(val)) setDatosFormulario(prev => ({ ...prev, sol_motivo: val }));
+                                    }}
                                 />
                             </div>
 
@@ -353,51 +448,114 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                 <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Detalle del Itinerario</label>
                                 <textarea
                                     required
+                                    minLength={20}
+                                    maxLength={1000}
                                     placeholder="Ej: Salida desde escuela a las 08:00, primera parada en museo, regreso 16:00..."
                                     className="w-full p-4 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-300 min-h-[120px] text-base resize-none"
                                     value={datosFormulario.sol_itinerario}
-                                    onChange={e => setDatosFormulario({ ...datosFormulario, sol_itinerario: e.target.value })}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,;:\-/"'?!@#&()º\n]*$/.test(val)) setDatosFormulario(prev => ({ ...prev, sol_itinerario: val }));
+                                    }}
                                 />
+                            </div>
+
+                            <div className="relative group">
+                                <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Kilometraje Estimado (Ida + Vuelta)</label>
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    required
+                                    placeholder="Ej: 45"
+                                    className="w-full p-4 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-300 text-base"
+                                    value={datosFormulario.sol_kmestimado || ''}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (/^[0-9]*$/.test(val)) setDatosFormulario(prev => ({ ...prev, sol_kmestimado: val }));
+                                    }}
+                                />
+                                <p className="mt-1 text-xs text-slate-400 pl-2">Ingrese la distancia total aproximada del viaje.</p>
                             </div>
 
                             {/* Destinos */}
                             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2 mb-3">
-                                    <MapPin size={14} /> Destinos a visitar
+                                <label className="text-xs font-bold text-slate-500 uppercase flex items-center justify-between gap-2 mb-3">
+                                    <div className="flex items-center gap-2"><MapPin size={14} /> Destinos a visitar</div>
+                                    <div className="flex bg-slate-200 p-1 rounded-lg">
+                                        <button
+                                            type="button"
+                                            onClick={() => setTipoDestino('OFICIAL')}
+                                            className={`px-3 py-1 rounded-md text-[10px] uppercase font-bold transition-all ${tipoDestino === 'OFICIAL' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            Establecimiento
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTipoDestino('OTRO')}
+                                            className={`px-3 py-1 rounded-md text-[10px] uppercase font-bold transition-all ${tipoDestino === 'OTRO' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                                        >
+                                            Otro Lugar
+                                        </button>
+                                    </div>
                                 </label>
 
                                 <div className="flex flex-col md:flex-row gap-2 mb-3">
                                     <select
                                         className="w-full md:w-1/3 p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-blue-500 transition-all text-sm font-medium"
                                         value={destinoActual.comuna_id}
-                                        onChange={e => setDestinoActual({ ...destinoActual, comuna_id: e.target.value })}
+                                        onChange={e => setDestinoActual({ ...destinoActual, comuna_id: e.target.value, establecimiento_id: null, lugar_nombre: '' })}
                                     >
                                         <option value="">Comuna...</option>
                                         {comunas.map(c => <option key={c.com_id} value={c.com_id}>{c.com_nombre}</option>)}
                                     </select>
-                                    <input
-                                        type="text"
-                                        list="lugares-comuna"
-                                        placeholder="Lugar específico (Ej: Museo Regional)"
-                                        className="w-full md:flex-1 p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-blue-500 transition-all text-sm font-medium"
-                                        value={destinoActual.lugar_nombre}
-                                        onChange={e => setDestinoActual({ ...destinoActual, lugar_nombre: e.target.value })}
-                                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), agregarDestino())}
-                                    />
-                                    <datalist id="lugares-comuna">
-                                        {lugaresDisponibles.map(l => (
-                                            <option key={l.lug_id} value={l.lug_nombre} />
-                                        ))}
-                                    </datalist>
+
+                                    {tipoDestino === 'OFICIAL' ? (
+                                        <select
+                                            className="w-full md:flex-1 p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-blue-500 transition-all text-sm font-medium disabled:bg-slate-100 disabled:text-slate-400"
+                                            value={destinoActual.establecimiento_id || ''}
+                                            onChange={e => setDestinoActual({ ...destinoActual, establecimiento_id: e.target.value })}
+                                            disabled={!destinoActual.comuna_id}
+                                        >
+                                            <option value="">Selecciona Establecimiento...</option>
+                                            {establecimientosDisponibles.map(e => (
+                                                <option key={e.est_id} value={e.est_id}>{e.est_nombre}</option>
+                                            ))}
+                                        </select>
+                                    ) : (
+                                        <>
+                                            <input
+                                                type="text"
+                                                list="lugares-comuna"
+                                                placeholder="Lugar específico (Ej: Museo Regional)"
+                                                className="w-full md:flex-1 p-3 bg-white border border-slate-300 rounded-xl outline-none focus:border-blue-500 transition-all text-sm font-medium disabled:bg-slate-100 disabled:text-slate-400"
+                                                value={destinoActual.lugar_nombre}
+                                                onChange={e => {
+                                                    const val = e.target.value;
+                                                    if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,;:\-/"'?!@#&()º]*$/.test(val)) setDestinoActual({ ...destinoActual, lugar_nombre: val });
+                                                }}
+                                                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), agregarDestino())}
+                                                disabled={!destinoActual.comuna_id}
+                                            />
+                                            <datalist id="lugares-comuna">
+                                                {lugaresDisponibles.map(l => (
+                                                    <option key={l.lug_id} value={l.lug_nombre} />
+                                                ))}
+                                            </datalist>
+                                        </>
+                                    )}
+
                                     <button
                                         type="button"
                                         onClick={agregarDestino}
-                                        disabled={!destinoActual.comuna_id || !destinoActual.lugar_nombre}
-                                        className="w-full md:w-auto px-4 py-3 md:py-0 bg-slate-800 disabled:bg-slate-300 text-white rounded-xl hover:bg-slate-700 transition-colors font-medium text-sm flex items-center justify-center gap-2"
+                                        disabled={!destinoActual.comuna_id || (tipoDestino === 'OFICIAL' ? !destinoActual.establecimiento_id : !destinoActual.lugar_nombre)}
+                                        className="w-full md:w-auto px-4 py-3 md:py-0 bg-slate-800 disabled:bg-slate-300 text-white rounded-xl hover:bg-slate-700 transition-colors font-medium text-sm flex items-center justify-center gap-2 shadow-lg shadow-slate-900/10"
                                     >
                                         <Plus size={18} /> <span className="md:hidden">Agregar Destino</span>
                                     </button>
                                 </div>
+                                <p className="text-[10px] text-blue-500 font-bold mb-3 pl-1 flex items-center gap-1">
+                                    <AlertCircle size={12} /> Recuerda presionar el botón "+" para guardar el destino en la lista.
+                                </p>
 
                                 {datosFormulario.destinos.length > 0 ? (
                                     <div className="flex flex-wrap gap-2">
@@ -435,7 +593,10 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                     placeholder="Nombre Completo del Pasajero"
                                     className="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
                                     value={nombrePasajero}
-                                    onChange={e => setNombrePasajero(e.target.value)}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(val)) setNombrePasajero(val);
+                                    }}
                                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), agregarPasajero())}
                                 />
                             </div>
@@ -466,6 +627,9 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                                 </button>
                             </div>
                         </div>
+                        <p className="text-[10px] text-blue-500 font-bold mb-4 pl-1 flex items-center gap-1 -mt-4">
+                            <AlertCircle size={12} /> Has click en el "+" para añadir a la persona a la lista.
+                        </p>
 
                         {datosFormulario.pasajeros.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
@@ -524,7 +688,7 @@ const UserRequestForm = ({ alCancelar, alCompletar }) => {
                         </div>
                         <button
                             type="submit"
-                            disabled={enviando || datosFormulario.pasajeros.length === 0 || datosFormulario.destinos.length === 0}
+                            disabled={enviando || datosFormulario.destinos.length === 0}
                             className="flex-1 md:flex-none md:w-96 py-4 bg-gradient-to-r from-slate-900 to-slate-800 hover:from-black hover:to-slate-900 text-white font-bold text-lg rounded-2xl shadow-xl shadow-slate-900/20 transition-all transform active:scale-[0.98] disabled:opacity-50 disabled:shadow-none flex items-center justify-center gap-3"
                         >
                             {enviando ? (

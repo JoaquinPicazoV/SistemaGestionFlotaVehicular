@@ -6,5 +6,6 @@ const verifyToken = require('../middlewares/authMiddleware');
 router.get('/comunas', referenceController.obtenerComunas);
 router.get('/passenger-types', verifyToken, referenceController.obtenerTiposPasajero);
 router.get('/places', verifyToken, referenceController.obtenerLugares);
+router.get('/establishments', verifyToken, referenceController.obtenerEstablecimientos);
 
 module.exports = router;

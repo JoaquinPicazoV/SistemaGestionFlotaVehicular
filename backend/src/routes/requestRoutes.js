@@ -15,9 +15,7 @@ const validacionCrearSolicitud = [
 ];
 
 const validacionAprobarSolicitud = [
-    body('sol_patentevehiculofk').notEmpty(),
-    body('sol_correochoferfk').notEmpty(),
-    body('sol_kmestimado').isNumeric(),
+    body('sol_patentevehiculofk').notEmpty().withMessage('La patente es obligatoria'),
     validate
 ];
 
@@ -31,6 +29,7 @@ router.get('/processed', verifyToken, requestController.obtenerProcesadas);
 router.get('/my', verifyToken, requestController.obtenerMisSolicitudes);
 router.get('/:id/details', verifyToken, requestController.obtenerDetalles);
 router.post('/', verifyToken, validacionCrearSolicitud, requestController.crearSolicitud);
+router.post('/admin', verifyToken, validacionCrearSolicitud, requestController.crearSolicitudAdmin);
 router.put('/:id/approve', verifyToken, validacionAprobarSolicitud, requestController.aprobarSolicitud);
 router.put('/:id/reject', verifyToken, validacionRechazarSolicitud, requestController.rechazarSolicitud);
 

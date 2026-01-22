@@ -43,14 +43,14 @@ exports.obtenerBI = async (req, res) => {
             `),
             pool.query(`SELECT sol_motivo as name, COUNT(*) as value FROM SOLICITUDES GROUP BY sol_motivo`),
             pool.query(`
-                SELECT c.com_nombre as name, COUNT(*) as value
+                SELECT e.est_nombre as name, COUNT(*) as value
                 FROM SOLICITUD_DESTINO sd
                 JOIN SOLICITUDES s ON sd.sde_solicitudfk = s.sol_id
-                JOIN LUGAR l ON sd.sde_lugarfk = l.lug_id
-                JOIN COMUNA c ON l.lug_comunafk = c.com_id
+                JOIN ESTABLECIMIENTO e ON sd.sde_establecimientofk = e.est_id
                 WHERE s.sol_estado = 'FINALIZADA'
-                GROUP BY c.com_id
+                GROUP BY e.est_id
                 ORDER BY value DESC
+                LIMIT 10
             `),
             pool.query(`
                 SELECT l.lug_nombre as nombre, c.com_nombre as comuna, COUNT(*) as visitas

@@ -4,10 +4,12 @@ import axios from 'axios';
 import API_URL from '../config/api';
 import { User, ShieldCheck, ArrowLeft, Key, Building2, Mail, Loader2, Sparkles } from 'lucide-react';
 
+import LogoSlep from '../assets/LogoSLEP.png';
+
 const Login = () => {
     const navigate = useNavigate();
     const [tipoUsuario, setTipoUsuario] = useState('funcionario');
-    const [credenciales, setCredenciales] = useState({ identifier: '', password: '' });
+    const [credenciales, setCredenciales] = useState({ usuario: '', clave: '' });
     const [cargando, setCargando] = useState(false);
     const [mensajeError, setMensajeError] = useState(null);
     const [formularioVisible, setFormularioVisible] = useState(true);
@@ -20,7 +22,7 @@ const Login = () => {
         setTimeout(() => {
             setTipoUsuario(tipo);
             setMensajeError(null);
-            setCredenciales({ identifier: '', password: '' });
+            setCredenciales({ usuario: '', clave: '' });
             setFormularioVisible(true);
         }, 200);
     };
@@ -32,8 +34,8 @@ const Login = () => {
 
         try {
             const response = await axios.post(`${API_URL}/auth/login`, {
-                email: credenciales.identifier,
-                password: credenciales.password
+                usuario: credenciales.usuario,
+                clave: credenciales.clave
             }, { withCredentials: true });
 
             if (response.status === 200) {
@@ -75,11 +77,8 @@ const Login = () => {
 
             <div className="w-full max-w-lg relative z-10 perspective-1000">
 
-                <div className="text-center mb-8 animate-fade-in-down">
-                    <h1 className="text-3xl font-bold text-white tracking-tight mb-2">
-                        Bienvenido al <span className={`text-transparent bg-clip-text bg-gradient-to-r ${tema.gradient}`}>Portal SLEP</span>
-                    </h1>
-                    <p className="text-slate-400 text-sm">Gestiona tus solicitudes de transporte de forma segura.</p>
+                <div className="text-center mb-4 animate-fade-in-down flex flex-col items-center">
+                    <img src={LogoSlep} alt="Logo SLEP" className="h-40 w-auto object-contain drop-shadow-2xl" />
                 </div>
 
                 <div className="bg-white/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl shadow-black/20 overflow-hidden transform transition-all duration-500 hover:shadow-black/30">
@@ -154,8 +153,8 @@ const Login = () => {
                                         autoFocus
                                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-700 placeholder:text-slate-300"
                                         placeholder={tipoUsuario === 'funcionario' ? "Ej: Finanzas" : "usuario@dominio.cl"}
-                                        value={credenciales.identifier}
-                                        onChange={(e) => setCredenciales({ ...credenciales, identifier: e.target.value })}
+                                        value={credenciales.usuario}
+                                        onChange={(e) => setCredenciales({ ...credenciales, usuario: e.target.value })}
                                     />
                                 </div>
                             </div>
@@ -171,8 +170,8 @@ const Login = () => {
                                         required
                                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-700 placeholder:text-slate-300"
                                         placeholder="••••••••••••••••"
-                                        value={credenciales.password}
-                                        onChange={(e) => setCredenciales({ ...credenciales, password: e.target.value })}
+                                        value={credenciales.clave}
+                                        onChange={(e) => setCredenciales({ ...credenciales, clave: e.target.value })}
                                     />
                                 </div>
                             </div>

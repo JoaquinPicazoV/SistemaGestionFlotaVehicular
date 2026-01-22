@@ -6,7 +6,8 @@ const jwt = require('jsonwebtoken');
 const CLAVE_SECRETA = process.env.JWT_SECRET;
 
 exports.login = async (req, res) => {
-    const { email, password } = req.body;
+    // Recibimos "usuario" (puede ser correo o unidad) y "clave"
+    const { usuario, clave } = req.body;
 
     if (!CLAVE_SECRETA) {
         console.error('CRITICAL: JWT_SECRET no está definido en variables de entorno');
@@ -14,63 +15,63 @@ exports.login = async (req, res) => {
     }
 
     try {
-        let usuario = null;
+        let entidadUsuario = null;
         let rol = '';
         let passwordBaseDatos = '';
         let idUsuario = '';
         let nombreUsuario = '';
 
-        // Buscar en tabla Administrador
-        const [administradores] = await pool.query('SELECT * FROM ADMINISTRADOR WHERE adm_correo = ?', [email]);
+        // 1. Buscar en tabla Administrador (usuario se trata como correo)
+        const [administradores] = await pool.query('SELECT * FROM ADMINISTRADOR WHERE adm_correo = ?', [usuario]);
 
         if (administradores.length > 0) {
-            usuario = administradores[0];
+            entidadUsuario = administradores[0];
             rol = 'admin';
-            passwordBaseDatos = usuario.adm_password;
-            idUsuario = usuario.adm_id;
-            nombreUsuario = usuario.adm_correo;
+            passwordBaseDatos = entidadUsuario.adm_password;
+            idUsuario = entidadUsuario.adm_id;
+            nombreUsuario = entidadUsuario.adm_correo;
         } else {
-            // Buscar en tabla Funcionario
-            const [funcionarios] = await pool.query('SELECT * FROM USUARIO WHERE usu_unidad = ?', [email]);
+            // 2. Buscar en tabla Funcionario (usuario se trata como unidad)
+            const [funcionarios] = await pool.query('SELECT * FROM USUARIO WHERE usu_unidad = ?', [usuario]);
 
             if (funcionarios.length > 0) {
-                usuario = funcionarios[0];
+                entidadUsuario = funcionarios[0];
                 rol = 'funcionario';
-                passwordBaseDatos = usuario.usu_password;
-                idUsuario = usuario.usu_id;
-                nombreUsuario = usuario.usu_unidad;
+                passwordBaseDatos = entidadUsuario.usu_password;
+                idUsuario = entidadUsuario.usu_id;
+                nombreUsuario = entidadUsuario.usu_unidad;
             }
         }
 
-        if (!usuario) {
-            // Protección contra timing attacks
+        if (!entidadUsuario) {
+            // Protección contra ataques de tiempo (Timing Attacks)
             await bcrypt.compare('dummy', '$2a$10$dummyhashdummyhashdummyhashdummyhashdummyhashdummyhash');
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
         // Verificar contraseña
-        const claveValida = await bcrypt.compare(password, passwordBaseDatos);
+        const claveValida = await bcrypt.compare(clave, passwordBaseDatos);
         if (!claveValida) {
             return res.status(401).json({ error: 'Credenciales inválidas' });
         }
 
-        // Generar JWT
+        // Generar Token JWT
         const token = jwt.sign(
             { id: idUsuario, role: rol, name: nombreUsuario },
             CLAVE_SECRETA,
             { expiresIn: '8h' }
         );
 
-        // Establecer Cookie HTTP-Only
+        // Establecer Cookie HTTP-Only (Seguridad Máxima)
         res.cookie('access_token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
-            maxAge: 8 * 60 * 60 * 1000
+            maxAge: 8 * 60 * 60 * 1000 // 8 Horas
         });
 
         res.json({
-            message: 'Login exitoso',
+            message: 'Inicio de sesión exitoso',
             user: { name: nombreUsuario, role: rol }
         });
 

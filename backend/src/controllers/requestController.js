@@ -31,11 +31,22 @@ exports.aprobarSolicitud = async (req, res) => {
 
         const { sol_fechasalida, sol_fechallegada } = solicitudActual[0];
 
+        if (!sol_patentevehiculofk) {
+            return res.status(400).json({ error: 'La patente del vehículo es obligatoria.' });
+        }
+
+        // Determinar estado basado en fecha (Igual que en crearSolicitudAdmin)
+        const ahora = new Date();
+        const fechaFinViaje = new Date(sol_fechallegada);
+        const nuevoEstado = fechaFinViaje < ahora ? 'FINALIZADA' : 'APROBADA';
+
         // Verificar conflictos de horario con vehículo o chofer
+        // Lógica: Evitar solapamiento con viajes APROBADOS o FINALIZADOS en el mismo rango horario.
+        // Se asume la bitácora física como respaldo, pero el sistema bloquea coincidencias lógicas.
         const [conflictos] = await pool.query(`
             SELECT sol_id, sol_patentevehiculofk, sol_correochoferfk 
             FROM SOLICITUDES 
-            WHERE sol_estado = 'APROBADA' 
+            WHERE sol_estado IN ('APROBADA', 'FINALIZADA') -- Chequear contra todo lo confirmado
             AND sol_id != ? 
             AND (
                 (sol_patentevehiculofk = ? AND ? IS NOT NULL) OR 
@@ -56,7 +67,7 @@ exports.aprobarSolicitud = async (req, res) => {
             if (conflicto.sol_patentevehiculofk === sol_patentevehiculofk) {
                 mensaje += `El vehículo ${sol_patentevehiculofk} ya está ocupado en ese horario. `;
             }
-            if (conflicto.sol_correochoferfk === sol_correochoferfk) {
+            if (conflicto.sol_correochoferfk === sol_correochoferfk && sol_correochoferfk) {
                 mensaje += `El chofer ya tiene un viaje asignado en ese horario.`;
             }
             return res.status(409).json({ error: mensaje });
@@ -64,14 +75,15 @@ exports.aprobarSolicitud = async (req, res) => {
 
         await pool.query(
             `UPDATE SOLICITUDES 
-             SET sol_estado = 'APROBADA', sol_patentevehiculofk = ?, sol_correochoferfk = ?, sol_idadminfk = ?, sol_kmestimado = ?
+             SET sol_estado = ?, sol_patentevehiculofk = ?, sol_correochoferfk = ?, sol_idadminfk = ?
              WHERE sol_id = ?`,
-            [sol_patentevehiculofk, sol_correochoferfk, req.user.id, sol_kmestimado, id]
+            [nuevoEstado, sol_patentevehiculofk, sol_correochoferfk || null, req.user.id, id]
         );
-        res.json({ message: 'Solicitud aprobada correctamente' });
+
+        res.json({ message: `Solicitud ${nuevoEstado === 'FINALIZADA' ? 'finalizada (por fecha pasada)' : 'aprobada'} correctamente` });
     } catch (error) {
-        console.error("Error aprobando solicitud:", error);
-        res.status(500).json({ error: 'Error al aprobar solicitud' });
+        console.error("Error detallado aprobando solicitud:", error);
+        res.status(500).json({ error: 'Error interno del servidor al aprobar: ' + error.message });
     }
 };
 
@@ -121,10 +133,15 @@ exports.obtenerDetalles = async (req, res) => {
         `, [id]);
 
         const [destinos] = await pool.query(`
-            SELECT l.lug_nombre, c.com_nombre 
+            SELECT 
+                COALESCE(l.lug_nombre, e.est_nombre) as lug_nombre,
+                COALESCE(cl.com_nombre, ce.com_nombre) as com_nombre,
+                CASE WHEN e.est_id IS NOT NULL THEN 'OFICIAL' ELSE 'LIBRE' END as tipo_destino
             FROM SOLICITUD_DESTINO sd
-            JOIN LUGAR l ON sd.sde_lugarfk = l.lug_id
-            JOIN COMUNA c ON l.lug_comunafk = c.com_id
+            LEFT JOIN LUGAR l ON sd.sde_lugarfk = l.lug_id
+            LEFT JOIN COMUNA cl ON l.lug_comunafk = cl.com_id
+            LEFT JOIN ESTABLECIMIENTO e ON sd.sde_establecimientofk = e.est_id
+            LEFT JOIN COMUNA ce ON e.est_comunafk = ce.com_id
             WHERE sd.sde_solicitudfk = ?
         `, [id]);
 
@@ -132,6 +149,138 @@ exports.obtenerDetalles = async (req, res) => {
     } catch (error) {
         console.error("Error obteniendo detalles de solicitud:", error);
         res.status(500).json({ error: 'Error al obtener detalles' });
+    }
+};
+
+exports.crearSolicitudAdmin = async (req, res) => {
+    const conexion = await pool.getConnection();
+    try {
+        await conexion.beginTransaction();
+
+        const {
+            sol_fechasalida,
+            sol_fechallegada,
+            sol_motivo,
+            sol_itinerario,
+            sol_tipo,
+            sol_requierechofer,
+            pasajeros,
+            destinos,
+            sol_nombresolicitante,
+            sol_kmestimado,
+            sol_patentevehiculofk,
+            sol_correochoferfk
+        } = req.body;
+
+        // 1. Validar Conflictos (Igual que en Aprobar)
+        const [conflictos] = await conexion.query(`
+            SELECT sol_id FROM SOLICITUDES 
+            WHERE sol_estado = 'APROBADA' 
+            AND (
+                (sol_patentevehiculofk = ? AND ? IS NOT NULL) OR 
+                (sol_correochoferfk = ? AND ? IS NOT NULL)
+            )
+            AND sol_fechasalida < ? 
+            AND sol_fechallegada > ?
+        `, [
+            sol_patentevehiculofk, sol_patentevehiculofk,
+            sol_correochoferfk, sol_correochoferfk,
+            sol_fechallegada, sol_fechasalida
+        ]);
+
+        if (conflictos.length > 0) {
+            await conexion.rollback();
+            return res.status(409).json({ error: 'El vehículo o chofer seleccionado ya tiene un viaje en ese horario.' });
+        }
+
+        const sol_id = crypto.randomUUID();
+
+        // Determinar estado inicial basado en la temporalidad del viaje
+        const ahora = new Date();
+        const fechaFinViaje = new Date(sol_fechallegada);
+        const estadoInicial = fechaFinViaje < ahora ? 'FINALIZADA' : 'APROBADA';
+
+        // 2. Inserción de la solicitud en base de datos
+        await conexion.query(`
+            INSERT INTO SOLICITUDES (
+                sol_id, sol_nombresolicitante, sol_fechasalida, sol_fechallegada, sol_estado,
+                sol_unidad, sol_motivo, sol_itinerario, sol_tipo, sol_requierechofer, 
+                sol_idusuariofk, sol_kmestimado, sol_patentevehiculofk, sol_correochoferfk, sol_idadminfk
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [
+            sol_id,
+            sol_nombresolicitante,
+            sol_fechasalida,
+            sol_fechallegada,
+            estadoInicial,
+            'ADMINISTRACION', // Unidad genérica o se podría pasar
+            sol_motivo,
+            sol_itinerario,
+            sol_tipo,
+            sol_requierechofer ? 1 : 0,
+            req.user.id, // El admin crea la solicitud
+            sol_kmestimado || 0,
+            sol_patentevehiculofk,
+            sol_requierechofer ? sol_correochoferfk : null,
+            req.user.id // El admin aprueba la solicitud
+        ]);
+
+        // 3. Insertar pasajeros
+        if (pasajeros && pasajeros.length > 0) {
+            const valoresPasajeros = pasajeros.map(p => [p.nombre, sol_id, p.tipo || 1]);
+            await conexion.query(
+                `INSERT INTO PASAJEROS (pas_nombre, pas_idsolicitudfk, pas_idtipofk) VALUES ?`,
+                [valoresPasajeros]
+            );
+        }
+
+        // 4. Insertar destinos
+        if (destinos && destinos.length > 0) {
+            for (const d of destinos) {
+                if (d.establecimiento_id) {
+                    await conexion.query(
+                        'INSERT INTO SOLICITUD_DESTINO (sde_solicitudfk, sde_establecimientofk) VALUES (?, ?)',
+                        [sol_id, d.establecimiento_id]
+                    );
+                    continue;
+                }
+
+                let idLugar = d.lugar_id;
+                if (!idLugar && d.lugar_nombre && d.comuna_id) {
+                    const [existente] = await conexion.query(
+                        'SELECT lug_id FROM LUGAR WHERE lug_nombre = ? AND lug_comunafk = ?',
+                        [d.lugar_nombre, d.comuna_id]
+                    );
+
+                    if (existente.length > 0) {
+                        idLugar = existente[0].lug_id;
+                    } else {
+                        const [resLugar] = await conexion.query(
+                            'INSERT INTO LUGAR (lug_nombre, lug_comunafk) VALUES (?, ?)',
+                            [d.lugar_nombre, d.comuna_id]
+                        );
+                        idLugar = resLugar.insertId;
+                    }
+                }
+
+                if (idLugar) {
+                    await conexion.query(
+                        'INSERT INTO SOLICITUD_DESTINO (sde_solicitudfk, sde_lugarfk) VALUES (?, ?)',
+                        [sol_id, idLugar]
+                    );
+                }
+            }
+        }
+
+        await conexion.commit();
+        res.json({ message: 'Solicitud creada y aprobada exitosamente', id: sol_id });
+
+    } catch (error) {
+        await conexion.rollback();
+        console.error("Error creando solicitud admin:", error);
+        res.status(500).json({ error: 'Error al procesar la solicitud: ' + error.message });
+    } finally {
+        conexion.release();
     }
 };
 
@@ -149,7 +298,8 @@ exports.crearSolicitud = async (req, res) => {
             sol_requierechofer,
             pasajeros,
             destinos,
-            sol_nombresolicitante
+            sol_nombresolicitante,
+            sol_kmestimado
         } = req.body;
 
         const sol_id = crypto.randomUUID();
@@ -159,8 +309,8 @@ exports.crearSolicitud = async (req, res) => {
             INSERT INTO SOLICITUDES (
                 sol_id, sol_nombresolicitante, sol_fechasalida, sol_fechallegada, sol_estado,
                 sol_unidad, sol_motivo, sol_itinerario, sol_tipo, sol_requierechofer, 
-                sol_idusuariofk
-            ) VALUES (?, ?, ?, ?, 'PENDIENTE', ?, ?, ?, ?, ?, ?)
+                sol_idusuariofk, sol_kmestimado
+            ) VALUES (?, ?, ?, ?, 'PENDIENTE', ?, ?, ?, ?, ?, ?, ?)
         `, [
             sol_id,
             sol_nombresolicitante || req.user.name,
@@ -171,7 +321,8 @@ exports.crearSolicitud = async (req, res) => {
             sol_itinerario,
             sol_tipo,
             sol_requierechofer ? 1 : 0,
-            req.user.role === 'funcionario' ? req.user.id : null
+            req.user.role === 'funcionario' ? req.user.id : null,
+            sol_kmestimado || 0
         ]);
 
         // Insertar pasajeros
@@ -186,6 +337,16 @@ exports.crearSolicitud = async (req, res) => {
         // Insertar destinos
         if (destinos && destinos.length > 0) {
             for (const d of destinos) {
+                // CASO 1: Destino es un establecimiento oficial (Asociación por ID)
+                if (d.establecimiento_id) {
+                    await conexion.query(
+                        'INSERT INTO SOLICITUD_DESTINO (sde_solicitudfk, sde_establecimientofk) VALUES (?, ?)',
+                        [sol_id, d.establecimiento_id]
+                    );
+                    continue;
+                }
+
+                // CASO 2: Destino es un lugar libre (Texto libre o ID existente)
                 let idLugar = d.lugar_id;
 
                 if (!idLugar && d.lugar_nombre && d.comuna_id) {

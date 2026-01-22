@@ -7,8 +7,13 @@ import {
     User,
     Calendar
 } from 'lucide-react';
-import StatusBadge from './common/StatusBadge';
-import RequestFilters from './common/RequestFilters';
+import StatusBadge from '../common/StatusBadge';
+import RequestFilters from '../common/RequestFilters';
+
+import axios from 'axios';
+import API_URL from '../../config/api';
+import { Eye } from 'lucide-react';
+import RequestDetailModal from '../common/RequestDetailModal';
 
 const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolicitud }) => {
     // Estado local para filtros
@@ -16,6 +21,10 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
     const [mesFiltro, setMesFiltro] = useState('');
     const [estadoFiltro, setEstadoFiltro] = useState('ALL');
 
+    // Estado para detalles
+    const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
+    const [detallesSolicitud, setDetallesSolicitud] = useState({ pasajeros: [], destinos: [] });
+    const [cargandoDetalles, setCargandoDetalles] = useState(false);
 
     // Calcular estadísticas localmente
     const estadisticas = {
@@ -56,6 +65,19 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
         setEstadoFiltro('ALL');
     };
 
+    const verDetalles = async (req) => {
+        setSolicitudSeleccionada(req);
+        setCargandoDetalles(true);
+        try {
+            const respuesta = await axios.get(`${API_URL}/requests/${req.sol_id}/details`, { withCredentials: true });
+            setDetallesSolicitud(respuesta.data);
+        } catch (error) {
+            console.error("Error cargando detalles:", error);
+        } finally {
+            setCargandoDetalles(false);
+        }
+    };
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 space-y-8">
 
@@ -80,7 +102,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <div>
                             <h2 className="text-xl font-bold text-slate-800">Mis Solicitudes</h2>
-                            <p className="text-slate-500 text-xs mt-1">Gestiona y revisa el estado de tus reservas</p>
+                            <p className="text-slate-500 text-xs mt-1">Gestiona y revisa el estado de tus solicitudes</p>
                         </div>
                         <button
                             onClick={obtenerSolicitudes}
@@ -101,6 +123,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                         setEstadoFiltro={setEstadoFiltro}
                         alLimpiar={limpiarFiltros}
                         mostrarFiltroEstado={true}
+                        customPlaceholder="Buscar por solicitante o motivo..."
                     />
                 </div>
 
@@ -144,7 +167,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                     </div>
 
                                     {/* Información */}
-                                    <div className="flex-1 min-w-0">
+                                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => verDetalles(req)}>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                                                 {req.sol_tipo || 'GENÉRICO'}
@@ -170,6 +193,15 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                         </div>
                                     </div>
 
+                                    <div className="flex flex-col items-end gap-2">
+                                        <button
+                                            onClick={() => verDetalles(req)}
+                                            className="px-4 py-2 bg-white border border-slate-200 text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 rounded-lg text-sm font-bold shadow-sm transition-all flex items-center gap-2"
+                                        >
+                                            <Eye size={16} /> Ver Detalle
+                                        </button>
+                                    </div>
+
                                     {/* Observación de Rechazo */}
                                     {req.sol_estado === 'RECHAZADA' && req.sol_observacionrechazo && (
                                         <div className="md:w-64 bg-red-50 p-3 rounded-lg border border-red-100 text-xs">
@@ -184,6 +216,15 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                     </div>
                 )}
             </div>
+
+            <RequestDetailModal
+                solicitud={solicitudSeleccionada}
+                detalles={detallesSolicitud}
+                cargandoDetalles={cargandoDetalles}
+                alCerrar={() => setSolicitudSeleccionada(null)}
+                titulo="Detalle de Solicitud"
+                mostrarId={true}
+            />
         </div>
     );
 };

@@ -9,7 +9,8 @@ const RequestFilters = ({
     estadoFiltro,
     setEstadoFiltro,
     alLimpiar,
-    mostrarFiltroEstado = false
+    mostrarFiltroEstado = false,
+    customPlaceholder = "Buscar por solicitante, unidad o motivo..."
 }) => {
     return (
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6">
@@ -20,7 +21,7 @@ const RequestFilters = ({
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
                         type="text"
-                        placeholder="Buscar por solicitante, unidad o motivo..."
+                        placeholder={customPlaceholder}
                         className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all font-medium"
                         value={terminoBusqueda}
                         onChange={(e) => setTerminoBusqueda(e.target.value)}
@@ -48,10 +49,10 @@ const RequestFilters = ({
                                 onChange={(e) => setEstadoFiltro(e.target.value)}
                             >
                                 <option value="ALL">Todos los Estados</option>
-                                <option value="PENDIENTE">🕒 Pendientes</option>
-                                <option value="APROBADA">✅ Aprobadas</option>
-                                <option value="FINALIZADA">🏁 Finalizadas</option>
-                                <option value="RECHAZADA">❌ Rechazadas</option>
+                                <option value="PENDIENTE">🟠 Pendientes</option>
+                                <option value="APROBADA">🟢 Aprobadas</option>
+                                <option value="FINALIZADA">🔵 Finalizadas</option>
+                                <option value="RECHAZADA">🔴 Rechazadas</option>
                             </select>
                             <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                         </div>
