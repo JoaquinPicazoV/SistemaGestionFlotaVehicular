@@ -1,15 +1,12 @@
 const cron = require('node-cron');
 const pool = require('./db');
 
-// Ajustar fecha a zona horaria local
 const toLocalISOString = (date) => {
     const offset = date.getTimezoneOffset() * 60000;
-    const localDate = new Date(date - offset);
-    return localDate.toISOString().slice(0, 19).replace('T', ' ');
+    return new Date(date - offset).toISOString().slice(0, 19).replace('T', ' ');
 };
 
 const initScheduler = () => {
-    // Ejecutar tarea cada minuto
     cron.schedule('* * * * *', async () => {
         const connection = await pool.getConnection();
 
@@ -17,7 +14,8 @@ const initScheduler = () => {
             await connection.beginTransaction();
             const nowLocalStr = toLocalISOString(new Date());
 
-            // 1. Finalizar viajes que ya concluyeron
+            // Complete finished trips
+
             const [finishedRequests] = await connection.query(`
                 SELECT sol_id, sol_patentevehiculofk 
                 FROM SOLICITUDES 
@@ -36,7 +34,7 @@ const initScheduler = () => {
                     [ids]
                 );
 
-                // Liberar vehículos asociados
+
                 if (patentes.length > 0) {
                     await connection.query(
                         `UPDATE VEHICULO SET vehi_estado = 'DISPONIBLE' WHERE vehi_patente IN (?)`,
@@ -46,7 +44,8 @@ const initScheduler = () => {
                 console.log(`✅ Cron: ${ids.length} viajes finalizados.`);
             }
 
-            // 2. Iniciar viajes programados para ahora
+            // Start scheduled trips
+
             const [activeRequests] = await connection.query(`
                  SELECT sol_id, sol_patentevehiculofk
                  FROM SOLICITUDES
@@ -56,7 +55,7 @@ const initScheduler = () => {
                  FOR UPDATE
             `, [nowLocalStr, nowLocalStr]);
 
-            // Marcar vehículos como EN RUTA
+
             if (activeRequests.length > 0) {
                 const patentes = [...new Set(activeRequests.map(r => r.sol_patentevehiculofk))].filter(p => p);
                 if (patentes.length > 0) {
@@ -67,7 +66,8 @@ const initScheduler = () => {
                 }
             }
 
-            // 3. Rechazar solicitudes PENDIENTES cuya hora de salida ya pasó
+            // Expire pending requests past start time
+
             const [expiredRequests] = await connection.query(`
                 SELECT sol_id
                 FROM SOLICITUDES
@@ -96,7 +96,7 @@ const initScheduler = () => {
         }
     });
 
-    console.log('⏰ Scheduler de vehículos iniciado');
+    console.log('⏰ Scheduler initiated');
 };
 
 module.exports = initScheduler;

@@ -10,13 +10,14 @@ const RequestFilters = ({
     setEstadoFiltro,
     alLimpiar,
     mostrarFiltroEstado = false,
-    customPlaceholder = "Buscar por solicitante, unidad o motivo..."
+    customPlaceholder = "Buscar por solicitante, unidad o motivo...",
+    estadosExcluidos = []
 }) => {
     return (
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6">
             <div className="flex flex-col lg:flex-row gap-4">
 
-                {/* Buscador */}
+
                 <div className="flex-1 relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
@@ -28,9 +29,9 @@ const RequestFilters = ({
                     />
                 </div>
 
-                {/* Filtros Rapidos */}
+
                 <div className="flex gap-2 min-w-48 overflow-x-auto pb-2 lg:pb-0">
-                    {/* Mes */}
+
                     <div className="relative flex-1 min-w-[160px]">
                         <input
                             type="month"
@@ -40,7 +41,7 @@ const RequestFilters = ({
                         />
                     </div>
 
-                    {/* Estado (Opcional) */}
+
                     {mostrarFiltroEstado && (
                         <div className="relative min-w-[160px]">
                             <select
@@ -49,16 +50,17 @@ const RequestFilters = ({
                                 onChange={(e) => setEstadoFiltro(e.target.value)}
                             >
                                 <option value="ALL">Todos los Estados</option>
-                                <option value="PENDIENTE">🟠 Pendientes</option>
-                                <option value="APROBADA">🟢 Aprobadas</option>
-                                <option value="FINALIZADA">🔵 Finalizadas</option>
-                                <option value="RECHAZADA">🔴 Rechazadas</option>
+                                {!estadosExcluidos.includes('PENDIENTE') && <option value="PENDIENTE">🟠 Pendientes</option>}
+                                {!estadosExcluidos.includes('APROBADA') && <option value="APROBADA">🟢 Aprobadas</option>}
+                                {!estadosExcluidos.includes('FINALIZADA') && <option value="FINALIZADA">🔵 Finalizadas</option>}
+                                {!estadosExcluidos.includes('RECHAZADA') && <option value="RECHAZADA">🔴 Rechazadas</option>}
+                                {!estadosExcluidos.includes('CANCELADO') && <option value="CANCELADO">⚫ Canceladas</option>}
                             </select>
                             <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                         </div>
                     )}
 
-                    {/* Limpiar */}
+
                     {(terminoBusqueda || mesFiltro || (mostrarFiltroEstado && estadoFiltro !== 'ALL')) && (
                         <button
                             onClick={alLimpiar}

@@ -25,6 +25,11 @@ const PendingRequests = () => {
     const [motivoRechazo, setMotivoRechazo] = useState('');
     const [procesando, setProcesando] = useState(false);
 
+    // Estados para mensajes UI
+    const [mensajeExito, setMensajeExito] = useState('');
+    const [mensajeError, setMensajeError] = useState('');
+    const [modalError, setModalError] = useState('');
+
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
     const [mesFiltro, setMesFiltro] = useState(''); // YYYY-MM
 
@@ -85,6 +90,7 @@ const PendingRequests = () => {
 
     const abrirModalAprobar = async () => {
         setProcesando(true);
+        setModalError('');
         try {
             const [resVehiculos, resChoferes] = await Promise.all([
                 axios.get(`${API_URL}/vehicles`, { withCredentials: true }),
@@ -97,7 +103,8 @@ const PendingRequests = () => {
             setModalAccion('APROBAR');
         } catch (error) {
             console.error("Error obteniendo recursos:", error);
-            alert("Error cargando vehículos y conductores.");
+            setMensajeError("Error cargando vehículos y conductores. Por favor intenta nuevamente.");
+            setModalAccion(null);
         } finally {
             setProcesando(false);
         }
@@ -106,17 +113,18 @@ const PendingRequests = () => {
     const procesarSolicitud = async () => {
         if (!solicitudSeleccionada) return;
         setProcesando(true);
+        setModalError('');
         try {
             if (modalAccion === 'APROBAR') {
-                if (!asignacion.vehi_patente) return alert("Selecciona un vehículo");
-                if (solicitudSeleccionada.sol_requierechofer && !asignacion.cho_correo) return alert("Selecciona un conductor");
+                if (!asignacion.vehi_patente) { setModalError("Selecciona un vehículo"); setProcesando(false); return; }
+                if (solicitudSeleccionada.sol_requierechofer && !asignacion.cho_correo) { setModalError("Selecciona un conductor"); setProcesando(false); return; }
 
                 await axios.put(`${API_URL}/requests/${solicitudSeleccionada.sol_id}/approve`, {
                     sol_patentevehiculofk: asignacion.vehi_patente,
                     sol_correochoferfk: solicitudSeleccionada.sol_requierechofer ? asignacion.cho_correo : null
                 }, { withCredentials: true });
             } else {
-                if (!motivoRechazo.trim()) return alert("Ingresa un motivo de rechazo");
+                if (!motivoRechazo.trim()) { setModalError("Ingresa un motivo de rechazo"); setProcesando(false); return; }
                 await axios.put(`${API_URL}/requests/${solicitudSeleccionada.sol_id}/reject`, {
                     sol_observacionrechazo: motivoRechazo
                 }, { withCredentials: true });
@@ -127,17 +135,19 @@ const PendingRequests = () => {
             setSolicitudSeleccionada(null);
             setAsignacion({ vehi_patente: '', cho_correo: '' });
             setMotivoRechazo('');
+            setMensajeExito(modalAccion === 'APROBAR' ? "Solicitud aprobada correctamente." : "Solicitud rechazada correctamente.");
+            setTimeout(() => setMensajeExito(''), 3000);
             obtenerSolicitudes(); // Actualizar lista
         } catch (error) {
             console.error("Error procesando solicitud:", error);
             console.log("Response data:", error.response?.data);
 
             if (error.response?.data?.error) {
-                alert(error.response.data.error);
+                setModalError(error.response.data.error);
             } else if (error.message) {
-                alert(`Error: ${error.message}`);
+                setModalError(`Error: ${error.message}`);
             } else {
-                alert("Error desconocido al procesar la solicitud.");
+                setModalError("Error desconocido al procesar la solicitud.");
             }
         } finally {
             setProcesando(false);
@@ -205,6 +215,31 @@ const PendingRequests = () => {
                 alLimpiar={limpiarFiltros}
             />
 
+            {/* Mensajes Popup Centralizados */}
+            {(mensajeError || mensajeExito) && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                    {mensajeError && (
+                        <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-2">
+                                <XCircle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">¡Atención!</h3>
+                            <p className="text-slate-600 font-medium">{mensajeError}</p>
+                            <button type="button" onClick={() => setMensajeError('')} className="mt-2 text-sm text-slate-400 font-bold hover:text-slate-600 uppercase tracking-wide">Cerrar</button>
+                        </div>
+                    )}
+                    {mensajeExito && (
+                        <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500 mb-2">
+                                <CheckCircle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">¡Éxito!</h3>
+                            <p className="text-slate-600 font-medium">{mensajeExito}</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
             <div className="grid gap-4">
                 {solicitudesFiltradas.length > 0 ? (
                     solicitudesFiltradas.map((req) => (
@@ -252,7 +287,7 @@ const PendingRequests = () => {
                             <CheckCircle size={20} /> Aprobar Solicitud
                         </button>
                         <button
-                            onClick={() => setModalAccion('RECHAZAR')}
+                            onClick={() => { setModalAccion('RECHAZAR'); setModalError(''); }}
                             className="flex-1 bg-white text-slate-700 border-2 border-slate-200 py-3.5 rounded-xl font-bold hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all flex items-center justify-center gap-2 transform active:scale-[0.98]"
                             disabled={procesando}
                         >
@@ -286,6 +321,12 @@ const PendingRequests = () => {
                             </div>
 
                             <div className="p-6 space-y-4">
+                                {modalError && (
+                                    <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm font-bold border border-red-100 flex items-center gap-2 animate-shake">
+                                        <XCircle size={16} /> {modalError}
+                                    </div>
+                                )}
+
                                 {modalAccion === 'APROBAR' ? (
                                     <>
                                         <div className="space-y-2">
@@ -334,7 +375,13 @@ const PendingRequests = () => {
                                             className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none h-32 resize-none"
                                             placeholder="Indique la razón del rechazo..."
                                             value={motivoRechazo}
-                                            onChange={e => setMotivoRechazo(e.target.value)}
+                                            onChange={e => {
+                                                const val = e.target.value;
+                                                if (val.startsWith(' ')) return;
+                                                if (/^[a-zA-Z0-9\s.,;:\-/"'?!¡¿@#&()ºáéíóúÁÉÍÓÚñÑüÜ]*$/.test(val)) {
+                                                    setMotivoRechazo(val);
+                                                }
+                                            }}
                                         ></textarea>
                                     </div>
                                 )}

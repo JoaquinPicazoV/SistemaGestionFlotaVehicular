@@ -4,7 +4,7 @@ import API_URL from '../config/api';
 
 import UserNavBar from '../components/user/UserNavBar';
 import UserRequestList from '../components/user/UserRequestList';
-import UserRequestForm from '../components/user/UserRequestForm';
+import FormularioSolicitud from '../components/user/FormularioSolicitud';
 import AdminCalendar from '../components/admin/AdminCalendar';
 
 const UserDashboard = ({ usuario, cerrarSesion }) => {
@@ -52,7 +52,7 @@ const UserDashboard = ({ usuario, cerrarSesion }) => {
                 )}
 
                 {pestanaActiva === 'crear' && (
-                    <UserRequestForm
+                    <FormularioSolicitud
                         alCancelar={() => setPestanaActiva('lista')}
                         alCompletar={() => {
                             setPestanaActiva('lista');

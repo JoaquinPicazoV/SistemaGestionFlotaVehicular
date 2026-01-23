@@ -13,12 +13,12 @@ import API_URL from '../../config/api';
 const COLORES = ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
 
 const StatisticsBI = () => {
-    // Statics
+
     const [pestanaActiva, setPestanaActiva] = useState('flota'); // flota | demanda | territorio | operaciones
     const [datos, setDatos] = useState(null);
     const [cargando, setCargando] = useState(true);
 
-    // Load BI Data
+
     useEffect(() => {
         const cargarBI = async () => {
             try {
@@ -36,12 +36,12 @@ const StatisticsBI = () => {
     if (cargando) return <div className="p-10 text-center text-slate-400">Cargando Tableros BI...</div>;
     if (!datos) return <div className="p-10 text-center text-red-400">Error cargando datos.</div>;
 
-    // --- DASHBOARDS RENDERS ---
 
-    // 1. FLEET
+
+
     const TableroFlota = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
-            {/* KPI Wear */}
+
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-1 flex items-center gap-2">
                     <Activity size={20} className="text-amber-500" /> Desgaste de Vehículos
@@ -66,7 +66,7 @@ const StatisticsBI = () => {
                 </div>
             </div>
 
-            {/* KPI Usage */}
+
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-1 flex items-center gap-2">
                     <Truck size={20} className="text-blue-500" /> Distribución de Uso
@@ -89,7 +89,7 @@ const StatisticsBI = () => {
         </div>
     );
 
-    // 2. DEMAND
+
     const TableroDemanda = () => {
         const total = datos.demanda.kpi_rechazo.total || 1;
         const rechazadas = datos.demanda.kpi_rechazo.rechazadas || 0;
@@ -97,7 +97,7 @@ const StatisticsBI = () => {
 
         return (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
-                {/* Gauge Rate */}
+
                 <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center justify-center text-center">
                     <h3 className="text-lg font-bold text-slate-700 mb-4">Tasa de Rechazo</h3>
                     <div className="relative w-40 h-40 flex items-center justify-center">
@@ -105,13 +105,13 @@ const StatisticsBI = () => {
                         <div className={`w-full h-full rounded-full border-[12px] ${tasa > 15 ? 'border-red-500' : 'border-emerald-500'} opacity-100 absolute`}
                             style={{ clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%)`, transform: `rotate(${(tasa / 100) * 180}deg)` }}>
                         </div>
-                        {/* Simple circle visualization for now, removed complex KPI text */}
+
                         <div className="w-full h-full rounded-full border-[12px] border-indigo-500 opacity-20 absolute"></div>
                         <div className="text-4xl font-black text-slate-800">{tasa}%</div>
                     </div>
                 </div>
 
-                {/* Units Pareto */}
+
                 <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                     <h3 className="text-lg font-bold text-slate-700 mb-1">Solicitudes por Unidad</h3>
                     <p className="text-xs text-slate-400 mb-4">¿Quién usa más el servicio?</p>
@@ -133,7 +133,7 @@ const StatisticsBI = () => {
         );
     };
 
-    // 3. GEO
+
     const TableroGeo = () => (
         <div className="grid grid-cols-1 gap-6 pt-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -154,7 +154,7 @@ const StatisticsBI = () => {
         </div>
     );
 
-    // 4. OPS
+
     const TableroOps = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -203,13 +203,13 @@ const StatisticsBI = () => {
 
     return (
         <div className="p-4 md:p-8 w-full max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {/* Header */}
+
             <div className="mb-6 md:mb-8">
                 <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Panel de Control BI</h2>
                 <p className="text-sm md:text-base text-slate-500 mt-1">Toma de decisiones basada en datos reales.</p>
             </div>
 
-            {/* Navigation Tabs */}
+
             <div className="flex gap-2 overflow-x-auto pb-2 border-b border-slate-200 mb-6 custom-scrollbar">
                 {pestanas.map((p) => (
                     <button
@@ -226,7 +226,7 @@ const StatisticsBI = () => {
                 ))}
             </div>
 
-            {/* Render Active Dashboard */}
+
             <motion.div
                 key={pestanaActiva}
                 initial={{ opacity: 0, x: 20 }}

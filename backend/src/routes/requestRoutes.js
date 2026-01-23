@@ -9,6 +9,8 @@ const validacionCrearSolicitud = [
     body('sol_fechasalida').isISO8601().toDate(),
     body('sol_fechallegada').isISO8601().toDate(),
     body('sol_motivo').trim().notEmpty(),
+    body('sol_itinerario').trim().notEmpty(),
+    body('sol_nombresolicitante').trim().notEmpty(),
     body('pasajeros').isArray(),
     body('destinos').isArray(),
     validate
@@ -32,5 +34,6 @@ router.post('/', verifyToken, validacionCrearSolicitud, requestController.crearS
 router.post('/admin', verifyToken, validacionCrearSolicitud, requestController.crearSolicitudAdmin);
 router.put('/:id/approve', verifyToken, validacionAprobarSolicitud, requestController.aprobarSolicitud);
 router.put('/:id/reject', verifyToken, validacionRechazarSolicitud, requestController.rechazarSolicitud);
+router.put('/:id/cancel', verifyToken, requestController.cancelarSolicitud);
 
 module.exports = router;

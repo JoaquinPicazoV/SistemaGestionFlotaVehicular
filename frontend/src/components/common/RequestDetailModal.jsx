@@ -115,11 +115,11 @@ const RequestDetailModal = ({
                                             )}
                                         </div>
                                     </div>
-                                    {solicitud.sol_solicitanteasiste !== undefined && (
+                                    {detalles?.pasajeros && (
                                         <div>
                                             <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Solicitante</h4>
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${solicitud.sol_solicitanteasiste ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
-                                                {solicitud.sol_solicitanteasiste ? 'VIAJA' : 'NO VIAJA'}
+                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border ${detalles.pasajeros.some(p => p.pas_nombre.trim().toLowerCase() === solicitud.sol_nombresolicitante.trim().toLowerCase()) ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-slate-50 text-slate-600 border-slate-100'}`}>
+                                                {detalles.pasajeros.some(p => p.pas_nombre.trim().toLowerCase() === solicitud.sol_nombresolicitante.trim().toLowerCase()) ? 'VIAJA' : 'NO VIAJA'}
                                             </span>
                                         </div>
                                     )}

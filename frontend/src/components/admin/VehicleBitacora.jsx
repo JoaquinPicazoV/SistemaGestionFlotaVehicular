@@ -44,24 +44,27 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
 
         // Validaciones estrictas por campo
         if (['bit_evento', 'bit_mecanico'].includes(name)) {
-            // Solo letras, números y espacios (SIN símbolos)
-            if (/^[a-zA-Z0-9\s]*$/.test(value)) {
+            if (value.startsWith(' ')) return;
+            // Solo letras, números y espacios (SIN símbolos), permite tildes y puntuación básica
+            if (/^[a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑüÜ.,;:\-/"'?!¡¿@#&()º]*$/.test(value)) {
                 setFormData(prev => ({ ...prev, [name]: value }));
             }
             return;
         }
 
         if (name === 'bit_observaciones') {
-            // Letras, números y puntuación común
-            if (/^[a-zA-Z0-9\s.,;:\-/"'?!@#&()]*$/.test(value)) {
+            if (value.startsWith(' ')) return;
+            // Letras, números y puntuación común, permite tildes
+            if (/^[a-zA-Z0-9\s.,;:\-/"'?!¡¿@#&()ºáéíóúÁÉÍÓÚñÑüÜ]*$/.test(value)) {
                 setFormData(prev => ({ ...prev, [name]: value }));
             }
             return;
         }
 
         if (name === 'bit_funcionario_responsable') {
-            // Solo letras y espacios
-            if (/^[a-zA-Z\s]*$/.test(value)) {
+            if (value.startsWith(' ')) return;
+            // Solo letras (mayusc/minusc) y tildes. SIN números ni símbolos.
+            if (/^[a-zA-Z\sáéíóúÁÉÍÓÚñÑüÜ]*$/.test(value)) {
                 setFormData(prev => ({ ...prev, [name]: value }));
             }
             return;
@@ -85,12 +88,12 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
             ...registro,
             bit_fecha: new Date(registro.bit_fecha).toISOString().slice(0, 16),
             // Limpieza preventiva de datos antiguos
-            bit_evento: registro.bit_evento.replace(/[^a-zA-Z0-9\s]/g, ''),
-            bit_mecanico: (registro.bit_mecanico || '').replace(/[^a-zA-Z0-9\s]/g, ''),
-            bit_funcionario_responsable: registro.bit_funcionario_responsable.replace(/[^a-zA-Z\s]/g, ''),
-            bit_kilometraje: registro.bit_kilometraje.toString().replace(/[^0-9]/g, ''),
-            bit_valor_mantencion: registro.bit_valor_mantencion.toString().replace(/[^0-9]/g, ''),
-            bit_observaciones: (registro.bit_observaciones || '').replace(/[^a-zA-Z0-9\s.,;:\-/"'?!@#&()]/g, '')
+            bit_evento: registro.bit_evento,
+            bit_mecanico: registro.bit_mecanico || '',
+            bit_funcionario_responsable: registro.bit_funcionario_responsable,
+            bit_kilometraje: registro.bit_kilometraje.toString(),
+            bit_valor_mantencion: registro.bit_valor_mantencion.toString(),
+            bit_observaciones: registro.bit_observaciones || ''
         });
         setModoEdicion(true);
     };

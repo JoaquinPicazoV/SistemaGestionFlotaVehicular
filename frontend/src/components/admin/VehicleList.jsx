@@ -76,16 +76,26 @@ const VehicleForm = ({ onSubmit, onCancel, inicial, cargando }) => {
         const textFields = ['vehi_marca', 'vehi_modelo', 'vehi_tipo', 'vehi_inventario', 'vehi_propietario', 'vehi_resolucion', 'vehi_lugaraparcamiento', 'vehi_poliza'];
 
         if (textFields.includes(name)) {
-            // Solo letras, números, espacios, guión, slash y punto.
-            const upperVal = value.toUpperCase();
-            if (/^[A-Z0-9\s\-/\.]*$/.test(upperVal)) {
+            // Solo letras, números, espacios, guión, slash y punto. Permitir tildes y ñ.
+            // NO permitir espacios al inicio
+            if (value.startsWith(' ')) return;
+
+            const upperVal = value.toUpperCase(); // Optional: remove uppercase enforcement if accents are needed in lower/mixed case, but sticking to previous logic if intended. 
+            // NOTE: The previous code forced uppercase. If we want accents like Á, É, Í, Ó, Ú, Ñ, Ü, we should ensure regex covers them in uppercase.
+            // Assuming the intention is standard text fields often allowing mixed case for "Resolution" etc or maybe strictly uppercase for standard consistency?
+            // The user asked for "permitir las tildes para faltas de ortografia" which implies user entered text.
+            // Let's modify to allow input as is but check chars.
+
+            // Checking previous logic: it heavily relied on upperVal. I will keep it but ensure regex includes uppercase accented chars.
+            if (/^[A-Z0-9\s\-/\.ÁÉÍÓÚÑÜ¡¿?!]*$/.test(upperVal)) {
                 setFormData(prev => ({ ...prev, [name]: upperVal }));
             }
             return;
         }
 
         if (name === 'vehi_multas') {
-            if (/^[a-zA-Z0-9\s.,;:\-/"'?!@#&()º]*$/.test(value)) {
+            if (value.startsWith(' ')) return;
+            if (/^[a-zA-Z0-9\s.,;:\-/"'?!¡¿@#&()ºáéíóúÁÉÍÓÚñÑüÜ]*$/.test(value)) {
                 setFormData(prev => ({ ...prev, [name]: value }));
             }
             return;
@@ -131,7 +141,6 @@ const VehicleForm = ({ onSubmit, onCancel, inicial, cargando }) => {
                             onChange={handleChange}
                         >
                             <option value="DISPONIBLE">🟢 Disponible</option>
-                            <option value="EN RUTA">🔵 En Ruta</option>
                             <option value="MANTENCION">🟠 Mantenimiento</option>
                         </select>
                     )}
@@ -153,11 +162,11 @@ const VehicleForm = ({ onSubmit, onCancel, inicial, cargando }) => {
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Año</label>
-                    <input type="text" inputMode="numeric" name="vehi_anio" placeholder="202X" className="input-std" value={formData.vehi_anio || ''} onChange={handleChange} maxLength={4} />
+                    <input type="text" inputMode="numeric" name="vehi_anio" placeholder="202X" className="input-std" value={formData.vehi_anio || ''} onChange={handleChange} maxLength={4} required />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Color</label>
-                    <input type="text" name="vehi_color" placeholder="Blanco" className="input-std" value={formData.vehi_color || ''} onChange={handleChange} />
+                    <input type="text" name="vehi_color" placeholder="Blanco" className="input-std" value={formData.vehi_color || ''} onChange={handleChange} required />
                 </div>
                 <div className="space-y-1">
                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Capacidad Pax</label>
@@ -171,19 +180,19 @@ const VehicleForm = ({ onSubmit, onCancel, inicial, cargando }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">N° Motor</label>
-                        <input type="text" name="vehi_motor" className="input-std font-mono" value={formData.vehi_motor || ''} onChange={handleChange} />
+                        <input type="text" name="vehi_motor" className="input-std font-mono" value={formData.vehi_motor || ''} onChange={handleChange} required />
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">N° Chasis</label>
-                        <input type="text" name="vehi_chasis" className="input-std font-mono" value={formData.vehi_chasis || ''} onChange={handleChange} />
+                        <input type="text" name="vehi_chasis" className="input-std font-mono" value={formData.vehi_chasis || ''} onChange={handleChange} required />
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Capacidad (kg-mt3)</label>
-                        <input type="text" name="vehi_capacidad_carga" className="input-std" value={formData.vehi_capacidad_carga || ''} onChange={handleChange} />
+                        <input type="text" name="vehi_capacidad_carga" className="input-std" value={formData.vehi_capacidad_carga || ''} onChange={handleChange} required />
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">N° Inventario</label>
-                        <input type="text" name="vehi_inventario" className="input-std font-mono" value={formData.vehi_inventario || ''} onChange={handleChange} />
+                        <input type="text" name="vehi_inventario" className="input-std font-mono" value={formData.vehi_inventario || ''} onChange={handleChange} required />
                     </div>
                 </div>
             </div>
@@ -194,15 +203,15 @@ const VehicleForm = ({ onSubmit, onCancel, inicial, cargando }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2 space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Propietario</label>
-                        <input type="text" name="vehi_propietario" className="input-std" value={formData.vehi_propietario || ''} onChange={handleChange} />
+                        <input type="text" name="vehi_propietario" className="input-std" value={formData.vehi_propietario || ''} onChange={handleChange} required />
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Resolución Aparcamiento</label>
-                        <input type="text" name="vehi_resolucion" className="input-std" value={formData.vehi_resolucion || ''} onChange={handleChange} />
+                        <input type="text" name="vehi_resolucion" className="input-std" value={formData.vehi_resolucion || ''} onChange={handleChange} required />
                     </div>
                     <div className="space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Lugar Aparcamiento</label>
-                        <input type="text" name="vehi_lugaraparcamiento" className="input-std" value={formData.vehi_lugaraparcamiento || ''} onChange={handleChange} />
+                        <input type="text" name="vehi_lugaraparcamiento" className="input-std" value={formData.vehi_lugaraparcamiento || ''} onChange={handleChange} required />
                     </div>
                     <div className="md:col-span-2 space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">N° Póliza de Seguro</label>
@@ -264,6 +273,7 @@ const VehicleList = () => {
     const [cargando, setCargando] = useState(true);
     const [vehiculoEditando, setVehiculoEditando] = useState(null);
     const [mensajeError, setMensajeError] = useState(null);
+    const [mensajeExito, setMensajeExito] = useState(null);
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
     const [estadoFiltro, setEstadoFiltro] = useState('ALL');
     const [creando, setCreando] = useState(false);
@@ -309,6 +319,8 @@ const VehicleList = () => {
             await axios.delete(`${API_URL}/vehicles/${patente}`, { withCredentials: true });
             setVehiculos(prev => prev.filter(v => v.vehi_patente !== patente));
             setMensajeError(null);
+            setMensajeExito("Vehículo eliminado correctamente.");
+            setTimeout(() => setMensajeExito(null), 3000);
         } catch (error) {
             console.error(error);
             setMensajeError(error.response?.data?.error || 'Error al eliminar');
@@ -328,6 +340,8 @@ const VehicleList = () => {
                 setCreando(false);
             }
             obtenerVehiculos();
+            setMensajeExito(vehiculoEditando ? "Vehículo actualizado correctamente." : "Vehículo creado correctamente.");
+            setTimeout(() => setMensajeExito(null), 3000);
         } catch (error) {
             console.error(error);
             setMensajeError(error.response?.data?.error || 'Error al guardar');
@@ -344,7 +358,8 @@ const VehicleList = () => {
             setViajes(res.data);
         } catch (error) {
             console.error("Error cargando viajes:", error);
-            alert("No se pudieron cargar los viajes.");
+            setMensajeError("No se pudieron cargar los viajes del vehículo.");
+            setTimeout(() => setMensajeError(null), 3000);
         } finally {
             setCargandoViajes(false);
         }
@@ -368,9 +383,28 @@ const VehicleList = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
-            {mensajeError && (
-                <div className="absolute top-4 right-4 md:right-8 bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50 animate-bounce max-w-[90%]">
-                    <AlertCircle size={18} className="flex-shrink-0" /> <span className="text-sm">{mensajeError}</span>
+            {/* Mensajes Popup Centralizados */}
+            {(mensajeError || mensajeExito) && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                    {mensajeError && (
+                        <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-2">
+                                <AlertCircle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">¡Atención!</h3>
+                            <p className="text-slate-600 font-medium">{mensajeError}</p>
+                            <button type="button" onClick={() => setMensajeError(null)} className="mt-2 text-sm text-slate-400 font-bold hover:text-slate-600 uppercase tracking-wide">Cerrar</button>
+                        </div>
+                    )}
+                    {mensajeExito && (
+                        <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500 mb-2">
+                                <CheckCircle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">¡Éxito!</h3>
+                            <p className="text-slate-600 font-medium">{mensajeExito}</p>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -415,7 +449,7 @@ const VehicleList = () => {
                                 <th className="p-5 font-bold">Patente / Año</th>
                                 <th className="p-5 font-bold">Capacidad</th>
                                 <th className="p-5 font-bold">Estado</th>
-                                <th className="p-5 font-bold">Inventario</th>
+                                <th className="p-5 font-bold">Itinerario</th>
                                 <th className="p-5 font-bold text-right">Acciones</th>
                             </tr>
                         </thead>
@@ -449,7 +483,14 @@ const VehicleList = () => {
                                                 {v.vehi_estado}
                                             </span>
                                         </td>
-                                        <td className="p-5 text-xs font-mono text-slate-500">{v.vehi_inventario || '-'}</td>
+                                        <td className="p-5">
+                                            <button
+                                                onClick={() => verViajes(v)}
+                                                className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors border border-blue-100"
+                                            >
+                                                Ver Itinerario
+                                            </button>
+                                        </td>
                                         <td className="p-5 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <button
@@ -500,6 +541,68 @@ const VehicleList = () => {
                         vehiculo={vehiculoBitacora}
                         onClose={() => setVehiculoBitacora(null)}
                     />
+                )}
+            </AnimatePresence>
+
+            {/* View Trips Modal */}
+            <AnimatePresence>
+                {vehiculoViajes && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                <div>
+                                    <h3 className="font-bold text-slate-800 text-xl">Próximos Viajes</h3>
+                                    <p className="text-sm text-slate-500 font-medium">Asignaciones para {vehiculoViajes.vehi_marca} {vehiculoViajes.vehi_modelo} ({vehiculoViajes.vehi_patente})</p>
+                                </div>
+                                <button onClick={() => setVehiculoViajes(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
+                            </div>
+
+                            <div className="p-0 overflow-y-auto custom-scrollbar">
+                                {cargandoViajes ? (
+                                    <div className="p-12 text-center text-slate-400">
+                                        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4 mx-auto"></div>
+                                        Cargando itinerario...
+                                    </div>
+                                ) : viajes.length > 0 ? (
+                                    <table className="w-full text-left">
+                                        <thead className="bg-slate-50 sticky top-0 z-10 text-xs text-slate-500 uppercase font-bold tracking-wider">
+                                            <tr>
+                                                <th className="p-4 border-b border-slate-100">Fecha Salida</th>
+                                                <th className="p-4 border-b border-slate-100">Destino/Motivo</th>
+                                                <th className="p-4 border-b border-slate-100">Conductor</th>
+                                                <th className="p-4 border-b border-slate-100">Regreso Est.</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
+                                            {viajes.map((v) => (
+                                                <tr key={v.sol_id} className="hover:bg-slate-50/50">
+                                                    <td className="p-4 font-bold text-slate-800">
+                                                        {new Date(v.sol_fechasalida).toLocaleDateString()} <br />
+                                                        <span className="text-xs text-blue-600 font-mono bg-blue-50 px-1 py-0.5 rounded">{new Date(v.sol_fechasalida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    </td>
+                                                    <td className="p-4">
+                                                        <div className="font-medium text-slate-800 mb-0.5">{v.sol_motivo}</div>
+                                                    </td>
+                                                    <td className="p-4 text-xs font-bold uppercase">{v.nombre_chofer || 'SIN CHOFER'}</td>
+                                                    <td className="p-4 font-mono text-xs">
+                                                        {new Date(v.sol_fechallegada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                ) : (
+                                    <div className="p-12 text-center text-slate-400">
+                                        <ClipboardList size={48} className="mx-auto mb-4 text-slate-200" />
+                                        <p>No hay viajes programados próximamente.</p>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+                                <button onClick={() => setVehiculoViajes(null)} className="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition-colors">Cerrar</button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
         </div>

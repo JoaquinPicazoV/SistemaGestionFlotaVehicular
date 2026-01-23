@@ -43,14 +43,14 @@ const Dashboard = () => {
         }
     }, [API_URL]);
 
-    // Verificar sesión al cargar
+
     useEffect(() => {
         const verificarSesion = async () => {
             try {
                 const response = await axios.get(`${API_URL}/auth/check`, { withCredentials: true });
-                setUsuario(response.data.user);
+                setUsuario(response.data.usuario);
 
-                if (response.data.user.role === 'admin') {
+                if (response.data.usuario.rol === 'admin') {
                     obtenerEstadisticas();
                 } else {
                     setCargando(false);
@@ -64,10 +64,10 @@ const Dashboard = () => {
         verificarSesion();
     }, [navigate, obtenerEstadisticas, API_URL]);
 
-    // Actualización periódica de estadísticas (cada 1 hora)
+
     useEffect(() => {
         let intervalo;
-        if (usuario?.role === 'admin') {
+        if (usuario?.rol === 'admin') {
             intervalo = setInterval(obtenerEstadisticas, 3600000);
         }
         return () => clearInterval(intervalo);
@@ -84,7 +84,7 @@ const Dashboard = () => {
 
     if (cargando) return <LoadingScreen mensaje="Cargando Panel..." />;
 
-    if (usuario && usuario.role === 'funcionario') {
+    if (usuario && usuario.rol === 'funcionario') {
         return <UserDashboard usuario={usuario} cerrarSesion={cerrarSesion} />;
     }
 
@@ -110,7 +110,7 @@ const Dashboard = () => {
                         </button>
                         <div>
                             <h2 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight line-clamp-1">
-                                {pestanaActiva === 'resumen' && `Hola, ${usuario?.name?.split(' ')[0] || 'Admin'}`}
+                                {pestanaActiva === 'resumen' && `Hola, ${usuario?.nombre?.split(' ')[0] || 'Admin'}`}
                                 {pestanaActiva === 'estadisticas' && 'Inteligencia de Negocios'}
                                 {pestanaActiva === 'calendario' && 'Calendario de Reservas'}
                                 {pestanaActiva === 'vehiculos' && 'Gestión de Flota'}
@@ -130,7 +130,7 @@ const Dashboard = () => {
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                                {/* KPIs Cards */}
+
                                 <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-200/60 transition-all group relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform"><AlertCircle size={80} /></div>
                                     <div className="flex flex-col relative z-10">
@@ -172,7 +172,7 @@ const Dashboard = () => {
                             </div>
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                {/* Gráfico Estado de Flota */}
+
                                 <div className="lg:col-span-2 bg-white p-8 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
                                     <h3 className="font-bold text-slate-800 text-lg mb-6">Disponibilidad de Flota</h3>
                                     <div className="w-full h-64 md:h-80">
@@ -212,9 +212,9 @@ const Dashboard = () => {
                                     </div>
                                 </div>
 
-                                {/* Columna Derecha: Próximos Viajes + Top Unidades */}
+
                                 <div className="space-y-6">
-                                    {/* Unidades Más Activas */}
+
                                     <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40">
                                         <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
                                             <TrendingUp size={16} className="text-blue-500" /> Top 3 Unidades (Mes)
@@ -233,7 +233,7 @@ const Dashboard = () => {
                                         </div>
                                     </div>
 
-                                    {/* Próximos Viajes */}
+
                                     <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-lg shadow-slate-200/40 flex flex-col">
                                         <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide mb-4">Próximos Viajes (72h)</h3>
                                         <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-2 max-h-60">

@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 // Usar variable de entorno obligatoria para seguridad
 const CLAVE_SECRETA = process.env.JWT_SECRET;
 
-exports.login = async (req, res) => {
+exports.iniciarSesion = async (req, res) => {
     // Recibimos "usuario" (puede ser correo o unidad) y "clave"
     const { usuario, clave } = req.body;
 
@@ -57,7 +57,7 @@ exports.login = async (req, res) => {
 
         // Generar Token JWT
         const token = jwt.sign(
-            { id: idUsuario, role: rol, name: nombreUsuario },
+            { id: idUsuario, rol: rol, nombre: nombreUsuario },
             CLAVE_SECRETA,
             { expiresIn: '8h' }
         );
@@ -72,7 +72,7 @@ exports.login = async (req, res) => {
 
         res.json({
             message: 'Inicio de sesión exitoso',
-            user: { name: nombreUsuario, role: rol }
+            usuario: { nombre: nombreUsuario, rol: rol }
         });
 
     } catch (error) {
@@ -81,16 +81,16 @@ exports.login = async (req, res) => {
     }
 };
 
-exports.logout = (req, res) => {
+exports.cerrarSesion = (req, res) => {
     res.clearCookie('access_token');
     res.json({ message: 'Sesión cerrada' });
 };
 
-exports.checkAuth = (req, res) => {
-    res.json({ user: req.user });
+exports.verificarSesion = (req, res) => {
+    res.json({ usuario: req.usuario });
 };
 
-exports.createAdmin = async (req, res) => {
+exports.crearAdministrador = async (req, res) => {
     try {
         const emailAdmin = process.env.ADMIN_INIT_EMAIL;
         const passwordAdmin = process.env.ADMIN_INIT_PASSWORD;
@@ -118,3 +118,4 @@ exports.createAdmin = async (req, res) => {
         res.status(500).json({ error: 'Error creando admin: ' + error.message });
     }
 };
+

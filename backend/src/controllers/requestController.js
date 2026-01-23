@@ -40,9 +40,8 @@ exports.aprobarSolicitud = async (req, res) => {
         const fechaFinViaje = new Date(sol_fechallegada);
         const nuevoEstado = fechaFinViaje < ahora ? 'FINALIZADA' : 'APROBADA';
 
-        // Verificar conflictos de horario con vehículo o chofer
-        // Lógica: Evitar solapamiento con viajes APROBADOS o FINALIZADOS en el mismo rango horario.
-        // Se asume la bitácora física como respaldo, pero el sistema bloquea coincidencias lógicas.
+        // Check for schedule conflicts
+
         const [conflictos] = await pool.query(`
             SELECT sol_id, sol_patentevehiculofk, sol_correochoferfk 
             FROM SOLICITUDES 
@@ -77,7 +76,7 @@ exports.aprobarSolicitud = async (req, res) => {
             `UPDATE SOLICITUDES 
              SET sol_estado = ?, sol_patentevehiculofk = ?, sol_correochoferfk = ?, sol_idadminfk = ?
              WHERE sol_id = ?`,
-            [nuevoEstado, sol_patentevehiculofk, sol_correochoferfk || null, req.user.id, id]
+            [nuevoEstado, sol_patentevehiculofk, sol_correochoferfk || null, req.usuario.id, id]
         );
 
         res.json({ message: `Solicitud ${nuevoEstado === 'FINALIZADA' ? 'finalizada (por fecha pasada)' : 'aprobada'} correctamente` });
@@ -96,12 +95,29 @@ exports.rechazarSolicitud = async (req, res) => {
             `UPDATE SOLICITUDES 
              SET sol_estado = 'RECHAZADA', sol_observacionrechazo = ?, sol_idadminfk = ?
              WHERE sol_id = ?`,
-            [sol_observacionrechazo, req.user.id, id]
+            [sol_observacionrechazo, req.usuario.id, id]
         );
         res.json({ message: 'Solicitud rechazada correctamente' });
     } catch (error) {
         console.error("Error rechazando solicitud:", error);
         res.status(500).json({ error: 'Error al rechazar solicitud' });
+    }
+};
+
+exports.cancelarSolicitud = async (req, res) => {
+    const { id } = req.params;
+    try {
+        // Liberamos los recursos al cancelar para que puedan ser usados en otros viajes
+        await pool.query(
+            `UPDATE SOLICITUDES 
+             SET sol_estado = 'CANCELADO', sol_patentevehiculofk = NULL, sol_correochoferfk = NULL
+             WHERE sol_id = ?`,
+            [id]
+        );
+        res.json({ message: 'Solicitud cancelada correctamente' });
+    } catch (error) {
+        console.error("Error cancelando solicitud:", error);
+        res.status(500).json({ error: 'Error al cancelar solicitud' });
     }
 };
 
@@ -112,7 +128,7 @@ exports.obtenerProcesadas = async (req, res) => {
             FROM SOLICITUDES s
             LEFT JOIN CHOFER c ON s.sol_correochoferfk = c.cho_correoinstitucional
             LEFT JOIN VEHICULO v ON s.sol_patentevehiculofk = v.vehi_patente
-            WHERE s.sol_estado IN ('APROBADA', 'FINALIZADA', 'RECHAZADA') 
+            WHERE s.sol_estado IN ('APROBADA', 'FINALIZADA', 'RECHAZADA', 'CANCELADO') 
             ORDER BY s.sol_fechasalida DESC
         `);
         res.json(solicitudes);
@@ -172,7 +188,13 @@ exports.crearSolicitudAdmin = async (req, res) => {
             sol_correochoferfk
         } = req.body;
 
-        // 1. Validar Conflictos (Igual que en Aprobar)
+        if (new Date(sol_fechasalida) >= new Date(sol_fechallegada)) {
+            await conexion.rollback();
+            return res.status(400).json({ error: 'La fecha de llegada debe ser posterior a la de salida.' });
+        }
+
+        // Validate conflicts
+
         const [conflictos] = await conexion.query(`
             SELECT sol_id FROM SOLICITUDES 
             WHERE sol_estado = 'APROBADA' 
@@ -195,12 +217,12 @@ exports.crearSolicitudAdmin = async (req, res) => {
 
         const sol_id = crypto.randomUUID();
 
-        // Determinar estado inicial basado en la temporalidad del viaje
+
         const ahora = new Date();
         const fechaFinViaje = new Date(sol_fechallegada);
         const estadoInicial = fechaFinViaje < ahora ? 'FINALIZADA' : 'APROBADA';
 
-        // 2. Inserción de la solicitud en base de datos
+
         await conexion.query(`
             INSERT INTO SOLICITUDES (
                 sol_id, sol_nombresolicitante, sol_fechasalida, sol_fechallegada, sol_estado,
@@ -218,14 +240,14 @@ exports.crearSolicitudAdmin = async (req, res) => {
             sol_itinerario,
             sol_tipo,
             sol_requierechofer ? 1 : 0,
-            req.user.id, // El admin crea la solicitud
+            req.usuario.id, // El admin crea la solicitud
             sol_kmestimado || 0,
             sol_patentevehiculofk,
             sol_requierechofer ? sol_correochoferfk : null,
-            req.user.id // El admin aprueba la solicitud
+            req.usuario.id // El admin aprueba la solicitud
         ]);
 
-        // 3. Insertar pasajeros
+
         if (pasajeros && pasajeros.length > 0) {
             const valoresPasajeros = pasajeros.map(p => [p.nombre, sol_id, p.tipo || 1]);
             await conexion.query(
@@ -234,7 +256,7 @@ exports.crearSolicitudAdmin = async (req, res) => {
             );
         }
 
-        // 4. Insertar destinos
+
         if (destinos && destinos.length > 0) {
             for (const d of destinos) {
                 if (d.establecimiento_id) {
@@ -302,9 +324,14 @@ exports.crearSolicitud = async (req, res) => {
             sol_kmestimado
         } = req.body;
 
+        if (new Date(sol_fechasalida) >= new Date(sol_fechallegada)) {
+            await conexion.rollback();
+            return res.status(400).json({ error: 'La fecha de llegada debe ser posterior a la de salida.' });
+        }
+
         const sol_id = crypto.randomUUID();
 
-        // Insertar solicitud
+
         await conexion.query(`
             INSERT INTO SOLICITUDES (
                 sol_id, sol_nombresolicitante, sol_fechasalida, sol_fechallegada, sol_estado,
@@ -313,19 +340,19 @@ exports.crearSolicitud = async (req, res) => {
             ) VALUES (?, ?, ?, ?, 'PENDIENTE', ?, ?, ?, ?, ?, ?, ?)
         `, [
             sol_id,
-            sol_nombresolicitante || req.user.name,
+            sol_nombresolicitante || req.usuario.nombre,
             sol_fechasalida,
             sol_fechallegada,
-            req.user.name,
+            req.usuario.nombre,
             sol_motivo,
             sol_itinerario,
             sol_tipo,
             sol_requierechofer ? 1 : 0,
-            req.user.role === 'funcionario' ? req.user.id : null,
+            req.usuario.rol === 'funcionario' ? req.usuario.id : null,
             sol_kmestimado || 0
         ]);
 
-        // Insertar pasajeros
+
         if (pasajeros && pasajeros.length > 0) {
             const valoresPasajeros = pasajeros.map(p => [p.nombre, sol_id, p.tipo || 1]);
             await conexion.query(
@@ -334,10 +361,10 @@ exports.crearSolicitud = async (req, res) => {
             );
         }
 
-        // Insertar destinos
+
         if (destinos && destinos.length > 0) {
             for (const d of destinos) {
-                // CASO 1: Destino es un establecimiento oficial (Asociación por ID)
+
                 if (d.establecimiento_id) {
                     await conexion.query(
                         'INSERT INTO SOLICITUD_DESTINO (sde_solicitudfk, sde_establecimientofk) VALUES (?, ?)',
@@ -346,7 +373,7 @@ exports.crearSolicitud = async (req, res) => {
                     continue;
                 }
 
-                // CASO 2: Destino es un lugar libre (Texto libre o ID existente)
+
                 let idLugar = d.lugar_id;
 
                 if (!idLugar && d.lugar_nombre && d.comuna_id) {
@@ -392,13 +419,13 @@ exports.obtenerMisSolicitudes = async (req, res) => {
         let consulta = "SELECT * FROM SOLICITUDES WHERE 1=1";
         const parametros = [];
 
-        if (req.user.role === 'funcionario') {
+        if (req.usuario.rol === 'funcionario') {
             consulta += " AND (sol_idusuariofk = ? AND sol_unidad = ?)";
-            parametros.push(req.user.id);
-            parametros.push(req.user.name);
+            parametros.push(req.usuario.id);
+            parametros.push(req.usuario.nombre);
         } else {
             consulta += " AND sol_idadminfk = ?";
-            parametros.push(req.user.id);
+            parametros.push(req.usuario.id);
         }
 
         consulta += " ORDER BY sol_fechasalida DESC";

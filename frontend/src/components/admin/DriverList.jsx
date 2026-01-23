@@ -18,6 +18,7 @@ const DriverList = () => {
     // Edit/Create states
     const [choferEditando, setChoferEditando] = useState(null);
     const [mensajeError, setMensajeError] = useState(null);
+    const [mensajeExito, setMensajeExito] = useState(null);
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
     const [estadoFiltro, setEstadoFiltro] = useState('ALL');
     const [creando, setCreando] = useState(false);
@@ -70,6 +71,8 @@ const DriverList = () => {
             await axios.delete(`${API_URL}/drivers/${email}`, { withCredentials: true });
             setChoferes(prev => prev.filter(d => d.cho_correoinstitucional !== email));
             setMensajeError(null);
+            setMensajeExito("Conductor eliminado correctamente.");
+            setTimeout(() => setMensajeExito(null), 3000);
         } catch (error) {
             console.error(error);
             setMensajeError(error.response?.data?.error || 'Error al eliminar');
@@ -85,6 +88,8 @@ const DriverList = () => {
             setCreando(false);
             setNuevoChofer({ cho_correoinstitucional: '', cho_nombre: '', cho_activo: true });
             obtenerChoferes();
+            setMensajeExito("Conductor creado correctamente.");
+            setTimeout(() => setMensajeExito(null), 3000);
         } catch (error) {
             console.error(error);
             setMensajeError(error.response?.data?.error || 'Error al crear conductor');
@@ -99,9 +104,12 @@ const DriverList = () => {
             await axios.put(`${API_URL}/drivers/${choferEditando.cho_correoinstitucional}`, choferEditando, { withCredentials: true });
             setChoferEditando(null);
             obtenerChoferes();
+            setMensajeExito("Conductor actualizado correctamente.");
+            setTimeout(() => setMensajeExito(null), 3000);
         } catch (error) {
             console.error(error);
-            alert('Error al actualizar');
+            setMensajeError(error.response?.data?.error || 'Error al actualizar conductor');
+            setTimeout(() => setMensajeError(null), 3000);
         }
     };
 
@@ -114,7 +122,8 @@ const DriverList = () => {
             setViajes(res.data);
         } catch (error) {
             console.error("Error cargando viajes:", error);
-            alert("No se pudieron cargar los viajes.");
+            setMensajeError("No se pudieron cargar los viajes del conductor.");
+            setTimeout(() => setMensajeError(null), 3000);
         } finally {
             setCargandoViajes(false);
         }
@@ -135,9 +144,28 @@ const DriverList = () => {
 
     return (
         <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
-            {mensajeError && (
-                <div className="absolute top-4 right-4 md:right-8 bg-red-100 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center gap-2 shadow-lg z-50 animate-bounce max-w-[90%]">
-                    <AlertCircle size={18} className="flex-shrink-0" /> <span className="text-sm">{mensajeError}</span>
+            {/* Mensajes Popup Centralizados */}
+            {(mensajeError || mensajeExito) && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                    {mensajeError && (
+                        <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-2">
+                                <AlertCircle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">¡Atención!</h3>
+                            <p className="text-slate-600 font-medium">{mensajeError}</p>
+                            <button type="button" onClick={() => setMensajeError(null)} className="mt-2 text-sm text-slate-400 font-bold hover:text-slate-600 uppercase tracking-wide">Cerrar</button>
+                        </div>
+                    )}
+                    {mensajeExito && (
+                        <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500 mb-2">
+                                <CheckCircle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">¡Éxito!</h3>
+                            <p className="text-slate-600 font-medium">{mensajeExito}</p>
+                        </div>
+                    )}
                 </div>
             )}
 
@@ -337,7 +365,8 @@ const DriverList = () => {
                                         value={nuevoChofer.cho_nombre}
                                         onChange={e => {
                                             const val = e.target.value;
-                                            if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(val)) {
+                                            if (val.startsWith(' ')) return;
+                                            if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(val)) {
                                                 setNuevoChofer({ ...nuevoChofer, cho_nombre: val });
                                             }
                                         }}
@@ -353,9 +382,9 @@ const DriverList = () => {
                                             className="flex-1 px-4 py-2.5 border border-r-0 border-slate-200 rounded-l-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
                                             value={nuevoChofer.cho_correoinstitucional.replace('@slepllanquihue.cl', '')}
                                             onChange={e => {
-                                                const val = e.target.value;
-                                                // Permitir solo caracteres válidos para email username
-                                                if (/^[a-zA-Z0-9.-]*$/.test(val)) {
+                                                const val = e.target.value.toLowerCase();
+                                                // Permitir solo minusculas, numeros y puntos
+                                                if (/^[a-z0-9.]*$/.test(val)) {
                                                     setNuevoChofer({ ...nuevoChofer, cho_correoinstitucional: val ? val + '@slepllanquihue.cl' : '' });
                                                 }
                                             }}
@@ -407,7 +436,8 @@ const DriverList = () => {
                                         value={choferEditando.cho_nombre}
                                         onChange={e => {
                                             const val = e.target.value;
-                                            if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(val)) {
+                                            if (val.startsWith(' ')) return;
+                                            if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(val)) {
                                                 setChoferEditando({ ...choferEditando, cho_nombre: val });
                                             }
                                         }}

@@ -27,6 +27,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
 
     const [enviando, setEnviando] = useState(false);
     const [mensajeExito, setMensajeExito] = useState('');
+    const [mensajeError, setMensajeError] = useState('');
     const peticionEnCurso = useRef(false);
 
     // Estado del Formulario
@@ -142,10 +143,21 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
         peticionEnCurso.current = true;
         setEnviando(true);
         setMensajeExito('');
+        setMensajeError('');
 
         try {
             const fechaSalida = `${datosFormulario.sol_fechasalida} ${datosFormulario.sol_timesalida}:00`;
             const fechaLlegada = `${datosFormulario.sol_fechallegada} ${datosFormulario.sol_timeallegada}:00`;
+
+            const dSalida = new Date(fechaSalida);
+            const dLlegada = new Date(fechaLlegada);
+
+            if (dSalida >= dLlegada) {
+                setMensajeError("La fecha y hora de llegada debe ser posterior a la de salida.");
+                setEnviando(false);
+                peticionEnCurso.current = false;
+                return;
+            }
 
             const datosEnvio = {
                 sol_fechasalida: fechaSalida,
@@ -175,9 +187,9 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
         } catch (error) {
             console.error("Error creando solicitud admin:", error);
             if (error.response && error.response.status === 409) {
-                alert("Conflicto: El vehículo o chofer ya está ocupado en ese horario.");
+                setMensajeError("Conflicto: El vehículo o chofer ya está ocupado en ese horario.");
             } else {
-                alert("Error al procesar la solicitud express.");
+                setMensajeError("Error al procesar la solicitud express.");
             }
         } finally {
             setEnviando(false);
@@ -191,7 +203,6 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                 <button onClick={alCancelar} className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-full text-slate-400 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all"><ChevronRight className="rotate-180" size={24} /></button>
                 <div>
                     <h2 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2">Solicitud Express <ShieldCheck size={24} className="text-emerald-500" /></h2>
-                    <p className="text-emerald-600 font-medium text-sm bg-emerald-50 px-2 py-0.5 rounded-md inline-block">Modo Administrador: Creación y Aprobación Inmediata</p>
                 </div>
             </div>
 
@@ -199,6 +210,16 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                 <div className="mb-8 p-4 bg-emerald-50 border-2 border-emerald-100 text-emerald-800 rounded-2xl flex items-center gap-3 shadow-lg shadow-emerald-500/10 animate-fade-in-down">
                     <div className="p-2 bg-emerald-100 rounded-full"><CheckCircle2 size={24} className="text-emerald-600" /></div>
                     <div className="font-bold text-lg">{mensajeExito}</div>
+                </div>
+            )}
+
+            {mensajeError && (
+                <div className="mb-8 p-4 bg-red-50 border-2 border-red-100 text-red-800 rounded-2xl flex items-center gap-3 shadow-lg shadow-red-500/10 animate-fade-in-down" role="alert">
+                    <div className="p-2 bg-red-100 rounded-full"><AlertCircle size={24} className="text-red-600" /></div>
+                    <div>
+                        <div className="font-bold text-lg">Error</div>
+                        <div className="text-red-700 text-sm font-medium">{mensajeError}</div>
+                    </div>
                 </div>
             )}
 
@@ -304,10 +325,53 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                     className="w-full p-4 bg-white border border-slate-300 rounded-xl outline-none font-medium text-slate-800"
                                     value={datosFormulario.sol_nombresolicitante}
                                     onChange={e => {
-                                        const val = e.target.value;
-                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(val)) setDatosFormulario({ ...datosFormulario, sol_nombresolicitante: val });
+                                        const nuevoNombre = e.target.value;
+                                        if (nuevoNombre.startsWith(' ')) return;
+                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(nuevoNombre)) {
+                                            setDatosFormulario(prev => ({
+                                                ...prev,
+                                                sol_nombresolicitante: nuevoNombre,
+                                                pasajeros: prev.pasajeros.map(p =>
+                                                    p.esSolicitante ? { ...p, nombre: nuevoNombre } : p
+                                                )
+                                            }));
+                                        }
                                     }}
                                 />
+                                <div className="mt-3 flex items-center justify-end">
+                                    <label className="relative inline-flex items-center cursor-pointer group">
+                                        <input
+                                            type="checkbox"
+                                            className="sr-only peer"
+                                            checked={datosFormulario.pasajeros.some(p => p.esSolicitante)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    if (!datosFormulario.sol_nombresolicitante.trim()) {
+                                                        setMensajeError("Por favor ingresa el nombre del responsable primero.");
+                                                        return;
+                                                    }
+                                                    setDatosFormulario(prev => ({
+                                                        ...prev,
+                                                        pasajeros: [...prev.pasajeros, {
+                                                            nombre: prev.sol_nombresolicitante,
+                                                            tipo: 1, // Asumimos Funcionario por defecto para el responsable
+                                                            esSolicitante: true
+                                                        }]
+                                                    }));
+                                                } else {
+                                                    setDatosFormulario(prev => ({
+                                                        ...prev,
+                                                        pasajeros: prev.pasajeros.filter(p => !p.esSolicitante)
+                                                    }));
+                                                }
+                                            }}
+                                        />
+                                        <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 group-hover:bg-slate-300"></div>
+                                        <span className="ml-3 text-sm font-bold text-slate-500 group-hover:text-blue-600 transition-colors">
+                                            Asistirá al viaje (Agregar a lista)
+                                        </span>
+                                    </label>
+                                </div>
                             </div>
                             <div className="relative group"><label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Motivo Principal</label>
                                 <input
@@ -320,7 +384,8 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                     value={datosFormulario.sol_motivo}
                                     onChange={e => {
                                         const val = e.target.value;
-                                        if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,;:\-/"'?!@#&()º]*$/.test(val)) setDatosFormulario({ ...datosFormulario, sol_motivo: val });
+                                        if (val.startsWith(' ')) return;
+                                        if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:\-/"'?!¡¿@#&()º]*$/.test(val)) setDatosFormulario({ ...datosFormulario, sol_motivo: val });
                                     }}
                                 />
                             </div>
@@ -334,7 +399,8 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                     value={datosFormulario.sol_itinerario}
                                     onChange={e => {
                                         const val = e.target.value;
-                                        if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,;:\-/"'?!@#&()º\n]*$/.test(val)) setDatosFormulario({ ...datosFormulario, sol_itinerario: val });
+                                        if (val.startsWith(' ')) return;
+                                        if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:\-/"'?!¡¿@#&()º\n]*$/.test(val)) setDatosFormulario({ ...datosFormulario, sol_itinerario: val });
                                     }}
                                 />
                             </div>
@@ -378,7 +444,8 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                                 value={destinoActual.lugar_nombre}
                                                 onChange={e => {
                                                     const val = e.target.value;
-                                                    if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑ\s.,;:\-/"'?!@#&()º]*$/.test(val)) setDestinoActual({ ...destinoActual, lugar_nombre: val });
+                                                    if (val.startsWith(' ')) return;
+                                                    if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:\-/"'?!¡¿@#&()º]*$/.test(val)) setDestinoActual({ ...destinoActual, lugar_nombre: val });
                                                 }}
                                                 disabled={!destinoActual.comuna_id}
                                             />
@@ -387,6 +454,9 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                     )}
                                     <button type="button" onClick={agregarDestino} disabled={!destinoActual.comuna_id} className="w-full md:w-auto px-4 bg-slate-800 disabled:bg-slate-300 text-white rounded-xl font-medium"><Plus size={18} /></button>
                                 </div>
+                                <p className="text-[10px] text-blue-500 font-bold mb-3 pl-1 flex items-center gap-1">
+                                    <AlertCircle size={12} /> Recuerda presionar el botón "+" para guardar el destino en la lista.
+                                </p>
                                 {datosFormulario.destinos.length > 0 ? (
                                     <div className="flex flex-wrap gap-2">{datosFormulario.destinos.map((d, idx) => (<div key={idx} className="flex items-center gap-2 pl-3 pr-2 py-2 bg-blue-100/50 text-blue-800 rounded-lg border border-blue-200/50 shadow-sm"><MapPin size={14} /><span className="text-sm font-bold">{d.lugar_nombre}</span><button type="button" onClick={() => eliminarDestino(idx)} className="text-blue-400 hover:text-red-500 ml-1"><XCircle size={14} /></button></div>))}</div>
                                 ) : <div className="text-xs text-slate-400 italic text-center py-2">Agrega al menos un destino.</div>}
@@ -409,7 +479,8 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                     value={nombrePasajero}
                                     onChange={e => {
                                         const val = e.target.value;
-                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]*$/.test(val)) setNombrePasajero(val);
+                                        if (val.startsWith(' ')) return;
+                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(val)) setNombrePasajero(val);
                                     }}
                                     onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), agregarPasajero())}
                                 />
@@ -419,6 +490,9 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                 <button type="button" onClick={agregarPasajero} disabled={!nombrePasajero.trim()} className="px-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 disabled:opacity-50"><Plus size={24} /></button>
                             </div>
                         </div>
+                        <p className="text-[10px] text-blue-500 font-bold mb-4 pl-1 flex items-center gap-1 -mt-4">
+                            <AlertCircle size={12} /> Has click en el "+" para añadir a la persona a la lista.
+                        </p>
                         {datosFormulario.pasajeros.length > 0 ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                                 {datosFormulario.pasajeros.map((p, idx) => {
@@ -474,6 +548,32 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                         </button>
                     </div>
                 </div>
+
+                {/* Mensajes Flotantes Inferiores */}
+                {/* Mensajes Popup Centralizados */}
+                {(mensajeError || mensajeExito) && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                        {mensajeError && (
+                            <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-2">
+                                    <AlertCircle size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800">¡Atención!</h3>
+                                <p className="text-slate-600 font-medium">{mensajeError}</p>
+                                <button type="button" onClick={() => setMensajeError('')} className="mt-2 text-sm text-slate-400 font-bold hover:text-slate-600 uppercase tracking-wide">Cerrar</button>
+                            </div>
+                        )}
+                        {mensajeExito && (
+                            <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500 mb-2">
+                                    <CheckCircle2 size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-800">¡Éxito!</h3>
+                                <p className="text-slate-600 font-medium">{mensajeExito}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
             </form>
         </div>

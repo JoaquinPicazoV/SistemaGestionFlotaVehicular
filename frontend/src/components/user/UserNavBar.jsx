@@ -16,7 +16,7 @@ const UserNavBar = ({ usuario, cerrarSesion, pestanaActiva, setPestanaActiva }) 
                         <div>
                             <p className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse box-content border border-slate-900"></span>
-                                {usuario.name}
+                                {usuario.nombre}
                             </p>
                         </div>
                     </div>

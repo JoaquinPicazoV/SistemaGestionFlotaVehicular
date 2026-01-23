@@ -71,7 +71,7 @@ const Login = () => {
     return (
         <div className={`min-h-screen ${tema.bg} flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-700`}>
 
-            {/* Efectos de Fondo */}
+
             <div className={`absolute top-[-20%] left-[-10%] w-[50%] h-[50%] ${tema.blobTop} rounded-full blur-[120px] animate-pulse duration-1000`} />
             <div className={`absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] ${tema.blobBottom} rounded-full blur-[120px] animate-pulse delay-700 duration-1000`} />
 
@@ -83,7 +83,7 @@ const Login = () => {
 
                 <div className="bg-white/95 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl shadow-black/20 overflow-hidden transform transition-all duration-500 hover:shadow-black/30">
 
-                    {/* Selector Notorio de Tipo de Usuario */}
+
                     <div className="flex p-2 bg-slate-100/50 gap-2">
                         <button
                             onClick={() => cambiarTipoUsuario('funcionario')}
@@ -154,7 +154,14 @@ const Login = () => {
                                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-700 placeholder:text-slate-300"
                                         placeholder={tipoUsuario === 'funcionario' ? "Ej: Finanzas" : "usuario@dominio.cl"}
                                         value={credenciales.usuario}
-                                        onChange={(e) => setCredenciales({ ...credenciales, usuario: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val.startsWith(' ')) return;
+                                            // Allow standard username/email chars
+                                            if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s@._-]*$/.test(val)) {
+                                                setCredenciales({ ...credenciales, usuario: val });
+                                            }
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -171,7 +178,11 @@ const Login = () => {
                                         className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border-2 border-slate-100 rounded-xl outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 transition-all font-medium text-slate-700 placeholder:text-slate-300"
                                         placeholder="••••••••••••••••"
                                         value={credenciales.clave}
-                                        onChange={(e) => setCredenciales({ ...credenciales, clave: e.target.value })}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            if (val.startsWith(' ')) return;
+                                            setCredenciales({ ...credenciales, clave: val });
+                                        }}
                                     />
                                 </div>
                             </div>

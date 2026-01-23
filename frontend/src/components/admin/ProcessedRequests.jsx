@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import API_URL from '../../config/api';
-import { RefreshCw, Filter } from 'lucide-react';
+import { RefreshCw, Filter, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import RequestFilters from '../common/RequestFilters';
 import RequestCard from '../common/RequestCard';
 import RequestDetailModal from '../common/RequestDetailModal';
@@ -9,7 +9,7 @@ import RequestDetailModal from '../common/RequestDetailModal';
 
 
 const ProcessedRequests = () => {
-    // Statics
+
     const [solicitudes, setSolicitudes] = useState([]);
     const [solicitudesFiltradas, setSolicitudesFiltradas] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -17,12 +17,16 @@ const ProcessedRequests = () => {
     const [detallesSolicitud, setDetallesSolicitud] = useState({ pasajeros: [], destinos: [] });
     const [cargandoDetalles, setCargandoDetalles] = useState(false);
 
-    // Filters
+
+    const [mensajeExito, setMensajeExito] = useState('');
+    const [mensajeError, setMensajeError] = useState('');
+
+
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
     const [mesFiltro, setMesFiltro] = useState(''); // YYYY-MM
     const [estadoFiltro, setEstadoFiltro] = useState('ALL'); // 'ALL', 'APROBADA', 'FINALIZADA', 'RECHAZADA'
 
-    // Fetch processed requests
+
     const obtenerSolicitudes = useCallback(async () => {
         setCargando(true);
         try {
@@ -36,16 +40,16 @@ const ProcessedRequests = () => {
         }
     }, []);
 
-    // Initial load
+
     useEffect(() => {
         obtenerSolicitudes();
     }, [obtenerSolicitudes]);
 
-    // Apply filters
+
     useEffect(() => {
         let resultado = solicitudes;
 
-        // Text Filter
+
         if (terminoBusqueda) {
             const terminoMinuscula = terminoBusqueda.toLowerCase();
             resultado = resultado.filter(req =>
@@ -55,7 +59,7 @@ const ProcessedRequests = () => {
             );
         }
 
-        // Month Filter
+
         if (mesFiltro) {
             resultado = resultado.filter(req => {
                 const fecha = new Date(req.sol_fechasalida);
@@ -64,7 +68,7 @@ const ProcessedRequests = () => {
             });
         }
 
-        // Status Filter
+
         if (estadoFiltro !== 'ALL') {
             resultado = resultado.filter(req => req.sol_estado === estadoFiltro);
         }
@@ -72,7 +76,7 @@ const ProcessedRequests = () => {
         setSolicitudesFiltradas(resultado);
     }, [solicitudes, terminoBusqueda, mesFiltro, estadoFiltro]);
 
-    // View request details
+
     const verDetalles = async (req) => {
         setSolicitudSeleccionada(req);
         setCargandoDetalles(true);
@@ -86,7 +90,25 @@ const ProcessedRequests = () => {
         }
     };
 
-    // Clear all filters
+
+    const cancelarSolicitud = async () => {
+        if (!solicitudSeleccionada) return;
+        if (!window.confirm("¿Seguro que deseas cancelar esta solicitud? Esta acción liberará el vehículo y conductor asignados.")) return;
+
+        try {
+            await axios.put(`${API_URL}/requests/${solicitudSeleccionada.sol_id}/cancel`, {}, { withCredentials: true });
+
+            // Update UI
+            setSolicitudSeleccionada(null);
+            setMensajeExito("Solicitud cancelada correctamente.");
+            obtenerSolicitudes(); // Refresh list to show 'CANCELADO' status
+        } catch (error) {
+            console.error("Error cancelando solicitud:", error);
+            setMensajeError("Error al cancelar la solicitud.");
+        }
+    };
+
+
     const limpiarFiltros = () => {
         setTerminoBusqueda('');
         setMesFiltro('');
@@ -118,7 +140,7 @@ const ProcessedRequests = () => {
                 </div>
             </div>
 
-            {/* Filter Bar */}
+
             <RequestFilters
                 terminoBusqueda={terminoBusqueda}
                 setTerminoBusqueda={setTerminoBusqueda}
@@ -128,7 +150,34 @@ const ProcessedRequests = () => {
                 setEstadoFiltro={setEstadoFiltro}
                 alLimpiar={limpiarFiltros}
                 mostrarFiltroEstado={true}
+                estadosExcluidos={['PENDIENTE']}
             />
+
+
+            {(mensajeError || mensajeExito) && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                    {mensajeError && (
+                        <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-2">
+                                <AlertCircle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">¡Atención!</h3>
+                            <p className="text-slate-600 font-medium">{mensajeError}</p>
+                            <button type="button" onClick={() => setMensajeError('')} className="mt-2 text-sm text-slate-400 font-bold hover:text-slate-600 uppercase tracking-wide">Cerrar</button>
+                        </div>
+                    )}
+                    {mensajeExito && (
+                        <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500 mb-2">
+                                <CheckCircle size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-800">¡Éxito!</h3>
+                            <p className="text-slate-600 font-medium">{mensajeExito}</p>
+                            <button type="button" onClick={() => setMensajeExito('')} className="mt-2 text-sm text-slate-400 font-bold hover:text-slate-600 uppercase tracking-wide">Cerrar</button>
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="grid gap-4">
                 {solicitudesFiltradas.length > 0 ? (
@@ -164,7 +213,7 @@ const ProcessedRequests = () => {
                 )}
             </div>
 
-            {/* Detail Modal */}
+
             <RequestDetailModal
                 solicitud={solicitudSeleccionada}
                 detalles={detallesSolicitud}
@@ -172,7 +221,17 @@ const ProcessedRequests = () => {
                 alCerrar={() => setSolicitudSeleccionada(null)}
                 mostrarId={false}
                 accionesPie={
-                    <div className="w-full flex justify-end">
+                    <div className="w-full flex justify-between items-center">
+                        <div>
+                            {solicitudSeleccionada?.sol_estado === 'APROBADA' && (
+                                <button
+                                    onClick={cancelarSolicitud}
+                                    className="px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-xl hover:bg-red-100 hover:text-red-700 font-bold text-sm transition-colors flex items-center gap-2"
+                                >
+                                    <XCircle size={16} /> Cancelar Solicitud
+                                </button>
+                            )}
+                        </div>
                         <button onClick={() => setSolicitudSeleccionada(null)} className="px-6 py-2 bg-white border border-slate-300 text-slate-700 font-bold rounded-xl hover:bg-slate-100 transition-colors text-sm shadow-sm">
                             Cerrar
                         </button>

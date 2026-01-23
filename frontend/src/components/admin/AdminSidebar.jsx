@@ -97,11 +97,11 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
                 <div className="p-4 border-t border-slate-800 bg-slate-900/50">
                     <div className="flex items-center gap-3 mb-4 px-2">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center font-bold text-white shadow-lg ring-2 ring-slate-800">
-                            {usuario?.name?.charAt(0) || 'U'}
+                            {usuario?.nombre?.charAt(0) || 'U'}
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-bold text-white truncate">{usuario?.name || 'Usuario'}</span>
-                            <span className="text-xs text-slate-500 capitalize">{usuario?.role || 'Admin'}</span>
+                            <span className="text-sm font-bold text-white truncate">{usuario?.nombre || 'Usuario'}</span>
+                            <span className="text-xs text-slate-500 capitalize">{usuario?.rol || 'Admin'}</span>
                         </div>
                     </div>
                     <button
