@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import API_URL from '../config/api';
 import { User, ShieldCheck, ArrowLeft, Key, Building2, Mail, Loader2, Sparkles } from 'lucide-react';
@@ -8,13 +9,12 @@ import LogoSlep from '../assets/LogoSLEP.png';
 
 const Login = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [tipoUsuario, setTipoUsuario] = useState('funcionario');
     const [credenciales, setCredenciales] = useState({ usuario: '', clave: '' });
     const [cargando, setCargando] = useState(false);
     const [mensajeError, setMensajeError] = useState(null);
     const [formularioVisible, setFormularioVisible] = useState(true);
-
-
 
     const cambiarTipoUsuario = (tipo) => {
         if (tipo === tipoUsuario) return;
@@ -39,6 +39,10 @@ const Login = () => {
             }, { withCredentials: true });
 
             if (response.status === 200) {
+                // Actualizar contexto y navegar
+                if (response.data.usuario) {
+                    login(response.data.usuario);
+                }
                 navigate('/dashboard');
             }
         } catch (err) {
@@ -157,7 +161,7 @@ const Login = () => {
                                         onChange={(e) => {
                                             const val = e.target.value;
                                             if (val.startsWith(' ')) return;
-                                            // Allow standard username/email chars
+
                                             if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s@._-]*$/.test(val)) {
                                                 setCredenciales({ ...credenciales, usuario: val });
                                             }
@@ -206,7 +210,6 @@ const Login = () => {
                             Volver al Inicio
                         </Link>
                     </div>
-
                 </div>
 
                 <p className="text-center text-slate-500/40 text-xs mt-6 font-medium">

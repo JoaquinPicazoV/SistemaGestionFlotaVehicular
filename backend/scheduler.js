@@ -1,102 +1,99 @@
 const cron = require('node-cron');
 const pool = require('./db');
 
-const toLocalISOString = (date) => {
-    const offset = date.getTimezoneOffset() * 60000;
-    return new Date(date - offset).toISOString().slice(0, 19).replace('T', ' ');
-};
-
 const initScheduler = () => {
+    // Ejecutar cada minuto
     cron.schedule('* * * * *', async () => {
-        const connection = await pool.getConnection();
+        const conexion = await pool.getConnection();
 
         try {
-            await connection.beginTransaction();
-            const nowLocalStr = toLocalISOString(new Date());
+            await conexion.beginTransaction();
 
-            // Complete finished trips
-
-            const [finishedRequests] = await connection.query(`
+            const [solicitudesFinalizadas] = await conexion.query(`
                 SELECT sol_id, sol_patentevehiculofk 
                 FROM SOLICITUDES 
                 WHERE sol_estado = 'APROBADA' 
-                AND sol_fechallegada <= ?
+                AND sol_fechallegada <= NOW()
                 FOR UPDATE
-            `, [nowLocalStr]);
+            `);
 
-            if (finishedRequests.length > 0) {
-                const ids = finishedRequests.map(r => r.sol_id);
-                const patentes = [...new Set(finishedRequests.map(r => r.sol_patentevehiculofk))].filter(p => p);
+            if (solicitudesFinalizadas.length > 0) {
+                const ids = solicitudesFinalizadas.map(r => r.sol_id);
+                const patentes = [...new Set(solicitudesFinalizadas.map(r => r.sol_patentevehiculofk))].filter(p => p);
 
-                // Actualizar estado a FINALIZADA
-                await connection.query(
+                await conexion.query(
                     `UPDATE SOLICITUDES SET sol_estado = 'FINALIZADA' WHERE sol_id IN (?)`,
                     [ids]
                 );
 
-
                 if (patentes.length > 0) {
-                    await connection.query(
-                        `UPDATE VEHICULO SET vehi_estado = 'DISPONIBLE' WHERE vehi_patente IN (?)`,
+                    await conexion.query(
+                        `UPDATE VEHICULO SET vehi_estado = 'DISPONIBLE' 
+                         WHERE vehi_patente IN (?) 
+                         AND vehi_estado = 'EN RUTA'`,
                         [patentes]
                     );
                 }
-                console.log(`✅ Cron: ${ids.length} viajes finalizados.`);
+                console.log(`[CRON] ${ids.length} viajes finalizados.`);
             }
 
-            // Start scheduled trips
-
-            const [activeRequests] = await connection.query(`
+            const [solicitudesActivas] = await conexion.query(`
                  SELECT sol_id, sol_patentevehiculofk
                  FROM SOLICITUDES
                  WHERE sol_estado = 'APROBADA'
-                 AND sol_fechasalida <= ?
-                 AND sol_fechallegada > ?
+                 AND sol_fechasalida <= NOW()
+                 AND sol_fechallegada > NOW()
                  FOR UPDATE
-            `, [nowLocalStr, nowLocalStr]);
+            `);
 
+            if (solicitudesActivas.length > 0) {
+                const patentesEnRuta = [...new Set(solicitudesActivas.map(r => r.sol_patentevehiculofk))].filter(p => p);
 
-            if (activeRequests.length > 0) {
-                const patentes = [...new Set(activeRequests.map(r => r.sol_patentevehiculofk))].filter(p => p);
-                if (patentes.length > 0) {
-                    await connection.query(
-                        `UPDATE VEHICULO SET vehi_estado = 'EN RUTA' WHERE vehi_patente IN (?)`,
-                        [patentes]
+                if (patentesEnRuta.length > 0) {
+                    // Actualizar a EN RUTA solo si están DISPONIBLES o ya asignados (evitar tocar mantenciones)
+                    await conexion.query(
+                        `UPDATE VEHICULO 
+                         SET vehi_estado = 'EN RUTA' 
+                         WHERE vehi_patente IN (?) 
+                         AND vehi_estado IN ('DISPONIBLE', 'EN RUTA')`,
+                        [patentesEnRuta]
                     );
                 }
             }
 
-            // Expire pending requests past start time
-
-            const [expiredRequests] = await connection.query(`
+            const [solicitudesExpiradas] = await conexion.query(`
                 SELECT sol_id
                 FROM SOLICITUDES
                 WHERE sol_estado = 'PENDIENTE'
-                AND sol_fechasalida < ?
+                AND sol_fechasalida < NOW()
                 FOR UPDATE
-            `, [nowLocalStr]);
+            `);
 
-            if (expiredRequests.length > 0) {
-                const ids = expiredRequests.map(r => r.sol_id);
+            if (solicitudesExpiradas.length > 0) {
+                const idsExpirados = solicitudesExpiradas.map(r => r.sol_id);
 
-                await connection.query(
-                    `UPDATE SOLICITUDES SET sol_estado = 'RECHAZADA', sol_observacionrechazo = 'Solicitud expirada automáticamente' WHERE sol_id IN (?)`,
-                    [ids]
+                await conexion.query(
+                    `UPDATE SOLICITUDES 
+                     SET sol_estado = 'RECHAZADA', 
+                         sol_observacionrechazo = 'Expirada: La fecha de salida ha pasado sin aprobación.' 
+                     WHERE sol_id IN (?)`,
+                    [idsExpirados]
                 );
-                console.log(`🚫 Cron: ${ids.length} solicitudes pendientes expiradas y rechazadas.`);
+                console.log(`[CRON] ${idsExpirados.length} solicitudes expiradas procesadas.`);
             }
 
-            await connection.commit();
+            await conexion.commit();
 
         } catch (error) {
-            await connection.rollback();
-            console.error('❌ Error en scheduler:', error);
+            await conexion.rollback();
+            console.error('[CRON] Error crítico en scheduler:', error);
         } finally {
-            connection.release();
+            conexion.release();
         }
     });
 
-    console.log('⏰ Scheduler initiated');
+    console.log('Servicio de Planificación iniciado (Sync con DB NOW())');
 };
 
 module.exports = initScheduler;
+

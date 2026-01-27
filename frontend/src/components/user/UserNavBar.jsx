@@ -8,7 +8,7 @@ const UserNavBar = ({ usuario, cerrarSesion, pestanaActiva, setPestanaActiva }) 
         <nav className="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-18 py-3">
-                    {/* Marca / Logo */}
+
                     <div className="flex items-center gap-4 group cursor-default">
                         <div className="relative">
                             <img src={LogoSlep} alt="Logo" className="relative h-14 w-auto object-contain" />
@@ -21,7 +21,7 @@ const UserNavBar = ({ usuario, cerrarSesion, pestanaActiva, setPestanaActiva }) 
                         </div>
                     </div>
 
-                    {/* Acciones de Navegación */}
+
                     <div className="flex items-center gap-4">
                         <div className="flex md:flex bg-slate-800/50 p-1 rounded-xl border border-slate-700/50">
                             <button

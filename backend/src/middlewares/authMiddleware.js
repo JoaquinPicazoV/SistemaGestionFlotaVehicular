@@ -11,14 +11,24 @@ const verificarToken = (req, res, next) => {
     if (!token) return res.status(401).json({ error: 'Acceso denegado. No hay token.' });
 
     try {
-        // Verificar firma y expiración
         const verificado = jwt.verify(token, CLAVE_SECRETA);
         req.usuario = verificado;
         next();
     } catch (error) {
-        res.status(400).json({ error: 'Token inválido' });
+        res.status(401).json({ error: 'Token inválido' });
     }
 };
 
-module.exports = verificarToken;
+const requerirAdmin = (req, res, next) => {
+    if (req.usuario && req.usuario.rol === 'admin') {
+        next();
+    } else {
+        res.status(403).json({ error: 'Acceso denegado. Se requieren permisos de administrador.' });
+    }
+};
+
+module.exports = {
+    verificarToken,
+    requerirAdmin
+};
 

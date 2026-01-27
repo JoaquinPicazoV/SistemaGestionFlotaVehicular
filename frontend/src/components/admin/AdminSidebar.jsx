@@ -26,7 +26,7 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
 
     return (
         <>
-            {/* Mobile Overlay */}
+
             {isOpen && (
                 <div
                     className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in"
@@ -39,18 +39,17 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
                 md:sticky md:translate-x-0 md:top-0
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
-                {/* Header / Brand */}
                 <div className="p-8 pb-6 flex justify-between items-center">
                     <div className="flex items-center justify-center w-full">
                         <img src={LogoSlep} alt="Logo" className="h-24 w-auto object-contain" />
                     </div>
-                    {/* Close button for mobile */}
+
                     <button onClick={onClose} className="md:hidden text-slate-400 hover:text-white">
                         <LogOut size={20} className="rotate-180" />
                     </button>
                 </div>
 
-                {/* Navigation */}
+
                 <nav className="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto custom-scrollbar">
                     <p className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Menu Principal</p>
                     {itemsMenu.map((item) => {
@@ -70,7 +69,7 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
                                 <item.icono size={20} className={`transition-transform duration-300 ${esActivo ? 'scale-110' : 'group-hover:scale-110'}`} />
                                 <span className="relative z-10">{item.etiqueta}</span>
 
-                                {/* Accent indicator for non-active hover */}
+
                                 {!esActivo && (
                                     <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-0 bg-blue-400 opacity-0 group-hover:h-8 group-hover:opacity-100 transition-all duration-300 rounded-r-full" />
                                 )}
@@ -79,7 +78,7 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
                     })}
                 </nav>
 
-                {/* System Status */}
+
                 <div className="px-6 py-4 hidden sm:block">
                     <div className="bg-slate-800/50 rounded-2xl p-4 border border-slate-700/50 relative overflow-hidden group">
                         <div className="absolute -right-4 -top-4 w-16 h-16 bg-blue-500/20 rounded-full blur-2xl group-hover:bg-blue-500/30 transition-all"></div>
@@ -93,7 +92,7 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
                     </div>
                 </div>
 
-                {/* Profile Footer */}
+
                 <div className="p-4 border-t border-slate-800 bg-slate-900/50">
                     <div className="flex items-center gap-3 mb-4 px-2">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 flex items-center justify-center font-bold text-white shadow-lg ring-2 ring-slate-800">

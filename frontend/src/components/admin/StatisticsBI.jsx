@@ -14,7 +14,7 @@ const COLORES = ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e
 
 const StatisticsBI = () => {
 
-    const [pestanaActiva, setPestanaActiva] = useState('flota'); // flota | demanda | territorio | operaciones
+    const [pestanaActiva, setPestanaActiva] = useState('flota');
     const [datos, setDatos] = useState(null);
     const [cargando, setCargando] = useState(true);
 
@@ -52,16 +52,16 @@ const StatisticsBI = () => {
                         <BarChart layout="vertical" data={datos.flota.desgaste}>
                             <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
                             <XAxis type="number" hide />
-                            <YAxis dataKey="name" type="category" width={90} tick={{ fontSize: 10 }} />
+                            <YAxis dataKey="nombre" type="category" width={90} tick={{ fontSize: 10 }} />
                             <Tooltip cursor={{ fill: 'transparent' }} />
-                            <Bar dataKey="value" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={20} />
+                            <Bar dataKey="valor" fill="#f59e0b" radius={[0, 4, 4, 0]} barSize={20} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
                 <div className="mt-4 p-3 bg-amber-50 rounded-lg text-xs text-amber-800 flex gap-2">
                     <AlertTriangle size={16} className="flex-shrink-0" />
                     <span>
-                        <strong>Insight:</strong> La unidad con más uso ({datos.flota.desgaste[0]?.name}) requiere revisión prioritaria.
+                        <strong>Insight:</strong> La unidad con más uso ({datos.flota.desgaste[0]?.nombre}) requiere revisión prioritaria.
                     </span>
                 </div>
             </div>
@@ -75,7 +75,7 @@ const StatisticsBI = () => {
                 <div className="h-64 flex justify-center">
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
-                            <Pie data={datos.flota.uso} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value">
+                            <Pie data={datos.flota.uso} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="valor" nameKey="nombre">
                                 {datos.flota.uso.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORES[index % COLORES.length]} />
                                 ))}
@@ -119,10 +119,10 @@ const StatisticsBI = () => {
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={datos.demanda.unidades}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
+                                <XAxis dataKey="nombre" tick={{ fontSize: 10 }} interval={0} />
                                 <YAxis width={30} />
                                 <Tooltip />
-                                <Bar dataKey="value" fill="#6366f1" radius={[4, 4, 0, 0]} />
+                                <Bar dataKey="valor" fill="#6366f1" radius={[4, 4, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -138,15 +138,15 @@ const StatisticsBI = () => {
         <div className="grid grid-cols-1 gap-6 pt-4">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                 <h3 className="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
-                    <Map size={20} className="text-emerald-500" /> Establecimientos Más Visitados (Top 10)
+                    <Map size={20} className="text-emerald-500" /> Establecimientos Más Visitados (Top 5)
                 </h3>
                 <div className="h-80">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart layout="vertical" data={datos.territorio.comunas}>
                             <XAxis type="number" hide />
-                            <YAxis dataKey="name" type="category" width={220} tick={{ fontSize: 10 }} />
+                            <YAxis dataKey="nombre" type="category" width={220} tick={{ fontSize: 10 }} />
                             <Tooltip />
-                            <Bar dataKey="value" fill="#10b981" radius={[0, 4, 4, 0]} />
+                            <Bar dataKey="valor" fill="#10b981" radius={[0, 4, 4, 0]} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
@@ -183,7 +183,7 @@ const StatisticsBI = () => {
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={datos.operaciones.choferes}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="name" tick={{ fontSize: 10, angle: -10 }} interval={0} />
+                            <XAxis dataKey="nombre" tick={{ fontSize: 10, angle: -10 }} interval={0} />
                             <YAxis width={30} />
                             <Tooltip />
                             <Bar dataKey="viajes" fill="#6366f1" radius={[4, 4, 0, 0]} />
@@ -243,3 +243,4 @@ const StatisticsBI = () => {
 };
 
 export default StatisticsBI;
+

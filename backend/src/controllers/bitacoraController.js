@@ -1,6 +1,5 @@
 const pool = require('../../db');
 
-// Obtener historial de bitácora de un vehículo
 exports.obtenerBitacora = async (req, res) => {
     const { patente } = req.params;
     try {
@@ -15,7 +14,6 @@ exports.obtenerBitacora = async (req, res) => {
     }
 };
 
-// Crear nueva entrada en la bitácora
 exports.crearEntrada = async (req, res) => {
     const { patente } = req.params;
     const {
@@ -46,7 +44,6 @@ exports.crearEntrada = async (req, res) => {
     }
 };
 
-// Actualizar entrada
 exports.actualizarEntrada = async (req, res) => {
     const { id } = req.params;
     const {
@@ -77,7 +74,6 @@ exports.actualizarEntrada = async (req, res) => {
     }
 };
 
-// Eliminar entrada
 exports.eliminarEntrada = async (req, res) => {
     const { id } = req.params;
     try {

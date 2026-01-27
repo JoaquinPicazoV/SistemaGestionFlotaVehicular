@@ -31,6 +31,19 @@ exports.actualizarChofer = async (req, res) => {
     const { email } = req.params;
     const { cho_nombre, cho_activo } = req.body;
     try {
+        if (cho_activo === false || cho_activo === 0 || cho_activo === '0') {
+            const [viajesPendientes] = await pool.query(`
+                SELECT sol_id FROM SOLICITUDES 
+                WHERE sol_correochoferfk = ? 
+                AND sol_estado IN ('PENDIENTE', 'APROBADA')
+                AND sol_fechasalida >= NOW()
+            `, [email]);
+
+            if (viajesPendientes.length > 0) {
+                return res.status(409).json({ error: 'No se puede desactivar: El chofer tiene viajes futuros asignados.' });
+            }
+        }
+
         await pool.query(
             'UPDATE CHOFER SET cho_nombre=?, cho_activo=? WHERE cho_correoinstitucional=?',
             [cho_nombre, cho_activo, email]
@@ -45,11 +58,21 @@ exports.actualizarChofer = async (req, res) => {
 exports.eliminarChofer = async (req, res) => {
     const { email } = req.params;
     try {
+        const [viajesActivos] = await pool.query(`
+            SELECT sol_id FROM SOLICITUDES 
+            WHERE sol_correochoferfk = ? 
+            AND sol_estado IN ('PENDIENTE', 'APROBADA')
+        `, [email]);
+
+        if (viajesActivos.length > 0) {
+            return res.status(409).json({ error: 'No se puede eliminar: El chofer tiene viajes pendientes o aprobados asignados.' });
+        }
+
         await pool.query('DELETE FROM CHOFER WHERE cho_correoinstitucional=?', [email]);
         res.json({ message: 'Chofer eliminado' });
     } catch (error) {
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            return res.status(400).json({ error: 'No se puede eliminar: El chofer tiene viajes asociados.' });
+            return res.status(400).json({ error: 'No se puede eliminar: El chofer tiene viajes asociados (historial).' });
         }
         console.error("Error eliminando chofer:", error);
         res.status(500).json({ error: 'Error al eliminar chofer' });

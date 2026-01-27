@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS VEHICULO (
     vehi_lugaraparcamiento VARCHAR(150),
     vehi_poliza VARCHAR(100),
     vehi_multas TEXT,
-    vehi_estado ENUM('DISPONIBLE', 'EN RUTA', 'MANTENCION') DEFAULT 'DISPONIBLE'
+    vehi_estado ENUM('DISPONIBLE', 'EN RUTA', 'MANTENCION', 'DE BAJA') DEFAULT 'DISPONIBLE'
 );
 
 -- Tabla de Bitácora de Vehículo
@@ -237,3 +237,10 @@ INSERT INTO ESTABLECIMIENTO (est_id, est_nombre, est_comunafk) VALUES
 (35155, 'JARDÍN INFANTIL Y SALA CUNA MI NUEVA AVENTURA', 2),
 (35156, 'SALA CUNA PRINCESA LICARAYEN', 2)
 ON DUPLICATE KEY UPDATE est_nombre=est_nombre;
+-- Índices para optimizar búsquedas frecuentes
+CREATE INDEX idx_solicitudes_estado ON SOLICITUDES(sol_estado);
+CREATE INDEX idx_solicitudes_fechasalida ON SOLICITUDES(sol_fechasalida);
+CREATE INDEX idx_solicitudes_fechallegada ON SOLICITUDES(sol_fechallegada);
+CREATE INDEX idx_solicitudes_patente ON SOLICITUDES(sol_patentevehiculofk);
+CREATE INDEX idx_solicitudes_chofer ON SOLICITUDES(sol_correochoferfk);
+CREATE INDEX idx_vehiculo_estado ON VEHICULO(vehi_estado);

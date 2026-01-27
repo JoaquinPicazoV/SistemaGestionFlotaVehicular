@@ -21,11 +21,11 @@ const PendingRequests = () => {
     const [vehiculos, setVehiculos] = useState([]);
     const [choferes, setChoferes] = useState([]);
     const [asignacion, setAsignacion] = useState({ vehi_patente: '', cho_correo: '' });
-    // const [kmEstimado, setKmEstimado] = useState(''); // REMOVED as per requirements
+
     const [motivoRechazo, setMotivoRechazo] = useState('');
     const [procesando, setProcesando] = useState(false);
 
-    // Estados para mensajes UI
+
     const [mensajeExito, setMensajeExito] = useState('');
     const [mensajeError, setMensajeError] = useState('');
     const [modalError, setModalError] = useState('');
@@ -53,7 +53,7 @@ const PendingRequests = () => {
     useEffect(() => {
         let resultado = solicitudes;
 
-        // 1. Búsqueda por texto
+
         if (terminoBusqueda) {
             const terminoMinuscula = terminoBusqueda.toLowerCase();
             resultado = resultado.filter(req =>
@@ -63,7 +63,7 @@ const PendingRequests = () => {
             );
         }
 
-        // 2. Filtro por Mes
+
         if (mesFiltro) {
             resultado = resultado.filter(req => {
                 const fecha = new Date(req.sol_fechasalida);
@@ -97,7 +97,6 @@ const PendingRequests = () => {
                 axios.get(`${API_URL}/drivers`, { withCredentials: true })
             ]);
             // Filtrar recursos disponibles
-            // Regla: Capacidad >= Pasajeros + 1 (Opcional, depende de lógica negocio. Se asume +1 Chofer)
             setVehiculos(resVehiculos.data.filter(v => v.vehi_estado === 'DISPONIBLE' && parseInt(v.vehi_capacidad) >= (detallesSolicitud.pasajeros.length + 1)));
             setChoferes(resChoferes.data.filter(d => d.cho_activo === 1));
             setModalAccion('APROBAR');
@@ -130,7 +129,7 @@ const PendingRequests = () => {
                 }, { withCredentials: true });
             }
 
-            // Exito
+
             setModalAccion(null);
             setSolicitudSeleccionada(null);
             setAsignacion({ vehi_patente: '', cho_correo: '' });
@@ -140,7 +139,7 @@ const PendingRequests = () => {
             obtenerSolicitudes(); // Actualizar lista
         } catch (error) {
             console.error("Error procesando solicitud:", error);
-            console.log("Response data:", error.response?.data);
+
 
             if (error.response?.data?.error) {
                 setModalError(error.response.data.error);
@@ -159,7 +158,7 @@ const PendingRequests = () => {
         setMesFiltro('');
     };
 
-    // --- RENDER FORMULARIO EXPRESS ---
+
     if (mostrarFormularioExpress) {
         return (
             <AdminExpressForm
@@ -180,7 +179,7 @@ const PendingRequests = () => {
     );
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto relative font-sans">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
                 <div>
                     <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Solicitudes Pendientes</h2>
@@ -215,11 +214,11 @@ const PendingRequests = () => {
                 alLimpiar={limpiarFiltros}
             />
 
-            {/* Mensajes Popup Centralizados */}
+
             {(mensajeError || mensajeExito) && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
                     {mensajeError && (
-                        <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                        <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full flex flex-col items-center text-center gap-4">
                             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-2">
                                 <XCircle size={32} />
                             </div>
@@ -229,7 +228,7 @@ const PendingRequests = () => {
                         </div>
                     )}
                     {mensajeExito && (
-                        <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                        <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full flex flex-col items-center text-center gap-4">
                             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500 mb-2">
                                 <CheckCircle size={32} />
                             </div>
@@ -297,110 +296,98 @@ const PendingRequests = () => {
                 }
             />
 
-            <AnimatePresence>
-                {modalAccion && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                            className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
-                        >
-                            <div className={`p-4 border-b flex justify-between items-center ${modalAccion === 'APROBAR' ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
-                                <h3 className={`font-bold text-lg ${modalAccion === 'APROBAR' ? 'text-emerald-800' : 'text-red-800'}`}>
-                                    {modalAccion === 'APROBAR' ? 'Aprobar & Asignar' : 'Rechazar Solicitud'}
-                                </h3>
-                                <button onClick={() => setModalAccion(null)} className="p-1 rounded-full hover:bg-white/50 transition-colors">
-                                    <X size={20} className={modalAccion === 'APROBAR' ? 'text-emerald-600' : 'text-red-600'} />
-                                </button>
-                            </div>
+            {modalAccion && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+                        <div className={`p-4 border-b flex justify-between items-center ${modalAccion === 'APROBAR' ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+                            <h3 className={`font-bold text-lg ${modalAccion === 'APROBAR' ? 'text-emerald-800' : 'text-red-800'}`}>
+                                {modalAccion === 'APROBAR' ? 'Aprobar & Asignar' : 'Rechazar Solicitud'}
+                            </h3>
+                            <button onClick={() => setModalAccion(null)} className="p-1 rounded-full hover:bg-white/50 transition-colors">
+                                <X size={20} className={modalAccion === 'APROBAR' ? 'text-emerald-600' : 'text-red-600'} />
+                            </button>
+                        </div>
 
-                            <div className="p-6 space-y-4">
-                                {modalError && (
-                                    <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm font-bold border border-red-100 flex items-center gap-2 animate-shake">
-                                        <XCircle size={16} /> {modalError}
+                        <div className="p-6 space-y-4">
+                            {modalError && (
+                                <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm font-bold border border-red-100 flex items-center gap-2">
+                                    <XCircle size={16} /> {modalError}
+                                </div>
+                            )}
+
+                            {modalAccion === 'APROBAR' ? (
+                                <>
+                                    <div className="space-y-2">
+                                        <label className="text-xs font-bold text-slate-500 uppercase">Asignar Vehículo</label>
+                                        <select
+                                            className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+                                            value={asignacion.vehi_patente}
+                                            onChange={e => setAsignacion({ ...asignacion, vehi_patente: e.target.value })}
+                                        >
+                                            <option value="">-- Seleccionar Vehículo --</option>
+                                            {vehiculos.map(v => (
+                                                <option key={v.vehi_patente} value={v.vehi_patente}>
+                                                    {v.vehi_marca} {v.vehi_modelo} ({v.vehi_patente}) - {v.vehi_capacidad} PAX
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                )}
 
-                                {modalAccion === 'APROBAR' ? (
-                                    <>
+                                    {solicitudSeleccionada.sol_requierechofer && (
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-slate-500 uppercase">Asignar Vehículo</label>
+                                            <label className="text-xs font-bold text-slate-500 uppercase">Asignar Conductor</label>
                                             <select
                                                 className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
-                                                value={asignacion.vehi_patente}
-                                                onChange={e => setAsignacion({ ...asignacion, vehi_patente: e.target.value })}
+                                                value={asignacion.cho_correo}
+                                                onChange={e => setAsignacion({ ...asignacion, cho_correo: e.target.value })}
                                             >
-                                                <option value="">-- Seleccionar Vehículo --</option>
-                                                {vehiculos.map(v => (
-                                                    <option key={v.vehi_patente} value={v.vehi_patente}>
-                                                        {v.vehi_marca} {v.vehi_modelo} ({v.vehi_patente}) - {v.vehi_capacidad} PAX
+                                                <option value="">-- Seleccionar Conductor --</option>
+                                                {choferes.map(d => (
+                                                    <option key={d.cho_correoinstitucional} value={d.cho_correoinstitucional}>
+                                                        {d.cho_nombre}
                                                     </option>
                                                 ))}
                                             </select>
                                         </div>
+                                    )}
+                                    {!solicitudSeleccionada.sol_requierechofer && (
+                                        <div className="p-3 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100">
+                                            * Esta solicitud no requiere conductor (autonoma).
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase">Motivo del Rechazo</label>
+                                    <textarea
+                                        className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none h-32 resize-none"
+                                        placeholder="Indique la razón del rechazo..."
+                                        value={motivoRechazo}
+                                        onChange={e => {
+                                            const val = e.target.value;
+                                            if (val.startsWith(' ')) return;
+                                            if (/^[a-zA-Z0-9\s.,;:\-/"'?!¡¿@#&()ºáéíóúÁÉÍÓÚñÑüÜ]*$/.test(val)) {
+                                                setMotivoRechazo(val);
+                                            }
+                                        }}
+                                    ></textarea>
+                                </div>
+                            )}
 
-                                        {solicitudSeleccionada.sol_requierechofer && (
-                                            <div className="space-y-2">
-                                                <label className="text-xs font-bold text-slate-500 uppercase">Asignar Conductor</label>
-                                                <select
-                                                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
-                                                    value={asignacion.cho_correo}
-                                                    onChange={e => setAsignacion({ ...asignacion, cho_correo: e.target.value })}
-                                                >
-                                                    <option value="">-- Seleccionar Conductor --</option>
-                                                    {choferes.map(d => (
-                                                        <option key={d.cho_correoinstitucional} value={d.cho_correoinstitucional}>
-                                                            {d.cho_nombre}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                            </div>
-                                        )}
-                                        {!solicitudSeleccionada.sol_requierechofer && (
-                                            <div className="p-3 bg-blue-50 text-blue-700 text-xs rounded-lg border border-blue-100">
-                                                * Esta solicitud no requiere conductor (autonoma).
-                                            </div>
-                                        )}
-                                    </>
-                                ) : (
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-500 uppercase">Motivo del Rechazo</label>
-                                        <textarea
-                                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none h-32 resize-none"
-                                            placeholder="Indique la razón del rechazo..."
-                                            value={motivoRechazo}
-                                            onChange={e => {
-                                                const val = e.target.value;
-                                                if (val.startsWith(' ')) return;
-                                                if (/^[a-zA-Z0-9\s.,;:\-/"'?!¡¿@#&()ºáéíóúÁÉÍÓÚñÑüÜ]*$/.test(val)) {
-                                                    setMotivoRechazo(val);
-                                                }
-                                            }}
-                                        ></textarea>
-                                    </div>
-                                )}
-
-                                <button
-                                    onClick={procesarSolicitud}
-                                    disabled={procesando}
-                                    className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-[0.98] ${modalAccion === 'APROBAR'
-                                        ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'
-                                        : 'bg-red-600 hover:bg-red-700 shadow-red-500/20'
-                                        }`}
-                                >
-                                    {procesando ? 'Procesando...' : (modalAccion === 'APROBAR' ? 'Confirmar Aprobación' : 'Confirmar Rechazo')}
-                                </button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                            <button
+                                onClick={procesarSolicitud}
+                                disabled={procesando}
+                                className={`w-full py-3 rounded-xl font-bold text-white shadow-lg transition-all ${modalAccion === 'APROBAR'
+                                    ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'
+                                    : 'bg-red-600 hover:bg-red-700 shadow-red-500/20'
+                                    }`}
+                            >
+                                {procesando ? 'Procesando...' : (modalAccion === 'APROBAR' ? 'Confirmar Aprobación' : 'Confirmar Rechazo')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

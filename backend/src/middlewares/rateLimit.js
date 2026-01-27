@@ -10,8 +10,8 @@ const limiter = rateLimit({
 // Limitador específico para login (fuerza bruta)
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 100,
-    message: 'Demasiados intentos de inicio de sesión.'
+    max: 5, // Límite estricto para evitar fuerza bruta
+    message: 'Demasiados intentos de inicio de sesión, cuenta bloqueada temporalmente.'
 });
 
 module.exports = { limiter, loginLimiter };

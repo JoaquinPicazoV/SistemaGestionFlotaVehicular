@@ -61,3 +61,12 @@ exports.obtenerEstablecimientos = async (req, res) => {
         res.status(500).json({ error: 'Error al obtener establecimientos' });
     }
 };
+exports.obtenerUnidades = async (req, res) => {
+    try {
+        const [filas] = await pool.query('SELECT usu_id, usu_unidad FROM USUARIO ORDER BY usu_unidad ASC');
+        res.json(filas);
+    } catch (error) {
+        console.error("Error obteniendo unidades:", error);
+        res.status(500).json({ error: 'Error al obtener unidades' });
+    }
+};

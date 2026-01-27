@@ -1,5 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/common/ProtectedRoute';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
@@ -8,13 +10,21 @@ import Dashboard from './pages/Dashboard';
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Landing />} />
-        <Route path="/login" element={<Login />} />
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<Landing />} />
+          <Route path="/login" element={<Login />} />
 
-        {/* Ruta Protegida (Idealmente, usar un wrapper de Auth) */}
-        <Route path="/dashboard" element={<Dashboard />} />
-      </Routes>
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

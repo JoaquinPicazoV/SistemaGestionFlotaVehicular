@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config/api';
+import { useAuth } from '../context/AuthContext';
 import { ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, Tooltip, Legend } from 'recharts';
 import { AlertCircle, TrendingUp, Menu, Users } from 'lucide-react';
 
@@ -16,8 +17,8 @@ import LoadingScreen from '../components/common/LoadingScreen';
 import UserDashboard from './UserDashboard';
 
 const Dashboard = () => {
+    const { usuario, cerrarSesion } = useAuth();
     const navigate = useNavigate();
-    const [usuario, setUsuario] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [pestanaActiva, setPestanaActiva] = useState('resumen');
     const [menuLateralAbierto, setMenuLateralAbierto] = useState(false);
@@ -30,8 +31,6 @@ const Dashboard = () => {
         estadoFlota: []
     });
 
-
-
     const obtenerEstadisticas = useCallback(async () => {
         try {
             const res = await axios.get(`${API_URL}/stats/summary`, { withCredentials: true });
@@ -43,27 +42,15 @@ const Dashboard = () => {
         }
     }, [API_URL]);
 
-
     useEffect(() => {
-        const verificarSesion = async () => {
-            try {
-                const response = await axios.get(`${API_URL}/auth/check`, { withCredentials: true });
-                setUsuario(response.data.usuario);
-
-                if (response.data.usuario.rol === 'admin') {
-                    obtenerEstadisticas();
-                } else {
-                    setCargando(false);
-                }
-            } catch (error) {
-                console.error("Session check failed", error);
-                navigate('/login');
+        if (usuario) {
+            if (usuario.rol === 'admin') {
+                obtenerEstadisticas();
+            } else {
+                setCargando(false);
             }
-        };
-
-        verificarSesion();
-    }, [navigate, obtenerEstadisticas, API_URL]);
-
+        }
+    }, [usuario, obtenerEstadisticas]);
 
     useEffect(() => {
         let intervalo;
@@ -73,14 +60,7 @@ const Dashboard = () => {
         return () => clearInterval(intervalo);
     }, [usuario, obtenerEstadisticas]);
 
-    const cerrarSesion = async () => {
-        try {
-            await axios.post(`${API_URL}/auth/logout`, {}, { withCredentials: true });
-            navigate('/login');
-        } catch (error) {
-            console.error("Error al salir", error);
-        }
-    };
+
 
     if (cargando) return <LoadingScreen mensaje="Cargando Panel..." />;
 
@@ -186,12 +166,13 @@ const Dashboard = () => {
                                                         innerRadius={60}
                                                         outerRadius={80}
                                                         paddingAngle={5}
-                                                        dataKey="value"
+                                                        dataKey="valor"
+                                                        nameKey="nombre"
                                                         stroke="none"
                                                     >
                                                         {estadisticas.estadoFlota.map((entry, index) => {
                                                             const colors = { 'DISPONIBLE': '#10b981', 'EN RUTA': '#3b82f6', 'MANTENCION': '#ef4444' };
-                                                            return <Cell key={`cell-${index}`} fill={colors[entry.name] || '#94a3b8'} />;
+                                                            return <Cell key={`cell-${index}`} fill={colors[entry.nombre] || '#94a3b8'} />;
                                                         })}
                                                     </Pie>
                                                     <Tooltip
@@ -224,7 +205,7 @@ const Dashboard = () => {
                                                 estadisticas.unidadesTop.map((u, i) => (
                                                     <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                                                         <span className="text-sm font-bold text-slate-700 truncate max-w-[150px]" title={u.sol_unidad}>{u.sol_unidad}</span>
-                                                        <span className="text-xs font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-lg">{u.trips} viajes</span>
+                                                        <span className="text-xs font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-lg">{u.viajes} viajes</span>
                                                     </div>
                                                 ))
                                             ) : (

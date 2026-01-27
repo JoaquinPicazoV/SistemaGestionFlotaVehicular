@@ -24,13 +24,14 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
     const [tiposPasajero, setTiposPasajero] = useState([]);
     const [vehiculos, setVehiculos] = useState([]);
     const [choferes, setChoferes] = useState([]);
+    const [unidades, setUnidades] = useState([]);
 
     const [enviando, setEnviando] = useState(false);
     const [mensajeExito, setMensajeExito] = useState('');
     const [mensajeError, setMensajeError] = useState('');
     const peticionEnCurso = useRef(false);
 
-    // Estado del Formulario
+
     const [datosFormulario, setDatosFormulario] = useState({
         sol_fechasalida: '',
         sol_timesalida: '',
@@ -38,6 +39,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
         sol_timeallegada: '',
         sol_motivo: '',
         sol_itinerario: '',
+        sol_unidad: '',
         sol_nombresolicitante: '', // Debe ser ingresado manualmente
         sol_tipo: 'PEDAGOGICA',
         sol_requierechofer: true,
@@ -74,16 +76,18 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
     useEffect(() => {
         const obtenerDatosIniciales = async () => {
             try {
-                const [resComunas, resTipos, resVehiculos, resChoferes] = await Promise.all([
+                const [resComunas, resTipos, resVehiculos, resChoferes, resUnidades] = await Promise.all([
                     axios.get(`${API_URL}/comunas`, { withCredentials: true }),
                     axios.get(`${API_URL}/passenger-types`, { withCredentials: true }),
                     axios.get(`${API_URL}/vehicles`, { withCredentials: true }),
-                    axios.get(`${API_URL}/drivers`, { withCredentials: true })
+                    axios.get(`${API_URL}/drivers`, { withCredentials: true }),
+                    axios.get(`${API_URL}/units`, { withCredentials: true })
                 ]);
                 setComunas(resComunas.data);
                 setTiposPasajero(resTipos.data);
                 setVehiculos(resVehiculos.data.filter(v => v.vehi_estado === 'DISPONIBLE'));
                 setChoferes(resChoferes.data.filter(d => d.cho_activo === 1));
+                setUnidades(resUnidades.data);
             } catch (error) {
                 console.error("Error obteniendo datos iniciales", error);
             }
@@ -152,6 +156,13 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
             const dSalida = new Date(fechaSalida);
             const dLlegada = new Date(fechaLlegada);
 
+            if (!datosFormulario.sol_unidad) {
+                setMensajeError("Debe seleccionar una unidad solicitante.");
+                setEnviando(false);
+                peticionEnCurso.current = false;
+                return;
+            }
+
             if (dSalida >= dLlegada) {
                 setMensajeError("La fecha y hora de llegada debe ser posterior a la de salida.");
                 setEnviando(false);
@@ -162,6 +173,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
             const datosEnvio = {
                 sol_fechasalida: fechaSalida,
                 sol_fechallegada: fechaLlegada,
+                sol_unidad: datosFormulario.sol_unidad,
                 sol_motivo: datosFormulario.sol_motivo,
                 sol_itinerario: datosFormulario.sol_itinerario,
                 sol_nombresolicitante: datosFormulario.sol_nombresolicitante,
@@ -187,7 +199,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
         } catch (error) {
             console.error("Error creando solicitud admin:", error);
             if (error.response && error.response.status === 409) {
-                setMensajeError("Conflicto: El vehículo o chofer ya está ocupado en ese horario.");
+                setMensajeError(error.response.data.error || "Conflicto de horario detectado.");
             } else {
                 setMensajeError("Error al procesar la solicitud express.");
             }
@@ -198,7 +210,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
     };
 
     return (
-        <div className="max-w-4xl mx-auto animate-in fade-in zoom-in-95 duration-500 pb-32">
+        <div className="max-w-4xl mx-auto pb-32">
             <div className="flex items-center gap-4 mb-8">
                 <button onClick={alCancelar} className="w-10 h-10 flex items-center justify-center bg-white border border-slate-200 rounded-full text-slate-400 hover:text-blue-600 hover:border-blue-200 shadow-sm transition-all"><ChevronRight className="rotate-180" size={24} /></button>
                 <div>
@@ -207,14 +219,14 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
             </div>
 
             {mensajeExito && (
-                <div className="mb-8 p-4 bg-emerald-50 border-2 border-emerald-100 text-emerald-800 rounded-2xl flex items-center gap-3 shadow-lg shadow-emerald-500/10 animate-fade-in-down">
+                <div className="mb-8 p-4 bg-emerald-50 border-2 border-emerald-100 text-emerald-800 rounded-2xl flex items-center gap-3 shadow-lg shadow-emerald-500/10">
                     <div className="p-2 bg-emerald-100 rounded-full"><CheckCircle2 size={24} className="text-emerald-600" /></div>
                     <div className="font-bold text-lg">{mensajeExito}</div>
                 </div>
             )}
 
             {mensajeError && (
-                <div className="mb-8 p-4 bg-red-50 border-2 border-red-100 text-red-800 rounded-2xl flex items-center gap-3 shadow-lg shadow-red-500/10 animate-fade-in-down" role="alert">
+                <div className="mb-8 p-4 bg-red-50 border-2 border-red-100 text-red-800 rounded-2xl flex items-center gap-3 shadow-lg shadow-red-500/10" role="alert">
                     <div className="p-2 bg-red-100 rounded-full"><AlertCircle size={24} className="text-red-600" /></div>
                     <div>
                         <div className="font-bold text-lg">Error</div>
@@ -225,7 +237,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
 
             <form onSubmit={manejarEnvio} className="space-y-6">
 
-                {/* 1. TIPO DE SERVICIO (Igual a UserRequestForm) */}
+
                 <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center gap-2">
                         <div className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">1</div>
@@ -233,18 +245,18 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                     </div>
                     <div className="p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div onClick={() => setDatosFormulario({ ...datosFormulario, sol_tipo: 'PEDAGOGICA', sol_requierechofer: true })} className={`cursor-pointer group relative overflow-hidden p-6 rounded-2xl border-2 transition-all duration-300 ${datosFormulario.sol_tipo === 'PEDAGOGICA' ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100' : 'border-slate-100 hover:border-blue-300 hover:bg-slate-50 bg-white'}`}>
+                            <button type="button" onClick={() => setDatosFormulario({ ...datosFormulario, sol_tipo: 'PEDAGOGICA', sol_requierechofer: true })} className={`w-full text-left cursor-pointer group relative overflow-hidden p-6 rounded-2xl border-2 transition-all duration-300 ${datosFormulario.sol_tipo === 'PEDAGOGICA' ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100' : 'border-slate-100 hover:border-blue-300 hover:bg-slate-50 bg-white'}`}>
                                 <div className="flex flex-col items-center text-center gap-4 relative z-10">
                                     <div className={`p-4 rounded-full transition-all duration-300 ${datosFormulario.sol_tipo === 'PEDAGOGICA' ? 'bg-blue-500 text-white scale-110 shadow-lg shadow-blue-500/30' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-500'}`}><Bus size={32} /></div>
                                     <div><div className={`font-bold text-lg mb-1 ${datosFormulario.sol_tipo === 'PEDAGOGICA' ? 'text-blue-900' : 'text-slate-700'}`}>Salida Pedagógica</div><span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-white/60 text-slate-500">Alumnos + Docentes</span></div>
                                 </div>
-                            </div>
-                            <div onClick={() => setDatosFormulario({ ...datosFormulario, sol_tipo: 'COMETIDO' })} className={`cursor-pointer group relative overflow-hidden p-6 rounded-2xl border-2 transition-all duration-300 ${datosFormulario.sol_tipo === 'COMETIDO' ? 'border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-100' : 'border-slate-100 hover:border-indigo-300 hover:bg-slate-50 bg-white'}`}>
+                            </button>
+                            <button type="button" onClick={() => setDatosFormulario({ ...datosFormulario, sol_tipo: 'COMETIDO' })} className={`w-full text-left cursor-pointer group relative overflow-hidden p-6 rounded-2xl border-2 transition-all duration-300 ${datosFormulario.sol_tipo === 'COMETIDO' ? 'border-indigo-500 bg-indigo-50 shadow-md shadow-indigo-100' : 'border-slate-100 hover:border-indigo-300 hover:bg-slate-50 bg-white'}`}>
                                 <div className="flex flex-col items-center text-center gap-4 relative z-10">
                                     <div className={`p-4 rounded-full transition-all duration-300 ${datosFormulario.sol_tipo === 'COMETIDO' ? 'bg-indigo-500 text-white scale-110 shadow-lg shadow-indigo-500/30' : 'bg-slate-100 text-slate-400 group-hover:bg-indigo-100 group-hover:text-indigo-500'}`}><Briefcase size={32} /></div>
                                     <div><div className={`font-bold text-lg mb-1 ${datosFormulario.sol_tipo === 'COMETIDO' ? 'text-indigo-900' : 'text-slate-700'}`}>Cometido Funcionario</div><span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-white/60 text-slate-500">Gestiones / Traslados</span></div>
                                 </div>
-                            </div>
+                            </button>
                         </div>
                         <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-slate-50 to-white border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${datosFormulario.sol_requierechofer ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-400'}`}><User size={24} /></div><div><div className="text-sm font-bold text-slate-900">Servicio de Conductor</div><div className="text-xs text-slate-500">Habilita esta opción si necesitas chofer profesional.</div></div></div>
@@ -253,7 +265,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                     </div>
                 </div>
 
-                {/* 2. ITINERARIO Y MOTIVO */}
+
                 <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center gap-2"><div className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">2</div><h3 className="font-bold text-slate-800 uppercase text-sm tracking-wide">Itinerario y Motivo</h3></div>
                     <div className="p-6">
@@ -270,7 +282,6 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                             const val = e.target.value;
                                             setDatosFormulario(prev => ({ ...prev, sol_fechasalida: val, sol_fechallegada: val > prev.sol_fechallegada ? val : prev.sol_fechallegada }));
                                         }}
-                                        min={new Date().toISOString().split('T')[0]}
                                     />
                                     <input
                                         type="time"
@@ -304,19 +315,34 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                         required
                                         className="w-32 bg-white p-3 rounded-xl border border-red-100 text-sm font-bold text-slate-700 outline-none text-center"
                                         value={datosFormulario.sol_timeallegada}
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            if (datosFormulario.sol_fechasalida === datosFormulario.sol_fechallegada && datosFormulario.sol_timesalida && val <= datosFormulario.sol_timesalida) {
-                                                alert("La hora de regreso debe ser posterior a la de salida.");
-                                                return;
-                                            }
-                                            setDatosFormulario(prev => ({ ...prev, sol_timeallegada: val }));
-                                        }}
+                                        onChange={e => setDatosFormulario(prev => ({ ...prev, sol_timeallegada: e.target.value }))}
                                     />
                                 </div>
+                                {datosFormulario.sol_fechasalida === datosFormulario.sol_fechallegada &&
+                                    datosFormulario.sol_timesalida &&
+                                    datosFormulario.sol_timeallegada < datosFormulario.sol_timesalida && (
+                                        <div className="mt-2 text-xs font-bold text-red-500 flex items-center gap-1">
+                                            <AlertCircle size={12} /> Hora inválida (anterior a salida)
+                                        </div>
+                                    )}
                             </div>
                         </div>
                         <div className="space-y-5">
+                            <div className="relative group">
+                                <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Unidad Solicitante</label>
+                                <select
+                                    required
+                                    className="w-full p-4 bg-white border border-slate-300 rounded-xl outline-none font-medium text-slate-800"
+                                    value={datosFormulario.sol_unidad}
+                                    onChange={e => setDatosFormulario({ ...datosFormulario, sol_unidad: e.target.value })}
+                                >
+                                    <option value="">-- Seleccionar Unidad --</option>
+                                    {unidades.map(u => (
+                                        <option key={u.usu_id} value={u.usu_unidad}>{u.usu_unidad}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <div className="relative group"><label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Solicitante Responsable</label>
                                 <input
                                     type="text"
@@ -419,7 +445,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                 />
                             </div>
 
-                            {/* Destinos */}
+
                             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">
                                 <label className="text-xs font-bold text-slate-500 uppercase flex items-center justify-between gap-2 mb-3">
                                     <div className="flex items-center gap-2"><MapPin size={14} /> Destinos a visitar</div>
@@ -465,7 +491,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                     </div>
                 </div>
 
-                {/* 3. NÓMINA DE OCUPANTES */}
+
                 <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                     <div className="bg-slate-50/50 px-6 py-4 border-b border-slate-100 flex items-center justify-between"><div className="flex items-center gap-2"><div className="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">3</div><h3 className="font-bold text-slate-800 uppercase text-sm tracking-wide">Nómina de Ocupantes</h3></div><span className="text-xs font-bold bg-slate-200 text-slate-600 px-2 py-1 rounded-md">{datosFormulario.pasajeros.length} Personas</span></div>
                     <div className="p-6">
@@ -510,7 +536,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                     </div>
                 </div>
 
-                {/* 4. ASIGNACIÓN DE RECURSOS (ADMIN EXCLUSIVO) */}
+
                 <div className="bg-white rounded-3xl shadow-sm border border-emerald-200 overflow-hidden ring-4 ring-emerald-500/5">
                     <div className="bg-emerald-50 px-6 py-4 border-b border-emerald-100 flex items-center gap-2">
                         <div className="bg-emerald-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold">4</div>
@@ -541,7 +567,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                         <button type="button" onClick={alCancelar} className="px-6 py-3 font-bold text-slate-500 hover:bg-slate-50 rounded-xl">Cancelar</button>
                         <button
                             type="submit"
-                            disabled={enviando || !datosFormulario.sol_patentevehiculofk || (datosFormulario.sol_requierechofer && !datosFormulario.sol_correochoferfk) || datosFormulario.destinos.length === 0}
+                            disabled={enviando || !datosFormulario.sol_unidad || !datosFormulario.sol_patentevehiculofk || (datosFormulario.sol_requierechofer && !datosFormulario.sol_correochoferfk) || datosFormulario.destinos.length === 0}
                             className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed text-lg"
                         >
                             {enviando ? 'Procesando...' : <><ShieldCheck size={20} /> Crear y Aprobar Inmediatamente</>}
@@ -549,12 +575,11 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                     </div>
                 </div>
 
-                {/* Mensajes Flotantes Inferiores */}
-                {/* Mensajes Popup Centralizados */}
+
                 {(mensajeError || mensajeExito) && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
                         {mensajeError && (
-                            <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full flex flex-col items-center text-center gap-4">
                                 <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-2">
                                     <AlertCircle size={32} />
                                 </div>
@@ -564,7 +589,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                             </div>
                         )}
                         {mensajeExito && (
-                            <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                            <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full flex flex-col items-center text-center gap-4">
                                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500 mb-2">
                                     <CheckCircle2 size={32} />
                                 </div>

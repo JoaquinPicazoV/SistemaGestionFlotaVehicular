@@ -16,33 +16,35 @@ import { Eye } from 'lucide-react';
 import RequestDetailModal from '../common/RequestDetailModal';
 
 const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolicitud }) => {
-    // Estado local para filtros
-    const [terminoBusqueda, setTerminoBusqueda] = useState('');
-    const [mesFiltro, setMesFiltro] = useState('');
-    const [estadoFiltro, setEstadoFiltro] = useState('ALL');
 
-    // Estado para detalles
     const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
     const [detallesSolicitud, setDetallesSolicitud] = useState({ pasajeros: [], destinos: [] });
     const [cargandoDetalles, setCargandoDetalles] = useState(false);
 
-    // Calcular estadísticas localmente
+    const [terminoBusqueda, setTerminoBusqueda] = useState('');
+    const [mesFiltro, setMesFiltro] = useState('');
+    const [estadoFiltro, setEstadoFiltro] = useState('ALL');
+
+
     const estadisticas = {
         total: solicitudes.length,
         pendientes: solicitudes.filter(r => r.sol_estado === 'PENDIENTE').length,
     };
 
-    // Lógica de filtrado
+
     const solicitudesFiltradas = useMemo(() => {
         let resultado = solicitudes;
 
-        // 1. Búsqueda por texto (Motivo)
+
         if (terminoBusqueda) {
             const terminoMinuscula = terminoBusqueda.toLowerCase();
-            resultado = resultado.filter(req => req.sol_motivo.toLowerCase().includes(terminoMinuscula));
+            resultado = resultado.filter(req =>
+                req.sol_motivo.toLowerCase().includes(terminoMinuscula) ||
+                (req.sol_nombresolicitante && req.sol_nombresolicitante.toLowerCase().includes(terminoMinuscula))
+            );
         }
 
-        // 2. Filtro por Mes
+
         if (mesFiltro) {
             resultado = resultado.filter(req => {
                 const fecha = new Date(req.sol_fechasalida);
@@ -51,7 +53,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
             });
         }
 
-        // 3. Filtro por Estado
+
         if (estadoFiltro !== 'ALL') {
             resultado = resultado.filter(req => req.sol_estado === estadoFiltro);
         }
@@ -81,7 +83,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
     return (
         <div className="animate-in fade-in slide-in-from-bottom-6 duration-700 space-y-8">
 
-            {/* Estadísticas Principales */}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="bg-gradient-to-br from-blue-600 to-blue-700 p-6 rounded-2xl text-white shadow-xl shadow-blue-900/20 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform"><LayoutGrid size={64} /></div>
@@ -96,7 +98,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                 </div>
             </div>
 
-            {/* Sección de Lista */}
+
             <div className="bg-white rounded-3xl border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
                 <div className="p-6 border-b border-slate-100 flex flex-col gap-6 bg-slate-50/30">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -113,7 +115,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                         </button>
                     </div>
 
-                    {/* Barra de Filtros */}
+
                     <RequestFilters
                         terminoBusqueda={terminoBusqueda}
                         setTerminoBusqueda={setTerminoBusqueda}
@@ -157,7 +159,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                             <div key={req.sol_id} className="p-6 hover:bg-slate-50 transition-all duration-200 group relative">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
 
-                                    {/* Estado e ID */}
+
                                     <div className="flex-shrink-0 flex flex-col gap-2 min-w-[120px]">
                                         <StatusBadge estado={req.sol_estado} />
                                         <div className="text-xs text-slate-500 text-center font-bold truncate max-w-[120px] flex items-center justify-center gap-1" title={req.sol_nombresolicitante}>
@@ -166,7 +168,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                         </div>
                                     </div>
 
-                                    {/* Información */}
+
                                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => verDetalles(req)}>
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
@@ -202,7 +204,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                         </button>
                                     </div>
 
-                                    {/* Observación de Rechazo */}
+
                                     {req.sol_estado === 'RECHAZADA' && req.sol_observacionrechazo && (
                                         <div className="md:w-64 bg-red-50 p-3 rounded-lg border border-red-100 text-xs">
                                             <strong className="text-red-700 block mb-1">Motivo Rechazo:</strong>

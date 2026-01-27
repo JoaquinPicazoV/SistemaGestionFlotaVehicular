@@ -33,13 +33,13 @@ function Landing() {
 
     return (
         <div className="min-h-screen bg-slate-900 font-sans text-slate-100 selection:bg-blue-500 selection:text-white overflow-hidden relative">
-            {/* Fondo Animado */}
+
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0">
                 <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
                 <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-indigo-600/20 rounded-full blur-[100px]"></div>
             </div>
 
-            {/* Navbar */}
+
             <nav className="fixed w-full z-50 border-b border-white/10 bg-slate-900/60 backdrop-blur-xl transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex justify-between items-center">
                     <div className="flex items-center gap-2 sm:gap-3">
@@ -57,7 +57,7 @@ function Landing() {
                 </div>
             </nav>
 
-            {/* Contenido Principal */}
+
             <main className="relative z-10 flex flex-col items-center justify-start md:justify-center min-h-screen px-4 text-center pt-24 pb-12 md:py-0">
 
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border mb-6 md:mb-8 backdrop-blur-md transition-all ${enLinea
@@ -83,7 +83,7 @@ function Landing() {
                         <Map className="text-blue-400 mb-3 md:mb-4 w-6 h-6 md:w-7 md:h-7" />
                         <h3 className="text-base md:text-lg font-semibold text-white mb-2">Cobertura</h3>
                         <p className="text-slate-400 text-sm">
-                            Solicitudes disponibles para las X comunas del territorio.
+                            Solicitudes disponibles para las 5 comunas del territorio SLEP Llanquihue.
                         </p>
                     </div>
 
@@ -99,7 +99,7 @@ function Landing() {
                         <ClipboardList className="text-purple-400 mb-3 md:mb-4 w-6 h-6 md:w-7 md:h-7" />
                         <h3 className="text-base md:text-lg font-semibold text-white mb-2">Control de Flota</h3>
                         <p className="text-slate-400 text-sm">
-                            La administración supervisa el uso de los vehículos y gestiona las solicitudes para garantizar un servicio eficiente y ordenado.
+                            Los administradores supervisan el uso de los vehículos y gestiona las solicitudes para garantizar un servicio eficiente y ordenado.
                         </p>
                     </div>
                 </div>

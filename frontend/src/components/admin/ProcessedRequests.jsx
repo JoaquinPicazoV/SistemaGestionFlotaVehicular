@@ -53,9 +53,9 @@ const ProcessedRequests = () => {
         if (terminoBusqueda) {
             const terminoMinuscula = terminoBusqueda.toLowerCase();
             resultado = resultado.filter(req =>
-                req.sol_unidad.toLowerCase().includes(terminoMinuscula) ||
-                req.sol_nombresolicitante.toLowerCase().includes(terminoMinuscula) ||
-                req.sol_motivo.toLowerCase().includes(terminoMinuscula)
+                (req.sol_unidad || '').toLowerCase().includes(terminoMinuscula) ||
+                (req.sol_nombresolicitante || '').toLowerCase().includes(terminoMinuscula) ||
+                (req.sol_motivo || '').toLowerCase().includes(terminoMinuscula)
             );
         }
 

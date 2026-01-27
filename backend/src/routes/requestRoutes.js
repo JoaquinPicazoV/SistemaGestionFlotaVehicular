@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const requestController = require('../controllers/requestController');
-const verifyToken = require('../middlewares/authMiddleware');
+const { verificarToken, requerirAdmin } = require('../middlewares/authMiddleware');
 const validate = require('../middlewares/validate');
 const { body } = require('express-validator');
 
@@ -26,14 +26,14 @@ const validacionRechazarSolicitud = [
     validate
 ];
 
-router.get('/pending', verifyToken, requestController.obtenerPendientes);
-router.get('/processed', verifyToken, requestController.obtenerProcesadas);
-router.get('/my', verifyToken, requestController.obtenerMisSolicitudes);
-router.get('/:id/details', verifyToken, requestController.obtenerDetalles);
-router.post('/', verifyToken, validacionCrearSolicitud, requestController.crearSolicitud);
-router.post('/admin', verifyToken, validacionCrearSolicitud, requestController.crearSolicitudAdmin);
-router.put('/:id/approve', verifyToken, validacionAprobarSolicitud, requestController.aprobarSolicitud);
-router.put('/:id/reject', verifyToken, validacionRechazarSolicitud, requestController.rechazarSolicitud);
-router.put('/:id/cancel', verifyToken, requestController.cancelarSolicitud);
+router.get('/pending', verificarToken, requestController.obtenerPendientes);
+router.get('/processed', verificarToken, requestController.obtenerProcesadas);
+router.get('/my', verificarToken, requestController.obtenerMisSolicitudes);
+router.get('/:id/details', verificarToken, requestController.obtenerDetalles);
+router.post('/', verificarToken, validacionCrearSolicitud, requestController.crearSolicitud);
+router.post('/admin', verificarToken, requerirAdmin, validacionCrearSolicitud, requestController.crearSolicitudAdmin);
+router.put('/:id/approve', verificarToken, requerirAdmin, validacionAprobarSolicitud, requestController.aprobarSolicitud);
+router.put('/:id/reject', verificarToken, requerirAdmin, validacionRechazarSolicitud, requestController.rechazarSolicitud);
+router.put('/:id/cancel', verificarToken, requestController.cancelarSolicitud);
 
 module.exports = router;

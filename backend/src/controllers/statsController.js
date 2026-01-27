@@ -14,16 +14,16 @@ exports.obtenerBI = async (req, res) => {
             [cargaChoferes]
         ] = await Promise.all([
             pool.query(`
-                SELECT CONCAT(v.vehi_modelo, ' - ', v.vehi_patente) as name, 
-                       COALESCE(SUM(s.sol_kmestimado), 0) as value 
+                SELECT CONCAT(v.vehi_modelo, ' - ', v.vehi_patente) as nombre, 
+                       COALESCE(SUM(s.sol_kmestimado), 0) as valor 
                 FROM VEHICULO v
                 LEFT JOIN SOLICITUDES s ON v.vehi_patente = s.sol_patentevehiculofk AND s.sol_estado = 'FINALIZADA'
                 GROUP BY v.vehi_patente
-                ORDER BY value DESC
+                ORDER BY valor DESC
                 LIMIT 3
             `),
             pool.query(`
-                SELECT v.vehi_patente as name, COUNT(s.sol_id) as value
+                SELECT v.vehi_patente as nombre, COUNT(s.sol_id) as valor
                 FROM VEHICULO v
                 LEFT JOIN SOLICITUDES s ON v.vehi_patente = s.sol_patentevehiculofk AND s.sol_estado = 'FINALIZADA'
                 GROUP BY v.vehi_patente
@@ -35,22 +35,22 @@ exports.obtenerBI = async (req, res) => {
                 FROM SOLICITUDES
             `),
             pool.query(`
-                SELECT sol_unidad as name, COUNT(*) as value
+                SELECT sol_unidad as nombre, COUNT(*) as valor
                 FROM SOLICITUDES
                 GROUP BY sol_unidad
-                ORDER BY value DESC
+                ORDER BY valor DESC
                 LIMIT 3
             `),
-            pool.query(`SELECT sol_motivo as name, COUNT(*) as value FROM SOLICITUDES GROUP BY sol_motivo`),
+            pool.query(`SELECT sol_motivo as nombre, COUNT(*) as valor FROM SOLICITUDES GROUP BY sol_motivo`),
             pool.query(`
-                SELECT e.est_nombre as name, COUNT(*) as value
+                SELECT e.est_nombre as nombre, COUNT(*) as valor
                 FROM SOLICITUD_DESTINO sd
                 JOIN SOLICITUDES s ON sd.sde_solicitudfk = s.sol_id
                 JOIN ESTABLECIMIENTO e ON sd.sde_establecimientofk = e.est_id
                 WHERE s.sol_estado = 'FINALIZADA'
                 GROUP BY e.est_id
-                ORDER BY value DESC
-                LIMIT 10
+                ORDER BY valor DESC
+                LIMIT 5
             `),
             pool.query(`
                 SELECT l.lug_nombre as nombre, c.com_nombre as comuna, COUNT(*) as visitas
@@ -70,7 +70,7 @@ exports.obtenerBI = async (req, res) => {
                 LIMIT 12
             `),
             pool.query(`
-                SELECT c.cho_nombre as name, COUNT(s.sol_id) as viajes
+                SELECT c.cho_nombre as nombre, COUNT(s.sol_id) as viajes
                 FROM CHOFER c
                 LEFT JOIN SOLICITUDES s ON c.cho_correoinstitucional = s.sol_correochoferfk AND s.sol_estado IN ('FINALIZADA', 'APROBADA')
                 GROUP BY c.cho_correoinstitucional
@@ -110,7 +110,7 @@ exports.obtenerResumen = async (req, res) => {
             LIMIT 5
         `);
 
-        const [estadoFlota] = await pool.query("SELECT vehi_estado as name, COUNT(*) as value FROM VEHICULO GROUP BY vehi_estado");
+        const [estadoFlota] = await pool.query("SELECT vehi_estado as nombre, COUNT(*) as valor FROM VEHICULO GROUP BY vehi_estado");
 
         const [estadisticasKm] = await pool.query(`
             SELECT COALESCE(SUM(sol_kmestimado), 0) as totalKm 
@@ -130,11 +130,11 @@ exports.obtenerResumen = async (req, res) => {
         `);
 
         const [unidadesTop] = await pool.query(`
-            SELECT sol_unidad, COUNT(*) as trips
+            SELECT sol_unidad, COUNT(*) as viajes
             FROM SOLICITUDES
             WHERE sol_estado = 'FINALIZADA'
             GROUP BY sol_unidad
-            ORDER BY trips DESC
+            ORDER BY viajes DESC
             LIMIT 3
         `);
 

@@ -53,6 +53,43 @@ exports.actualizarVehiculo = async (req, res) => {
     } = req.body;
 
     try {
+        // Verificar estado actual antes de actualizar
+        const [actual] = await pool.query('SELECT vehi_estado FROM VEHICULO WHERE vehi_patente = ?', [patente]);
+
+        if (actual.length > 0) {
+            const estadoActual = actual[0].vehi_estado;
+
+            if (estadoActual === 'EN RUTA' && vehi_estado === 'DISPONIBLE') {
+                // Verificar si tiene viaje activo
+                const [viajeActivo] = await pool.query(`
+                    SELECT sol_id FROM SOLICITUDES 
+                    WHERE sol_patentevehiculofk = ? 
+                    AND sol_estado = 'APROBADA' 
+                    AND sol_fechasalida <= NOW() 
+                    AND sol_fechallegada > NOW()
+                 `, [patente]);
+
+                if (viajeActivo.length > 0) {
+                    return res.status(409).json({ error: 'No se puede poner DISPONIBLE: El vehículo está actualmente EN RUTA con un viaje activo.' });
+                }
+            }
+
+            if ((vehi_estado === 'MANTENCION' || vehi_estado === 'DE BAJA') && estadoActual !== vehi_estado) {
+                const [compromisos] = await pool.query(`
+                    SELECT sol_id FROM SOLICITUDES 
+                    WHERE sol_patentevehiculofk = ? 
+                    AND sol_estado = 'APROBADA'
+                    AND sol_fechasalida > NOW()
+                `, [patente]);
+
+                if (compromisos.length > 0) {
+                    return res.status(409).json({
+                        error: `No se puede cambiar a ${vehi_estado}: El vehículo tiene ${compromisos.length} viajes futuros programados.`
+                    });
+                }
+            }
+
+        }
         await pool.query(
             `UPDATE VEHICULO SET 
                 vehi_marca=?, vehi_modelo=?, vehi_anio=?, vehi_color=?, vehi_tipo=?,
@@ -78,11 +115,17 @@ exports.actualizarVehiculo = async (req, res) => {
 exports.eliminarVehiculo = async (req, res) => {
     const { patente } = req.params;
     try {
+        const [vehiculo] = await pool.query('SELECT vehi_estado FROM VEHICULO WHERE vehi_patente = ?', [patente]);
+
+        if (vehiculo.length > 0 && vehiculo[0].vehi_estado === 'EN RUTA') {
+            return res.status(400).json({ error: 'No se puede eliminar un vehículo que se encuentra EN RUTA activos.' });
+        }
+
         await pool.query('DELETE FROM VEHICULO WHERE vehi_patente=?', [patente]);
         res.json({ message: 'Vehículo eliminado' });
     } catch (error) {
         if (error.code === 'ER_ROW_IS_REFERENCED_2') {
-            return res.status(400).json({ error: 'No se puede eliminar: El vehículo tiene solicitudes asociadas.' });
+            return res.status(400).json({ error: 'No se puede eliminar: El vehículo tiene historial de solicitudes asociadas (aunque no sean futuras).' });
         }
         console.error("Error eliminando vehículo:", error);
         res.status(500).json({ error: 'Error al eliminar vehículo' });
@@ -93,13 +136,11 @@ exports.obtenerViajes = async (req, res) => {
     const { patente } = req.params;
     try {
         const [viajes] = await pool.query(`
-            SELECT sol_id, sol_unidad, sol_motivo, sol_fechasalida, sol_fechallegada, sol_kmestimado
+            SELECT sol_id, sol_unidad, sol_motivo, sol_fechasalida, sol_fechallegada, sol_kmestimado, sol_estado
             FROM SOLICITUDES
             WHERE sol_patentevehiculofk = ?
-            AND sol_estado IN ('APROBADA', 'PENDIENTE')
-            AND sol_fechasalida >= NOW()
+            AND sol_estado IN ('PENDIENTE', 'APROBADA', 'EN RUTA')
             ORDER BY sol_fechasalida ASC
-            LIMIT 10
         `, [patente]);
         res.json(viajes);
     } catch (error) {

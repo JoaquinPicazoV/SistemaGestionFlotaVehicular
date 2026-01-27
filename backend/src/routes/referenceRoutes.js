@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const referenceController = require('../controllers/referenceController');
-const verifyToken = require('../middlewares/authMiddleware');
+const { verificarToken } = require('../middlewares/authMiddleware');
 
 router.get('/comunas', referenceController.obtenerComunas);
-router.get('/passenger-types', verifyToken, referenceController.obtenerTiposPasajero);
-router.get('/places', verifyToken, referenceController.obtenerLugares);
-router.get('/establishments', verifyToken, referenceController.obtenerEstablecimientos);
+router.get('/passenger-types', verificarToken, referenceController.obtenerTiposPasajero);
+router.get('/places', verificarToken, referenceController.obtenerLugares);
+router.get('/establishments', verificarToken, referenceController.obtenerEstablecimientos);
+router.get('/units', verificarToken, referenceController.obtenerUnidades);
 
 module.exports = router;

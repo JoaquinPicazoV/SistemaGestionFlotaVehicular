@@ -12,7 +12,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
     const [busqueda, setBusqueda] = useState('');
     const [verDetalle, setVerDetalle] = useState(null);
 
-    // Estado para el formulario (nuevo o edición)
+
     const [formData, setFormData] = useState({
         bit_fecha: new Date().toISOString().slice(0, 16),
         bit_funcionario_responsable: '',
@@ -42,10 +42,9 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
     const handleInputChange = (e) => {
         const { name, value } = e.target;
 
-        // Validaciones estrictas por campo
+
         if (['bit_evento', 'bit_mecanico'].includes(name)) {
             if (value.startsWith(' ')) return;
-            // Solo letras, números y espacios (SIN símbolos), permite tildes y puntuación básica
             if (/^[a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑüÜ.,;:\-/"'?!¡¿@#&()º]*$/.test(value)) {
                 setFormData(prev => ({ ...prev, [name]: value }));
             }
@@ -54,7 +53,6 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
 
         if (name === 'bit_observaciones') {
             if (value.startsWith(' ')) return;
-            // Letras, números y puntuación común, permite tildes
             if (/^[a-zA-Z0-9\s.,;:\-/"'?!¡¿@#&()ºáéíóúÁÉÍÓÚñÑüÜ]*$/.test(value)) {
                 setFormData(prev => ({ ...prev, [name]: value }));
             }
@@ -63,7 +61,6 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
 
         if (name === 'bit_funcionario_responsable') {
             if (value.startsWith(' ')) return;
-            // Solo letras (mayusc/minusc) y tildes. SIN números ni símbolos.
             if (/^[a-zA-Z\sáéíóúÁÉÍÓÚñÑüÜ]*$/.test(value)) {
                 setFormData(prev => ({ ...prev, [name]: value }));
             }
@@ -71,14 +68,14 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
         }
 
         if (name === 'bit_kilometraje' || name === 'bit_valor_mantencion') {
-            // Solo números puros
+
             if (/^[0-9]*$/.test(value)) {
                 setFormData(prev => ({ ...prev, [name]: value }));
             }
             return;
         }
 
-        // Fecha y otros
+
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
@@ -87,7 +84,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
         setFormData({
             ...registro,
             bit_fecha: new Date(registro.bit_fecha).toISOString().slice(0, 16),
-            // Limpieza preventiva de datos antiguos
+
             bit_evento: registro.bit_evento,
             bit_mecanico: registro.bit_mecanico || '',
             bit_funcionario_responsable: registro.bit_funcionario_responsable,
@@ -139,19 +136,9 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4"
-        >
-            <motion.div
-                initial={{ scale: 0.95, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.95, opacity: 0, y: 20 }}
-                className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col"
-            >
-                {/* Header */}
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+            <div className="bg-white rounded-3xl shadow-2xl w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col">
+
                 <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                     <div className="flex items-center gap-4">
                         <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
@@ -171,7 +158,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
 
                 <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
 
-                    {/* Panel Izquierdo: Formulario */}
+
                     <div className="w-full lg:w-1/3 bg-slate-50/50 border-r border-slate-100 p-6 overflow-y-auto">
                         <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-4 flex items-center gap-2">
                             {modoEdicion ? <span className="text-orange-500 flex items-center gap-2"><Pencil size={14} /> Editando Registro</span> : <span className="text-emerald-600 flex items-center gap-2"><Plus size={14} /> Nuevo Evento</span>}
@@ -230,7 +217,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
                         </form>
                     </div>
 
-                    {/* Panel Derecho: Lista */}
+
                     <div className="w-full lg:w-2/3 bg-white p-0 flex flex-col h-full">
                         <div className="p-4 bg-slate-50/30 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center">
                             <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wide">Historial Registrado</h4>
@@ -325,9 +312,9 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
                         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
                     }
                 `}</style>
-            </motion.div>
+            </div>
 
-            {/* Modal de Detalle */}
+
             <AnimatePresence>
                 {verDetalle && (
                     <motion.div
@@ -338,9 +325,9 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
                         onClick={() => setVerDetalle(null)}
                     >
                         <motion.div
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
                             className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden"
                             onClick={(e) => e.stopPropagation()}
                         >
@@ -413,7 +400,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
                     </motion.div>
                 )}
             </AnimatePresence>
-        </motion.div>
+        </div>
     );
 };
 

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 
 const DriverList = () => {
-    // Statics
+
     const [choferes, setChoferes] = useState([]);
     const [choferesFiltrados, setChoferesFiltrados] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -15,7 +15,7 @@ const DriverList = () => {
     const [viajes, setViajes] = useState([]);
     const [cargandoViajes, setCargandoViajes] = useState(false);
 
-    // Edit/Create states
+
     const [choferEditando, setChoferEditando] = useState(null);
     const [mensajeError, setMensajeError] = useState(null);
     const [mensajeExito, setMensajeExito] = useState(null);
@@ -28,7 +28,6 @@ const DriverList = () => {
         cho_activo: true
     });
 
-    // Fetch drivers
     const obtenerChoferes = useCallback(async () => {
         setCargando(true);
         try {
@@ -42,12 +41,12 @@ const DriverList = () => {
         }
     }, []);
 
-    // Initial load
+
     useEffect(() => {
         obtenerChoferes();
     }, [obtenerChoferes]);
 
-    // Filtering logic
+
     useEffect(() => {
         let resultado = choferes;
         if (terminoBusqueda) {
@@ -64,7 +63,6 @@ const DriverList = () => {
         setChoferesFiltrados(resultado);
     }, [choferes, terminoBusqueda, estadoFiltro]);
 
-    // Delete driver
     const eliminarChofer = async (email) => {
         if (!window.confirm(`¿Estás seguro de eliminar el chofer ${email}?`)) return;
         try {
@@ -75,12 +73,30 @@ const DriverList = () => {
             setTimeout(() => setMensajeExito(null), 3000);
         } catch (error) {
             console.error(error);
-            setMensajeError(error.response?.data?.error || 'Error al eliminar');
-            setTimeout(() => setMensajeError(null), 3000);
+            const errorMsg = error.response?.data?.error || 'Error al eliminar';
+
+            if (error.response?.status === 400 && errorMsg.includes('tiene viajes')) {
+                if (window.confirm(`El conductor no puede eliminarse porque tiene historial de viajes.\n\n¿Deseas marcarlo como "INACTIVO" para que no se le asignen nuevos viajes?`)) {
+                    try {
+                        const choferActual = choferes.find(c => c.cho_correoinstitucional === email);
+                        if (choferActual) {
+                            await axios.put(`${API_URL}/drivers/${email}`, { ...choferActual, cho_activo: 0 }, { withCredentials: true });
+                            obtenerChoferes();
+                            setMensajeExito("Conductor marcado como INACTIVO correctamente.");
+                            setTimeout(() => setMensajeExito(null), 3000);
+                        }
+                    } catch (updateError) {
+                        setMensajeError("Error al intentar desactivar el conductor.");
+                        setTimeout(() => setMensajeError(null), 3000);
+                    }
+                }
+            } else {
+                setMensajeError(errorMsg);
+                setTimeout(() => setMensajeError(null), 3000);
+            }
         }
     };
 
-    // Create driver
     const crearChofer = async (e) => {
         e.preventDefault();
         try {
@@ -97,7 +113,6 @@ const DriverList = () => {
         }
     };
 
-    // Update driver
     const actualizarChofer = async (e) => {
         e.preventDefault();
         try {
@@ -113,7 +128,6 @@ const DriverList = () => {
         }
     };
 
-    // View trips
     const verViajes = async (chofer) => {
         setChoferViajes(chofer);
         setCargandoViajes(true);
@@ -129,7 +143,6 @@ const DriverList = () => {
         }
     };
 
-    // Reset filters
     const limpiarFiltros = () => {
         setTerminoBusqueda('');
         setEstadoFiltro('ALL');
@@ -143,12 +156,12 @@ const DriverList = () => {
     );
 
     return (
-        <div className="p-4 md:p-8 max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500 relative font-sans">
-            {/* Mensajes Popup Centralizados */}
+        <div className="p-4 md:p-8 max-w-7xl mx-auto relative font-sans">
+
             {(mensajeError || mensajeExito) && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
                     {mensajeError && (
-                        <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                        <div className="bg-white border-l-4 border-red-500 p-6 rounded-2xl shadow-2xl max-w-md w-full flex flex-col items-center text-center gap-4">
                             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-500 mb-2">
                                 <AlertCircle size={32} />
                             </div>
@@ -158,7 +171,7 @@ const DriverList = () => {
                         </div>
                     )}
                     {mensajeExito && (
-                        <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full animate-in zoom-in-95 duration-200 flex flex-col items-center text-center gap-4">
+                        <div className="bg-white border-l-4 border-emerald-500 p-6 rounded-2xl shadow-2xl max-w-md w-full flex flex-col items-center text-center gap-4">
                             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-500 mb-2">
                                 <CheckCircle size={32} />
                             </div>
@@ -221,7 +234,7 @@ const DriverList = () => {
                 </div>
             </div>
 
-            {/* DESKTOP VIEW: TABLE */}
+
             <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[600px]">
@@ -294,7 +307,6 @@ const DriverList = () => {
                 </div>
             </div>
 
-            {/* MOBILE VIEW: CARDS */}
             <div className="md:hidden space-y-4">
                 {choferesFiltrados.length > 0 ? (
                     choferesFiltrados.map((d) => (
@@ -346,194 +358,187 @@ const DriverList = () => {
                 )}
             </div>
 
-            {/* Create Modal */}
-            <AnimatePresence>
-                {creando && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden">
-                            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                                <h3 className="font-bold text-slate-800 text-xl">Nuevo Conductor</h3>
-                                <button onClick={() => setCreando(false)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
+
+            {creando && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden">
+                        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 className="font-bold text-slate-800 text-xl">Nuevo Conductor</h3>
+                            <button onClick={() => setCreando(false)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
+                        </div>
+                        <form onSubmit={crearChofer} className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre Completo</label>
+                                <input
+                                    type="text"
+                                    placeholder="Ej: Juan Pérez"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                                    value={nuevoChofer.cho_nombre}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (val.startsWith(' ')) return;
+                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(val)) {
+                                            setNuevoChofer({ ...nuevoChofer, cho_nombre: val });
+                                        }
+                                    }}
+                                    required
+                                />
                             </div>
-                            <form onSubmit={crearChofer} className="p-8 space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre Completo</label>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Correo Institucional</label>
+                                <div className="flex">
                                     <input
                                         type="text"
-                                        placeholder="Ej: Juan Pérez"
-                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                                        value={nuevoChofer.cho_nombre}
+                                        placeholder="nombre.apellido"
+                                        className="flex-1 px-4 py-2.5 border border-r-0 border-slate-200 rounded-l-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                                        value={nuevoChofer.cho_correoinstitucional.replace('@slepllanquihue.cl', '')}
                                         onChange={e => {
-                                            const val = e.target.value;
-                                            if (val.startsWith(' ')) return;
-                                            if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(val)) {
-                                                setNuevoChofer({ ...nuevoChofer, cho_nombre: val });
+                                            const val = e.target.value.toLowerCase();
+                                            if (/^[a-z0-9.]*$/.test(val)) {
+                                                setNuevoChofer({ ...nuevoChofer, cho_correoinstitucional: val ? val + '@slepllanquihue.cl' : '' });
                                             }
                                         }}
                                         required
                                     />
+                                    <span className="inline-flex items-center px-4 border border-l-0 border-slate-200 bg-slate-50 text-slate-500 text-sm font-bold rounded-r-xl select-none">
+                                        @slepllanquihue.cl
+                                    </span>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Correo Institucional</label>
-                                    <div className="flex">
-                                        <input
-                                            type="text"
-                                            placeholder="nombre.apellido"
-                                            className="flex-1 px-4 py-2.5 border border-r-0 border-slate-200 rounded-l-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                                            value={nuevoChofer.cho_correoinstitucional.replace('@slepllanquihue.cl', '')}
-                                            onChange={e => {
-                                                const val = e.target.value.toLowerCase();
-                                                // Permitir solo minusculas, numeros y puntos
-                                                if (/^[a-z0-9.]*$/.test(val)) {
-                                                    setNuevoChofer({ ...nuevoChofer, cho_correoinstitucional: val ? val + '@slepllanquihue.cl' : '' });
-                                                }
-                                            }}
-                                            required
-                                        />
-                                        <span className="inline-flex items-center px-4 border border-l-0 border-slate-200 bg-slate-50 text-slate-500 text-sm font-bold rounded-r-xl select-none">
-                                            @slepllanquihue.cl
-                                        </span>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estado Inicial</label>
-                                    <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-3">
-                                        <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs"><CheckCircle size={12} strokeWidth={4} /></div>
-                                        <span className="text-sm font-bold text-emerald-800">Activo (Predeterminado)</span>
-                                    </div>
-                                </div>
-                                <div className="pt-6 flex gap-3 justify-end border-t border-slate-100">
-                                    <button type="button" onClick={() => setCreando(false)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors">Cancelar</button>
-                                    <button type="submit" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 transform active:scale-[0.98]" disabled={cargando}>
-                                        {cargando ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save size={18} />} Registrar Conductor
-                                    </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* Edit Modal */}
-            <AnimatePresence>
-                {choferEditando && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden">
-                            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                                <h3 className="font-bold text-slate-800 text-xl">Editar Conductor</h3>
-                                <button onClick={() => setChoferEditando(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
                             </div>
-                            <form onSubmit={actualizarChofer} className="p-8 space-y-6">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Correo Institucional (ID)</label>
-                                    <input type="email" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-400 font-medium cursor-not-allowed" value={choferEditando.cho_correoinstitucional} disabled />
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estado Inicial</label>
+                                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-3">
+                                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs"><CheckCircle size={12} strokeWidth={4} /></div>
+                                    <span className="text-sm font-bold text-emerald-800">Activo (Predeterminado)</span>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre Completo</label>
-                                    <input
-                                        type="text"
-                                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                                        value={choferEditando.cho_nombre}
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            if (val.startsWith(' ')) return;
-                                            if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(val)) {
-                                                setChoferEditando({ ...choferEditando, cho_nombre: val });
-                                            }
-                                        }}
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estado</label>
-                                    <div className="relative">
-                                        <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-white font-medium text-slate-700 appearance-none cursor-pointer" value={choferEditando.cho_activo ? 1 : 0} onChange={e => setChoferEditando({ ...choferEditando, cho_activo: parseInt(e.target.value) })}>
-                                            <option value={1}>🟢 Activo</option>
-                                            <option value={0}>🔴 Inactivo</option>
-                                        </select>
-                                        <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                    </div>
-                                </div>
-                                <div className="pt-6 flex gap-3 justify-end border-t border-slate-100">
-                                    <button type="button" onClick={() => setChoferEditando(null)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors">Cancelar</button>
-                                    <button type="submit" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2 transform active:scale-[0.98]"><Save size={18} /> Guardar Cambios</button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            {/* View Trips Modal */}
-            <AnimatePresence>
-                {choferViajes && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                        <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-                            <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                                <div>
-                                    <h3 className="font-bold text-slate-800 text-xl">Próximos Viajes</h3>
-                                    <p className="text-sm text-slate-500 font-medium">Asignaciones para {choferViajes.cho_nombre}</p>
-                                </div>
-                                <button onClick={() => setChoferViajes(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
                             </div>
-
-                            <div className="p-0 overflow-y-auto custom-scrollbar">
-                                {cargandoViajes ? (
-                                    <div className="p-12 text-center text-slate-400">
-                                        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4 mx-auto"></div>
-                                        Cargando itinerario...
-                                    </div>
-                                ) : viajes.length > 0 ? (
-                                    <table className="w-full text-left">
-                                        <thead className="bg-slate-50 sticky top-0 z-10 text-xs text-slate-500 uppercase font-bold tracking-wider">
-                                            <tr>
-                                                <th className="p-4 border-b border-slate-100">Fecha Salida</th>
-                                                <th className="p-4 border-b border-slate-100">Destino/Motivo</th>
-                                                <th className="p-4 border-b border-slate-100">Unidad</th>
-                                                <th className="p-4 border-b border-slate-100">Regreso Est.</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
-                                            {viajes.map((v) => (
-                                                <tr key={v.sol_id} className="hover:bg-slate-50/50">
-                                                    <td className="p-4 font-bold text-slate-800">
-                                                        {new Date(v.sol_fechasalida).toLocaleDateString()} <br />
-                                                        <span className="text-xs text-blue-600 font-mono bg-blue-50 px-1 py-0.5 rounded">{new Date(v.sol_fechasalida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                    </td>
-                                                    <td className="p-4">
-                                                        <div className="font-medium text-slate-800 mb-0.5">{v.sol_motivo}</div>
-                                                    </td>
-                                                    <td className="p-4 text-xs font-bold uppercase">{v.sol_unidad}</td>
-                                                    <td className="p-4 font-mono text-xs">
-                                                        {new Date(v.sol_fechallegada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                ) : (
-                                    <div className="p-16 text-center text-slate-400">
-                                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
-                                            <Search size={24} />
-                                        </div>
-                                        <p className="font-medium">No tiene viajes próximos asignados.</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
-                                <button
-                                    onClick={() => setChoferViajes(null)}
-                                    className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-colors"
-                                >
-                                    Cerrar
+                            <div className="pt-6 flex gap-3 justify-end border-t border-slate-100">
+                                <button type="button" onClick={() => setCreando(false)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors">Cancelar</button>
+                                <button type="submit" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2" disabled={cargando}>
+                                    {cargando ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save size={18} />} Registrar Conductor
                                 </button>
                             </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+
+            {choferEditando && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden">
+                        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 className="font-bold text-slate-800 text-xl">Editar Conductor</h3>
+                            <button onClick={() => setChoferEditando(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
+                        </div>
+                        <form onSubmit={actualizarChofer} className="p-8 space-y-6">
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Correo Institucional (ID)</label>
+                                <input type="email" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-400 font-medium cursor-not-allowed" value={choferEditando.cho_correoinstitucional} disabled />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre Completo</label>
+                                <input
+                                    type="text"
+                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
+                                    value={choferEditando.cho_nombre}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (val.startsWith(' ')) return;
+                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(val)) {
+                                            setChoferEditando({ ...choferEditando, cho_nombre: val });
+                                        }
+                                    }}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estado</label>
+                                <div className="relative">
+                                    <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-white font-medium text-slate-700 appearance-none cursor-pointer" value={choferEditando.cho_activo ? 1 : 0} onChange={e => setChoferEditando({ ...choferEditando, cho_activo: parseInt(e.target.value) })}>
+                                        <option value={1}>🟢 Activo</option>
+                                        <option value={0}>🔴 Inactivo</option>
+                                    </select>
+                                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                </div>
+                            </div>
+                            <div className="pt-6 flex gap-3 justify-end border-t border-slate-100">
+                                <button type="button" onClick={() => setChoferEditando(null)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors">Cancelar</button>
+                                <button type="submit" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"><Save size={18} /> Guardar Cambios</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+
+            {choferViajes && (
+                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+                        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h3 className="font-bold text-slate-800 text-xl">Próximos Viajes</h3>
+                                <p className="text-sm text-slate-500 font-medium">Asignaciones para {choferViajes.cho_nombre}</p>
+                            </div>
+                            <button onClick={() => setChoferViajes(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
+                        </div>
+
+                        <div className="p-0 overflow-y-auto custom-scrollbar">
+                            {cargandoViajes ? (
+                                <div className="p-12 text-center text-slate-400">
+                                    <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mb-4 mx-auto"></div>
+                                    Cargando itinerario...
+                                </div>
+                            ) : viajes.length > 0 ? (
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-50 sticky top-0 z-10 text-xs text-slate-500 uppercase font-bold tracking-wider">
+                                        <tr>
+                                            <th className="p-4 border-b border-slate-100">Fecha Salida</th>
+                                            <th className="p-4 border-b border-slate-100">Destino/Motivo</th>
+                                            <th className="p-4 border-b border-slate-100">Unidad</th>
+                                            <th className="p-4 border-b border-slate-100">Regreso Est.</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100 text-sm text-slate-600">
+                                        {viajes.map((v) => (
+                                            <tr key={v.sol_id} className="hover:bg-slate-50/50">
+                                                <td className="p-4 font-bold text-slate-800">
+                                                    {new Date(v.sol_fechasalida).toLocaleDateString()} <br />
+                                                    <span className="text-xs text-blue-600 font-mono bg-blue-50 px-1 py-0.5 rounded">{new Date(v.sol_fechasalida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </td>
+                                                <td className="p-4">
+                                                    <div className="font-medium text-slate-800 mb-0.5">{v.sol_motivo}</div>
+                                                </td>
+                                                <td className="p-4 text-xs font-bold uppercase">{v.sol_unidad}</td>
+                                                <td className="p-4 font-mono text-xs">
+                                                    {new Date(v.sol_fechallegada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <div className="p-16 text-center text-slate-400">
+                                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                                        <Search size={24} />
+                                    </div>
+                                    <p className="font-medium">No tiene viajes próximos asignados.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
+                            <button
+                                onClick={() => setChoferViajes(null)}
+                                className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-colors"
+                            >
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div >
     );
 };
 

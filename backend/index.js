@@ -5,15 +5,18 @@ if (process.env.NODE_ENV === 'production') {
     const missingEnv = requiredEnv.filter(key => !process.env[key]);
 
     if (missingEnv.length > 0) {
-        console.error('❌ Missing required environment variables:', missingEnv.join(', '));
+        console.error('Faltan variables de entorno requeridas:', missingEnv.join(', '));
         process.exit(1);
     }
 }
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
+const path = require('path');
 const cookieParser = require('cookie-parser');
 const { limiter } = require('./src/middlewares/rateLimit');
+const errorHandler = require('./src/middlewares/errorHandler');
 const initScheduler = require('./scheduler');
 
 
@@ -29,6 +32,7 @@ const app = express();
 
 
 app.use(helmet());
+app.use(compression());
 app.use(cors({
     origin: process.env.ALLOWED_ORIGIN || 'http://localhost:5173',
     credentials: true,
@@ -37,7 +41,17 @@ app.use(cors({
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(compression()); // Comprimir respuestas gzip para optimizar ancho de banda
 
+// Logger personalizado simple (para producción/desarrollo)
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const duration = Date.now() - start;
+        console.log(`[${req.method}] ${req.originalUrl} - ${res.statusCode} (${duration}ms)`);
+    });
+    next();
+});
 
 app.use('/api/', limiter);
 
@@ -49,11 +63,23 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api', referenceRoutes);
 
+// Servir archivos estáticos en producción
+if (process.env.NODE_ENV === 'production') {
+    app.use(express.static(path.join(__dirname, '../frontend/dist')));
+
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, '../frontend/dist', 'index.html'));
+    });
+}
+
+// Middleware de manejo de errores global (Debe ir al final)
+app.use(errorHandler);
+
 
 initScheduler();
 
 
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`Servidor corriendo en http://localhost:${PORT}`);
+    console.log(`Entorno: ${process.env.NODE_ENV || 'development'}`);
 });

@@ -20,7 +20,7 @@ const FormularioSolicitud = ({ alCancelar, alCompletar }) => {
     const [mensajeError, setMensajeError] = useState('');
     const peticionEnCurso = useRef(false);
 
-    // Estado del Formulario Principal
+
     const [datosFormulario, setDatosFormulario] = useState({
         sol_fechasalida: '',
         sol_timesalida: '',
@@ -38,7 +38,7 @@ const FormularioSolicitud = ({ alCancelar, alCompletar }) => {
     const manejarEnvio = async (e) => {
         e.preventDefault();
 
-        // Evitar doble click inmediato
+
         if (peticionEnCurso.current) return;
         peticionEnCurso.current = true;
 
@@ -73,7 +73,7 @@ const FormularioSolicitud = ({ alCancelar, alCompletar }) => {
                 destinos: datosFormulario.destinos
             };
 
-            // Espera intencional para prevenir duplicados y mejorar UX
+
             await Promise.all([
                 axios.post(`${API_URL}/requests`, datosSolicitud, { withCredentials: true }),
                 new Promise(resolve => setTimeout(resolve, 2000))
@@ -115,7 +115,7 @@ const FormularioSolicitud = ({ alCancelar, alCompletar }) => {
 
     return (
         <div className="max-w-4xl mx-auto animate-in fade-in zoom-in-95 duration-500">
-            {/* Cabecera Título */}
+
             <div className="flex items-center gap-4 mb-8">
                 <button
                     onClick={alCancelar}
@@ -198,7 +198,7 @@ const FormularioSolicitud = ({ alCancelar, alCompletar }) => {
                     </div>
                 </div>
 
-                {/* Mensajes Popup Centralizados */}
+
                 {(mensajeError || mensajeExito) && (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300">
                         {mensajeError && (
