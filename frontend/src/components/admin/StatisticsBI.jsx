@@ -5,9 +5,11 @@ import {
     PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
 import {
-    Truck, Users, Map, ClipboardList, Activity, AlertTriangle, CheckCircle2, TrendingUp
+    Truck, Users, Map, ClipboardList, Activity, AlertTriangle, CheckCircle2, TrendingUp, Download
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 
 import API_URL from '../../config/api';
 const COLORES = ['#0ea5e9', '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e'];
@@ -38,6 +40,118 @@ const StatisticsBI = () => {
 
 
 
+
+
+    const handleDescargarReporteBI = async () => {
+        if (!datos) return;
+
+        const workbook = new ExcelJS.Workbook();
+
+        // Estilo Común Header
+        const headerStyle = {
+            font: { bold: true, color: { argb: '000000' } },
+            fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC000' } },
+            alignment: { vertical: 'middle', horizontal: 'center' }
+        };
+
+        // Función auxiliar para estilar solo las celdas usadas de la cabecera
+        const estilarCabecera = (ws) => {
+            const row = ws.getRow(1);
+            // Iterar solo hasta la cantidad de columnas definidas
+            for (let i = 1; i <= ws.columns.length; i++) {
+                const cell = row.getCell(i);
+                cell.font = headerStyle.font;
+                cell.fill = headerStyle.fill;
+                cell.alignment = headerStyle.alignment;
+                // Opcional: Agregar bordes a la cabecera también
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            }
+        };
+
+        // 1. FLOTA DETALLADA
+        const wsFlota = workbook.addWorksheet('Flota Detallada');
+        wsFlota.columns = [
+            { header: 'PATENTE', key: 'vehi_patente', width: 15 },
+            { header: 'MARCA', key: 'vehi_marca', width: 20 },
+            { header: 'MODELO', key: 'vehi_modelo', width: 20 },
+            { header: 'ESTADO', key: 'vehi_estado', width: 15 },
+            { header: 'VIAJES REALIZADOS', key: 'total_viajes', width: 20 },
+            { header: 'KM ESTIMADOS', key: 'km_estimados', width: 20 },
+        ];
+        estilarCabecera(wsFlota);
+        datos.reporte?.flota?.forEach(v => wsFlota.addRow(v));
+
+        // 2. GESTIÓN UNIDADES
+        const wsUnidades = workbook.addWorksheet('Gestión Unidades');
+        wsUnidades.columns = [
+            { header: 'UNIDAD', key: 'sol_unidad', width: 35 },
+            { header: 'SOLICITUDES TOTALES', key: 'total_solicitudes', width: 20 },
+            { header: 'APROBADAS', key: 'aprobadas', width: 15 },
+            { header: 'FINALIZADAS', key: 'finalizadas', width: 15 },
+        ];
+        estilarCabecera(wsUnidades);
+        datos.reporte?.unidades?.forEach(u => wsUnidades.addRow(u));
+
+
+        // 3. ESTABLECIMIENTOS
+        const wsTerritorio = workbook.addWorksheet('Establecimientos');
+        wsTerritorio.columns = [
+            { header: 'ESTABLECIMIENTO', key: 'nombre', width: 50 },
+            { header: 'COMUNA', key: 'comuna', width: 20 },
+            { header: 'VISITAS REALIZADAS', key: 'valor', width: 20 },
+        ];
+        estilarCabecera(wsTerritorio);
+        datos.territorio.todos_establecimientos.forEach(d => wsTerritorio.addRow(d));
+
+
+        // 4. CHOFERES
+        const wsChoferes = workbook.addWorksheet('Choferes');
+        wsChoferes.columns = [
+            { header: 'CONDUCTOR', key: 'nombre', width: 30 },
+            { header: 'VIAJES REALIZADOS', key: 'viajes', width: 20 },
+        ];
+        estilarCabecera(wsChoferes);
+        datos.operaciones.choferes.forEach(c => wsChoferes.addRow(c));
+
+
+        // 5. TENDENCIA MENSUAL
+        const wsTendencia = workbook.addWorksheet('Tendencia Mensual');
+        wsTendencia.columns = [
+            { header: 'MES / AÑO', key: 'mes', width: 20 },
+            { header: 'CANTIDAD SOLICITUDES', key: 'cantidad', width: 25 },
+        ];
+        estilarCabecera(wsTendencia);
+        datos.operaciones.tendencia.forEach(t => wsTendencia.addRow(t));
+
+
+        // 6. RESUMEN GLOBAL
+        const wsGlobal = workbook.addWorksheet('Resumen Global');
+        wsGlobal.columns = [
+            { header: 'ESTADO SOLICITUD', key: 'estado', width: 25 },
+            { header: 'CANTIDAD', key: 'cantidad', width: 15 },
+        ];
+        estilarCabecera(wsGlobal);
+
+        if (datos.reporte?.global) {
+            wsGlobal.addRow({ estado: 'TOTAL SOLICITUDES', cantidad: datos.reporte.global.total });
+            wsGlobal.addRow({ estado: 'PENDIENTES', cantidad: datos.reporte.global.pendientes });
+            wsGlobal.addRow({ estado: 'APROBADAS', cantidad: datos.reporte.global.aprobadas });
+            wsGlobal.addRow({ estado: 'RECHAZADAS', cantidad: datos.reporte.global.rechazadas });
+            wsGlobal.addRow({ estado: 'FINALIZADAS', cantidad: datos.reporte.global.finalizadas });
+            wsGlobal.addRow({ estado: 'CANCELADAS', cantidad: datos.reporte.global.canceladas });
+        }
+
+
+        // GENERAR ARCHIVO
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, `INFORME_GESTION_SLEPLLANQUIHUE_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    };
 
     const TableroFlota = () => (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
@@ -204,9 +318,17 @@ const StatisticsBI = () => {
     return (
         <div className="p-4 md:p-8 w-full max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
 
-            <div className="mb-6 md:mb-8">
-                <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Panel de Control BI</h2>
-                <p className="text-sm md:text-base text-slate-500 mt-1">Toma de decisiones basada en datos reales.</p>
+            <div className="mb-6 md:mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight">Panel de Control BI</h2>
+                    <p className="text-sm md:text-base text-slate-500 mt-1">Toma de decisiones basada en datos reales.</p>
+                </div>
+                <button
+                    onClick={handleDescargarReporteBI}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-green-600/20 text-sm"
+                >
+                    <Download size={18} /> Descargar Reporte Completo
+                </button>
             </div>
 
 

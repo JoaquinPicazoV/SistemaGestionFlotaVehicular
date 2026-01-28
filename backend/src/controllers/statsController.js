@@ -11,7 +11,11 @@ exports.obtenerBI = async (req, res) => {
             [comunasHeatmap],
             [topLugares],
             [tendenciaMensual],
-            [cargaChoferes]
+            [cargaChoferes],
+            [allEstablecimientos],
+            [reportFlota],
+            [reportUnidades],
+            [reportGlobal]
         ] = await Promise.all([
             pool.query(`
                 SELECT CONCAT(v.vehi_modelo, ' - ', v.vehi_patente) as nombre, 
@@ -75,6 +79,44 @@ exports.obtenerBI = async (req, res) => {
                 LEFT JOIN SOLICITUDES s ON c.cho_correoinstitucional = s.sol_correochoferfk AND s.sol_estado IN ('FINALIZADA', 'APROBADA')
                 GROUP BY c.cho_correoinstitucional
                 ORDER BY viajes DESC
+            `),
+            pool.query(`
+                SELECT e.est_nombre as nombre, c.com_nombre as comuna, COUNT(s.sol_id) as valor
+                FROM ESTABLECIMIENTO e
+                JOIN COMUNA c ON e.est_comunafk = c.com_id
+                LEFT JOIN SOLICITUD_DESTINO sd ON e.est_id = sd.sde_establecimientofk
+                LEFT JOIN SOLICITUDES s ON sd.sde_solicitudfk = s.sol_id AND s.sol_estado = 'FINALIZADA'
+                GROUP BY e.est_id
+                ORDER BY valor DESC
+            `),
+            // 1. Reporte Flota Completo
+            pool.query(`
+                SELECT v.vehi_patente, v.vehi_marca, v.vehi_modelo, v.vehi_estado,
+                       COUNT(s.sol_id) as total_viajes,
+                       COALESCE(SUM(s.sol_kmestimado), 0) as km_estimados
+                FROM VEHICULO v
+                LEFT JOIN SOLICITUDES s ON v.vehi_patente = s.sol_patentevehiculofk AND s.sol_estado = 'FINALIZADA'
+                GROUP BY v.vehi_patente
+            `),
+            // 2. Reporte Unidades Completo
+            pool.query(`
+                SELECT sol_unidad, 
+                       COUNT(*) as total_solicitudes,
+                       SUM(CASE WHEN sol_estado = 'APROBADA' THEN 1 ELSE 0 END) as aprobadas,
+                       SUM(CASE WHEN sol_estado = 'FINALIZADA' THEN 1 ELSE 0 END) as finalizadas
+                FROM SOLICITUDES
+                GROUP BY sol_unidad
+            `),
+            // 3. Global Stats Detallado
+            pool.query(`
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN sol_estado = 'PENDIENTE' THEN 1 ELSE 0 END) as pendientes,
+                    SUM(CASE WHEN sol_estado = 'APROBADA' THEN 1 ELSE 0 END) as aprobadas,
+                    SUM(CASE WHEN sol_estado = 'RECHAZADA' THEN 1 ELSE 0 END) as rechazadas,
+                    SUM(CASE WHEN sol_estado = 'FINALIZADA' THEN 1 ELSE 0 END) as finalizadas,
+                    SUM(CASE WHEN sol_estado = 'CANCELADO' THEN 1 ELSE 0 END) as canceladas
+                FROM SOLICITUDES
             `)
         ]);
 
@@ -85,8 +127,17 @@ exports.obtenerBI = async (req, res) => {
                 unidades: solicitudesUnidad,
                 motivos: motivosViaje
             },
-            territorio: { comunas: comunasHeatmap, lugares: topLugares },
-            operaciones: { tendencia: tendenciaMensual, choferes: cargaChoferes }
+            territorio: {
+                comunas: comunasHeatmap,
+                lugares: topLugares,
+                todos_establecimientos: allEstablecimientos
+            },
+            operaciones: { tendencia: tendenciaMensual, choferes: cargaChoferes },
+            reporte: {
+                flota: reportFlota,
+                unidades: reportUnidades,
+                global: reportGlobal[0]
+            }
         });
 
     } catch (error) {

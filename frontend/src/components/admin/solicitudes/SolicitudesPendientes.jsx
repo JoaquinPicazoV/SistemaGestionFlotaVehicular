@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import API_URL from '../../config/api';
-import { RefreshCw, Clock, CheckCircle, XCircle, X, ShieldCheck, Plus } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import RequestFilters from '../common/RequestFilters';
-import RequestCard from '../common/RequestCard';
-import RequestDetailModal from '../common/RequestDetailModal';
-import AdminExpressForm from './AdminExpressForm';
+import API_URL from '../../../config/api';
+import { RefreshCw, Clock, CheckCircle, XCircle, X, Plus } from 'lucide-react';
 
-const PendingRequests = () => {
+import FiltrosSolicitud from '../../common/RequestFilters';
+import TarjetaSolicitud from '../../common/RequestCard';
+import ModalDetalleSolicitud from '../../common/RequestDetailModal';
+import FormularioExpressAdmin from '../AdminExpressForm';
+
+const SolicitudesPendientes = () => {
     const [solicitudes, setSolicitudes] = useState([]);
     const [solicitudesFiltradas, setSolicitudesFiltradas] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -31,7 +31,11 @@ const PendingRequests = () => {
     const [modalError, setModalError] = useState('');
 
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
-    const [mesFiltro, setMesFiltro] = useState(''); // YYYY-MM
+    const [mesFiltro, setMesFiltro] = useState('');
+    const [fechaInicio, setFechaInicio] = useState('');
+    const [fechaFin, setFechaFin] = useState('');
+
+
 
     const obtenerSolicitudes = useCallback(async () => {
         setCargando(true);
@@ -51,7 +55,7 @@ const PendingRequests = () => {
     }, [obtenerSolicitudes]);
 
     useEffect(() => {
-        let resultado = solicitudes;
+        let resultado = [...solicitudes];
 
 
         if (terminoBusqueda) {
@@ -64,7 +68,16 @@ const PendingRequests = () => {
         }
 
 
-        if (mesFiltro) {
+        if (fechaInicio && fechaFin) {
+            const inicio = new Date(fechaInicio);
+            const fin = new Date(fechaFin);
+            fin.setHours(23, 59, 59, 999);
+
+            resultado = resultado.filter(req => {
+                const fechaSalida = new Date(req.sol_fechasalida);
+                return fechaSalida >= inicio && fechaSalida <= fin;
+            });
+        } else if (mesFiltro) {
             resultado = resultado.filter(req => {
                 const fecha = new Date(req.sol_fechasalida);
                 const mesStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
@@ -73,7 +86,7 @@ const PendingRequests = () => {
         }
 
         setSolicitudesFiltradas(resultado);
-    }, [solicitudes, terminoBusqueda, mesFiltro]);
+    }, [solicitudes, terminoBusqueda, mesFiltro, fechaInicio, fechaFin]);
 
     const verDetalles = async (req) => {
         setSolicitudSeleccionada(req);
@@ -96,7 +109,7 @@ const PendingRequests = () => {
                 axios.get(`${API_URL}/vehicles`, { withCredentials: true }),
                 axios.get(`${API_URL}/drivers`, { withCredentials: true })
             ]);
-            // Filtrar recursos disponibles
+
             setVehiculos(resVehiculos.data.filter(v => v.vehi_estado === 'DISPONIBLE' && parseInt(v.vehi_capacidad) >= (detallesSolicitud.pasajeros.length + 1)));
             setChoferes(resChoferes.data.filter(d => d.cho_activo === 1));
             setModalAccion('APROBAR');
@@ -136,7 +149,7 @@ const PendingRequests = () => {
             setMotivoRechazo('');
             setMensajeExito(modalAccion === 'APROBAR' ? "Solicitud aprobada correctamente." : "Solicitud rechazada correctamente.");
             setTimeout(() => setMensajeExito(''), 3000);
-            obtenerSolicitudes(); // Actualizar lista
+            obtenerSolicitudes();
         } catch (error) {
             console.error("Error procesando solicitud:", error);
 
@@ -156,12 +169,13 @@ const PendingRequests = () => {
     const limpiarFiltros = () => {
         setTerminoBusqueda('');
         setMesFiltro('');
+        setFechaInicio('');
+        setFechaFin('');
     };
-
 
     if (mostrarFormularioExpress) {
         return (
-            <AdminExpressForm
+            <FormularioExpressAdmin
                 alCancelar={() => setMostrarFormularioExpress(false)}
                 alCompletar={() => {
                     setMostrarFormularioExpress(false);
@@ -206,11 +220,15 @@ const PendingRequests = () => {
                 </div>
             </div>
 
-            <RequestFilters
+            <FiltrosSolicitud
                 terminoBusqueda={terminoBusqueda}
                 setTerminoBusqueda={setTerminoBusqueda}
                 mesFiltro={mesFiltro}
                 setMesFiltro={setMesFiltro}
+                fechaInicio={fechaInicio}
+                setFechaInicio={setFechaInicio}
+                fechaFin={fechaFin}
+                setFechaFin={setFechaFin}
                 alLimpiar={limpiarFiltros}
             />
 
@@ -242,7 +260,7 @@ const PendingRequests = () => {
             <div className="grid gap-4">
                 {solicitudesFiltradas.length > 0 ? (
                     solicitudesFiltradas.map((req) => (
-                        <RequestCard
+                        <TarjetaSolicitud
                             key={req.sol_id}
                             solicitud={req}
                             alAccionar={verDetalles}
@@ -269,7 +287,7 @@ const PendingRequests = () => {
                 )}
             </div>
 
-            <RequestDetailModal
+            <ModalDetalleSolicitud
                 solicitud={solicitudSeleccionada}
                 detalles={detallesSolicitud}
                 cargandoDetalles={cargandoDetalles}
@@ -392,4 +410,4 @@ const PendingRequests = () => {
     );
 };
 
-export default PendingRequests;
+export default SolicitudesPendientes;

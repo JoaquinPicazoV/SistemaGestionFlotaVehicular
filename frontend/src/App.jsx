@@ -5,7 +5,7 @@ import ProtectedRoute from './components/common/ProtectedRoute';
 
 import Landing from './pages/Landing';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+import PanelControl from './pages/PanelControl';
 
 function App() {
   return (
@@ -19,7 +19,7 @@ function App() {
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <PanelControl />
               </ProtectedRoute>
             }
           />

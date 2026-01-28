@@ -10,9 +10,9 @@ import {
     Calendar
 } from 'lucide-react';
 
-import LogoSlep from '../../assets/LogoSLEP.png';
+import LogoSlep from '../../../assets/LogoSLEP.png';
 
-const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, isOpen, onClose }) => {
+const BarraLateralAdmin = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, abierto, alCerrar }) => {
 
     const itemsMenu = [
         { id: 'resumen', etiqueta: 'Resumen General', icono: LayoutDashboard },
@@ -27,24 +27,24 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
     return (
         <>
 
-            {isOpen && (
+            {abierto && (
                 <div
                     className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden animate-in fade-in"
-                    onClick={onClose}
+                    onClick={alCerrar}
                 />
             )}
 
             <aside className={`
                 fixed inset-y-0 left-0 z-50 w-72 bg-[#0F172A] text-slate-300 h-screen flex flex-col border-r border-slate-800 shadow-2xl transition-transform duration-300 ease-in-out
                 md:sticky md:translate-x-0 md:top-0
-                ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+                ${abierto ? 'translate-x-0' : '-translate-x-full'}
             `}>
                 <div className="p-8 pb-6 flex justify-between items-center">
                     <div className="flex items-center justify-center w-full">
                         <img src={LogoSlep} alt="Logo" className="h-24 w-auto object-contain" />
                     </div>
 
-                    <button onClick={onClose} className="md:hidden text-slate-400 hover:text-white">
+                    <button onClick={alCerrar} className="md:hidden text-slate-400 hover:text-white">
                         <LogOut size={20} className="rotate-180" />
                     </button>
                 </div>
@@ -59,7 +59,7 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
                                 key={item.id}
                                 onClick={() => {
                                     setPestanaActiva(item.id);
-                                    if (onClose) onClose();
+                                    if (alCerrar) alCerrar();
                                 }}
                                 className={`group relative w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl font-medium transition-all duration-300 ${esActivo
                                     ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40'
@@ -115,4 +115,4 @@ const UserSidebar = ({ pestanaActiva, setPestanaActiva, usuario, cerrarSesion, i
     );
 };
 
-export default UserSidebar;
+export default BarraLateralAdmin;

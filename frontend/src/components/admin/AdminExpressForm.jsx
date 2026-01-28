@@ -40,13 +40,13 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
         sol_motivo: '',
         sol_itinerario: '',
         sol_unidad: '',
-        sol_nombresolicitante: '', // Debe ser ingresado manualmente
+        sol_nombresolicitante: '',
         sol_tipo: 'PEDAGOGICA',
         sol_requierechofer: true,
         sol_kmestimado: '',
         pasajeros: [],
         destinos: [],
-        // Asignación Admin
+
         sol_patentevehiculofk: '',
         sol_correochoferfk: ''
     });
@@ -182,7 +182,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                 sol_kmestimado: datosFormulario.sol_kmestimado,
                 pasajeros: datosFormulario.pasajeros,
                 destinos: datosFormulario.destinos,
-                // Asignación administrativa
+
                 sol_patentevehiculofk: datosFormulario.sol_patentevehiculofk,
                 sol_correochoferfk: datosFormulario.sol_requierechofer ? datosFormulario.sol_correochoferfk : null
             };
@@ -259,7 +259,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                             </button>
                         </div>
                         <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-slate-50 to-white border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${datosFormulario.sol_requierechofer ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-400'}`}><User size={24} /></div><div><div className="text-sm font-bold text-slate-900">Servicio de Conductor</div><div className="text-xs text-slate-500">Habilita esta opción si necesitas chofer profesional.</div></div></div>
+                            <div className="flex items-center gap-4"><div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${datosFormulario.sol_requierechofer ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-200 text-slate-400'}`}><User size={24} /></div><div><div className="text-sm font-bold text-slate-900">Servicio de Conductor</div><div className="text-xs text-slate-500">Habilita esta opción si necesitas chofer del servicio.</div></div></div>
                             <label className="relative inline-flex items-center cursor-pointer"><input type="checkbox" className="sr-only peer" checked={datosFormulario.sol_requierechofer} onChange={e => setDatosFormulario({ ...datosFormulario, sol_requierechofer: e.target.checked })} /><div className="w-14 h-7 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-indigo-600"></div><span className="ml-3 text-sm font-medium text-slate-700">{datosFormulario.sol_requierechofer ? 'SI' : 'NO'}</span></label>
                         </div>
                     </div>

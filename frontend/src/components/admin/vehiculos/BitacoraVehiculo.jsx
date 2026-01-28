@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import API_URL from '../../config/api';
-import { X, Plus, Pencil, Trash2, Save, FileText, Wrench, Search, Eye, Calendar, User, DollarSign, Activity, MapPin } from 'lucide-react';
+import API_URL from '../../../config/api';
+import { X, Plus, Pencil, Trash2, Save, FileText, Wrench, Search, Eye, Calendar, User, DollarSign, Activity, MapPin, Download } from 'lucide-react';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const VehicleBitacora = ({ vehiculo, onClose }) => {
+const BitacoraVehiculo = ({ vehiculo, alCerrar }) => {
     const [registros, setRegistros] = useState([]);
     const [cargando, setCargando] = useState(true);
     const [modoEdicion, setModoEdicion] = useState(false);
@@ -13,7 +15,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
     const [verDetalle, setVerDetalle] = useState(null);
 
 
-    const [formData, setFormData] = useState({
+    const [datosFormulario, setDatosFormulario] = useState({
         bit_fecha: new Date().toISOString().slice(0, 16),
         bit_funcionario_responsable: '',
         bit_kilometraje: '',
@@ -30,8 +32,8 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
     const cargarBitacora = async () => {
         setCargando(true);
         try {
-            const res = await axios.get(`${API_URL}/vehicles/${vehiculo.vehi_patente}/bitacora`, { withCredentials: true });
-            setRegistros(res.data);
+            const respuesta = await axios.get(`${API_URL}/vehicles/${vehiculo.vehi_patente}/bitacora`, { withCredentials: true });
+            setRegistros(respuesta.data);
         } catch (error) {
             console.error(error);
         } finally {
@@ -39,14 +41,14 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
         }
     };
 
-    const handleInputChange = (e) => {
+    const manejarCambioEntrada = (e) => {
         const { name, value } = e.target;
 
 
         if (['bit_evento', 'bit_mecanico'].includes(name)) {
             if (value.startsWith(' ')) return;
             if (/^[a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑüÜ.,;:\-/"'?!¡¿@#&()º]*$/.test(value)) {
-                setFormData(prev => ({ ...prev, [name]: value }));
+                setDatosFormulario(prev => ({ ...prev, [name]: value }));
             }
             return;
         }
@@ -54,7 +56,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
         if (name === 'bit_observaciones') {
             if (value.startsWith(' ')) return;
             if (/^[a-zA-Z0-9\s.,;:\-/"'?!¡¿@#&()ºáéíóúÁÉÍÓÚñÑüÜ]*$/.test(value)) {
-                setFormData(prev => ({ ...prev, [name]: value }));
+                setDatosFormulario(prev => ({ ...prev, [name]: value }));
             }
             return;
         }
@@ -62,7 +64,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
         if (name === 'bit_funcionario_responsable') {
             if (value.startsWith(' ')) return;
             if (/^[a-zA-Z\sáéíóúÁÉÍÓÚñÑüÜ]*$/.test(value)) {
-                setFormData(prev => ({ ...prev, [name]: value }));
+                setDatosFormulario(prev => ({ ...prev, [name]: value }));
             }
             return;
         }
@@ -70,18 +72,18 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
         if (name === 'bit_kilometraje' || name === 'bit_valor_mantencion') {
 
             if (/^[0-9]*$/.test(value)) {
-                setFormData(prev => ({ ...prev, [name]: value }));
+                setDatosFormulario(prev => ({ ...prev, [name]: value }));
             }
             return;
         }
 
 
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setDatosFormulario(prev => ({ ...prev, [name]: value }));
     };
 
     const iniciarEdicion = (registro) => {
         setRegistroEditando(registro);
-        setFormData({
+        setDatosFormulario({
             ...registro,
             bit_fecha: new Date(registro.bit_fecha).toISOString().slice(0, 16),
 
@@ -98,7 +100,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
     const cancelarEdicion = () => {
         setModoEdicion(false);
         setRegistroEditando(null);
-        setFormData({
+        setDatosFormulario({
             bit_fecha: new Date().toISOString().slice(0, 16),
             bit_funcionario_responsable: '',
             bit_kilometraje: '',
@@ -111,17 +113,30 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
 
     const guardarRegistro = async (e) => {
         e.preventDefault();
+
+        if (!modoEdicion && registros.length > 0) {
+            const maxKm = Math.max(...registros.map(r => r.bit_kilometraje));
+            if (parseInt(datosFormulario.bit_kilometraje) < maxKm) {
+                alert(`Error: El kilometraje ingresado (${datosFormulario.bit_kilometraje}) no puede ser menor al histórico máximo (${maxKm} km).`);
+                return;
+            }
+        }
+
         try {
             if (registroEditando) {
-                await axios.put(`${API_URL}/vehicles/bitacora/${registroEditando.bit_id}`, formData, { withCredentials: true });
+                await axios.put(`${API_URL}/vehicles/bitacora/${registroEditando.bit_id}`, datosFormulario, { withCredentials: true });
             } else {
-                await axios.post(`${API_URL}/vehicles/${vehiculo.vehi_patente}/bitacora`, formData, { withCredentials: true });
+                await axios.post(`${API_URL}/vehicles/${vehiculo.vehi_patente}/bitacora`, datosFormulario, { withCredentials: true });
             }
             cargarBitacora();
             cancelarEdicion();
         } catch (error) {
             console.error("Error guardando bitácora:", error);
-            alert("Error al guardar el registro");
+            if (error.response && error.response.data && error.response.data.error) {
+                alert(error.response.data.error);
+            } else {
+                alert("Error al guardar el registro");
+            }
         }
     };
 
@@ -133,6 +148,164 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
         } catch (error) {
             console.error(error);
         }
+    };
+
+    const manejarDescargaExcel = async () => {
+        if (registros.length === 0) {
+            alert("No hay registros para descargar.");
+            return;
+        }
+
+        const libroExcel = new ExcelJS.Workbook();
+
+
+        const hojaFicha = libroExcel.addWorksheet('Ficha Técnica');
+
+        hojaFicha.mergeCells('A1:B1');
+        const tituloFicha = hojaFicha.getCell('A1');
+        tituloFicha.value = 'FICHA TÉCNICA DEL VEHÍCULO';
+        tituloFicha.font = { name: 'Arial', size: 16, bold: true, color: { argb: 'FFFFFF' } };
+        tituloFicha.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: '000000' } };
+        tituloFicha.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        hojaFicha.columns = [
+            { key: 'label', width: 35 },
+            { key: 'value', width: 50 }
+        ];
+
+        const datosVehiculo = [
+            { label: 'Vehículo', value: `${vehiculo.vehi_tipo || ''} ${vehiculo.vehi_marca || ''} ${vehiculo.vehi_modelo || ''}` },
+            { label: 'Patente', value: vehiculo.vehi_patente },
+            { label: 'Tipo', value: vehiculo.vehi_tipo || '-' },
+            { label: 'Marca', value: vehiculo.vehi_marca || '-' },
+            { label: 'Modelo', value: vehiculo.vehi_modelo || '-' },
+            { label: 'Año', value: vehiculo.vehi_anio || '-' },
+            { label: 'Color', value: vehiculo.vehi_color || '-' },
+            { label: 'N° Motor', value: vehiculo.vehi_motor || '-' },
+            { label: 'N° Chasis', value: vehiculo.vehi_chasis || '-' },
+            { label: 'Capacidad (kg-mt3)', value: vehiculo.vehi_capacidad_carga || '-' },
+            { label: 'N° Inventario', value: vehiculo.vehi_inventario || '-' },
+            { label: 'Propietario', value: vehiculo.vehi_propietario || 'SERVICIO LOCAL DE LLANQUIHUE' },
+            { label: 'Resolución Aparcamiento', value: vehiculo.vehi_resolucion || '-' },
+            { label: 'Lugar Aparcamiento', value: vehiculo.vehi_lugaraparcamiento || '-' },
+            { label: 'N° Póliza seguros/Cía Seguros', value: vehiculo.vehi_poliza || '-' },
+            { label: 'Multa Asociados', value: vehiculo.vehi_multas || '-' }
+        ];
+
+        datosVehiculo.forEach((dato, index) => {
+            const fila = hojaFicha.addRow([dato.label, dato.value]);
+
+            const celdaEtiqueta = fila.getCell(1);
+            celdaEtiqueta.font = { bold: true, color: { argb: '333333' } };
+            celdaEtiqueta.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'F0F0F0' } };
+            celdaEtiqueta.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+            celdaEtiqueta.alignment = { vertical: 'middle', horizontal: 'left', indent: 1 };
+
+            const celdaValor = fila.getCell(2);
+            celdaValor.font = { bold: false, color: { argb: '000000' } };
+            celdaValor.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+            celdaValor.alignment = { vertical: 'middle', horizontal: 'left', indent: 1, wrapText: true };
+        });
+
+
+
+        const hojaCalculo = libroExcel.addWorksheet('Bitácora');
+
+        hojaCalculo.columns = [
+            { key: 'fecha', width: 20 },
+            { key: 'funcionario', width: 30 },
+            { key: 'firma', width: 25 },
+            { key: 'km', width: 12 },
+            { key: 'evento', width: 30 },
+            { key: 'mecanico', width: 25 },
+            { key: 'valor', width: 20 },
+            { key: 'observaciones', width: 40 }
+        ];
+
+        hojaCalculo.mergeCells('A1:H1');
+        const celdaTitulo = hojaCalculo.getCell('A1');
+        celdaTitulo.value = 'BITÁCORA DE VEHÍCULO';
+        celdaTitulo.font = { name: 'Arial', size: 16, bold: true };
+        celdaTitulo.alignment = { horizontal: 'center', vertical: 'middle' };
+
+        const filaInfo = hojaCalculo.getRow(2);
+        filaInfo.values = [
+            'PATENTE:', vehiculo.vehi_patente,
+            'MARCA:', vehiculo.vehi_marca || '-',
+            'MODELO:', vehiculo.vehi_modelo || '-',
+            ''
+        ];
+        filaInfo.font = { bold: true };
+
+        ['A2', 'C2', 'E2'].forEach(claveCelda => {
+            hojaCalculo.getCell(claveCelda).font = { bold: true, color: { argb: '555555' } };
+            hojaCalculo.getCell(claveCelda).alignment = { horizontal: 'right' };
+        });
+
+        ['B2', 'D2', 'F2'].forEach(claveCelda => {
+            hojaCalculo.getCell(claveCelda).font = { bold: true, color: { argb: '000000' } };
+            hojaCalculo.getCell(claveCelda).alignment = { horizontal: 'left' };
+        });
+
+        const filaCabecera = hojaCalculo.getRow(4);
+        filaCabecera.values = [
+            'FECHA DE SERVICIO',
+            'FUNCIONARIO RESPONSABLE',
+            'FIRMA FUNCIONARIO',
+            'KM',
+            'EVENTO DEL VEHICULO',
+            'MECANICO',
+            'VALOR MANTENCION',
+            'OBSERVACIONES'
+        ];
+
+        for (let i = 1; i <= 8; i++) {
+            const celda = filaCabecera.getCell(i);
+            celda.font = { bold: true, color: { argb: '000000' } };
+            celda.fill = {
+                type: 'pattern',
+                pattern: 'solid',
+                fgColor: { argb: 'FFC000' }
+            };
+            celda.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            celda.border = {
+                top: { style: 'thin' },
+                left: { style: 'thin' },
+                bottom: { style: 'thin' },
+                right: { style: 'thin' }
+            };
+        }
+
+
+        [...registros].sort((a, b) => new Date(a.bit_fecha) - new Date(b.bit_fecha)).forEach(reg => {
+            const fila = hojaCalculo.addRow({
+                fecha: new Date(reg.bit_fecha).toLocaleString('es-CL'),
+                funcionario: (reg.bit_funcionario_responsable || '').trim(),
+                firma: '',
+                km: reg.bit_kilometraje,
+                evento: (reg.bit_evento || '').trim(),
+                mecanico: (reg.bit_mecanico || '').trim() || '-',
+                valor: reg.bit_valor_mantencion,
+                observaciones: (reg.bit_observaciones || '').trim() || '-'
+            });
+
+            fila.eachCell((celda) => {
+                celda.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+                celda.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+            });
+        });
+
+        const bufferDatos = await libroExcel.xlsx.writeBuffer();
+        const archivoBlob = new Blob([bufferDatos], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const nombreArchivo = `Bitacora_${vehiculo.vehi_patente}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+        saveAs(archivoBlob, nombreArchivo);
     };
 
     return (
@@ -151,9 +324,19 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
                             </p>
                         </div>
                     </div>
-                    <button onClick={onClose} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors">
-                        <X size={24} />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={manejarDescargaExcel}
+                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold transition-colors shadow-lg shadow-green-600/20"
+                            title="Descargar Excel"
+                        >
+                            <Download size={18} />
+                            <span className="hidden sm:inline">Descargar Excel</span>
+                        </button>
+                        <button onClick={alCerrar} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors">
+                            <X size={24} />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
@@ -167,19 +350,19 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
                         <form onSubmit={guardarRegistro} className="space-y-4">
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Fecha del Evento</label>
-                                <input type="datetime-local" name="bit_fecha" className="input-field" value={formData.bit_fecha} onChange={handleInputChange} required />
+                                <input type="datetime-local" name="bit_fecha" className="input-field" value={datosFormulario.bit_fecha} onChange={manejarCambioEntrada} required />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Evento / Tipo</label>
-                                <input type="text" name="bit_evento" className="input-field" placeholder="Ej: Cambio de Aceite, Choque, Revisión..." value={formData.bit_evento} onChange={handleInputChange} required />
+                                <input type="text" name="bit_evento" className="input-field" placeholder="Ej: Cambio de Aceite, Choque, Revisión..." value={datosFormulario.bit_evento} onChange={manejarCambioEntrada} required />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Kilometraje Actual</label>
-                                <input type="text" inputMode="numeric" name="bit_kilometraje" className="input-field" placeholder="10500" value={formData.bit_kilometraje} onChange={handleInputChange} required />
+                                <input type="text" inputMode="numeric" name="bit_kilometraje" className="input-field" placeholder="10500" value={datosFormulario.bit_kilometraje} onChange={manejarCambioEntrada} required />
                             </div>
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Funcionario Responsable</label>
-                                <input type="text" name="bit_funcionario_responsable" className="input-field" placeholder="Nombre funcionario..." value={formData.bit_funcionario_responsable} onChange={handleInputChange} required />
+                                <input type="text" name="bit_funcionario_responsable" className="input-field" placeholder="Nombre funcionario..." value={datosFormulario.bit_funcionario_responsable} onChange={manejarCambioEntrada} required />
                             </div>
 
                             <div className="pt-2 border-t border-slate-200">
@@ -187,13 +370,13 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
                                 <div className="space-y-3">
                                     <div>
                                         <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Mecánico</label>
-                                        <input type="text" name="bit_mecanico" className="input-field" placeholder="Mecánico / Taller" value={formData.bit_mecanico || ''} onChange={handleInputChange} required />
+                                        <input type="text" name="bit_mecanico" className="input-field" placeholder="Mecánico / Taller" value={datosFormulario.bit_mecanico || ''} onChange={manejarCambioEntrada} required />
                                     </div>
                                     <div>
                                         <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Costo Mantención</label>
                                         <div className="relative">
                                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">$</span>
-                                            <input type="text" inputMode="numeric" name="bit_valor_mantencion" className="input-field !pl-12" placeholder="0" value={formData.bit_valor_mantencion} onChange={handleInputChange} required />
+                                            <input type="text" inputMode="numeric" name="bit_valor_mantencion" className="input-field !pl-12" placeholder="0" value={datosFormulario.bit_valor_mantencion} onChange={manejarCambioEntrada} required />
                                         </div>
                                     </div>
                                 </div>
@@ -201,7 +384,7 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
 
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Observaciones</label>
-                                <textarea name="bit_observaciones" className="input-field h-20 resize-none" placeholder="Detalles adicionales..." value={formData.bit_observaciones || ''} onChange={handleInputChange} required></textarea>
+                                <textarea name="bit_observaciones" className="input-field h-20 resize-none" placeholder="Detalles adicionales..." value={datosFormulario.bit_observaciones || ''} onChange={manejarCambioEntrada} required></textarea>
                             </div>
 
                             <div className="flex gap-2 pt-2">
@@ -404,4 +587,4 @@ const VehicleBitacora = ({ vehiculo, onClose }) => {
     );
 };
 
-export default VehicleBitacora;
+export default BitacoraVehiculo;

@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import API_URL from '../../config/api';
-import { User, Pencil, Trash2, X, Save, AlertCircle, Search, RefreshCw, ChevronDown, CheckCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import API_URL from '../../../config/api';
+import { User, Pencil, Trash2, X, AlertCircle, Search, RefreshCw, ChevronDown, CheckCircle } from 'lucide-react';
+import FormularioChofer from './FormularioChofer';
 
-
-
-const DriverList = () => {
+const ListaChoferes = () => {
 
     const [choferes, setChoferes] = useState([]);
     const [choferesFiltrados, setChoferesFiltrados] = useState([]);
     const [cargando, setCargando] = useState(true);
-    const [choferViajes, setChoferViajes] = useState(null);
+    const [viajesChofer, setViajesChofer] = useState(null);
     const [viajes, setViajes] = useState([]);
     const [cargandoViajes, setCargandoViajes] = useState(false);
 
@@ -22,11 +20,6 @@ const DriverList = () => {
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
     const [estadoFiltro, setEstadoFiltro] = useState('ALL');
     const [creando, setCreando] = useState(false);
-    const [nuevoChofer, setNuevoChofer] = useState({
-        cho_correoinstitucional: '',
-        cho_nombre: '',
-        cho_activo: true
-    });
 
     const obtenerChoferes = useCallback(async () => {
         setCargando(true);
@@ -73,9 +66,9 @@ const DriverList = () => {
             setTimeout(() => setMensajeExito(null), 3000);
         } catch (error) {
             console.error(error);
-            const errorMsg = error.response?.data?.error || 'Error al eliminar';
+            const msgError = error.response?.data?.error || 'Error al eliminar';
 
-            if (error.response?.status === 400 && errorMsg.includes('tiene viajes')) {
+            if (error.response?.status === 400 && msgError.includes('tiene viajes')) {
                 if (window.confirm(`El conductor no puede eliminarse porque tiene historial de viajes.\n\n¿Deseas marcarlo como "INACTIVO" para que no se le asignen nuevos viajes?`)) {
                     try {
                         const choferActual = choferes.find(c => c.cho_correoinstitucional === email);
@@ -91,45 +84,35 @@ const DriverList = () => {
                     }
                 }
             } else {
-                setMensajeError(errorMsg);
+                setMensajeError(msgError);
                 setTimeout(() => setMensajeError(null), 3000);
             }
         }
     };
 
-    const crearChofer = async (e) => {
-        e.preventDefault();
+    const manejarGuardado = async (datos) => {
         try {
-            await axios.post(`${API_URL}/drivers`, nuevoChofer, { withCredentials: true });
-            setCreando(false);
-            setNuevoChofer({ cho_correoinstitucional: '', cho_nombre: '', cho_activo: true });
-            obtenerChoferes();
-            setMensajeExito("Conductor creado correctamente.");
-            setTimeout(() => setMensajeExito(null), 3000);
-        } catch (error) {
-            console.error(error);
-            setMensajeError(error.response?.data?.error || 'Error al crear conductor');
-            setTimeout(() => setMensajeError(null), 3000);
-        }
-    };
+            if (choferEditando) {
 
-    const actualizarChofer = async (e) => {
-        e.preventDefault();
-        try {
-            await axios.put(`${API_URL}/drivers/${choferEditando.cho_correoinstitucional}`, choferEditando, { withCredentials: true });
-            setChoferEditando(null);
+                await axios.put(`${API_URL}/drivers/${datos.cho_correoinstitucional}`, datos, { withCredentials: true });
+                setChoferEditando(null);
+            } else {
+
+                await axios.post(`${API_URL}/drivers`, datos, { withCredentials: true });
+                setCreando(false);
+            }
             obtenerChoferes();
-            setMensajeExito("Conductor actualizado correctamente.");
+            setMensajeExito(choferEditando ? "Conductor actualizado correctamente." : "Conductor creado correctamente.");
             setTimeout(() => setMensajeExito(null), 3000);
         } catch (error) {
             console.error(error);
-            setMensajeError(error.response?.data?.error || 'Error al actualizar conductor');
+            setMensajeError(error.response?.data?.error || 'Error al guardar conductor');
             setTimeout(() => setMensajeError(null), 3000);
         }
     };
 
     const verViajes = async (chofer) => {
-        setChoferViajes(chofer);
+        setViajesChofer(chofer);
         setCargandoViajes(true);
         try {
             const res = await axios.get(`${API_URL}/drivers/${chofer.cho_correoinstitucional}/trips`, { withCredentials: true });
@@ -359,128 +342,33 @@ const DriverList = () => {
             </div>
 
 
-            {creando && (
+            {(creando || choferEditando) && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden">
                         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <h3 className="font-bold text-slate-800 text-xl">Nuevo Conductor</h3>
-                            <button onClick={() => setCreando(false)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
+                            <h3 className="font-bold text-slate-800 text-xl">{creando ? 'Nuevo Conductor' : 'Editar Conductor'}</h3>
+                            <button onClick={() => { setCreando(false); setChoferEditando(null); }} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
                         </div>
-                        <form onSubmit={crearChofer} className="p-8 space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre Completo</label>
-                                <input
-                                    type="text"
-                                    placeholder="Ej: Juan Pérez"
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                                    value={nuevoChofer.cho_nombre}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        if (val.startsWith(' ')) return;
-                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(val)) {
-                                            setNuevoChofer({ ...nuevoChofer, cho_nombre: val });
-                                        }
-                                    }}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Correo Institucional</label>
-                                <div className="flex">
-                                    <input
-                                        type="text"
-                                        placeholder="nombre.apellido"
-                                        className="flex-1 px-4 py-2.5 border border-r-0 border-slate-200 rounded-l-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                                        value={nuevoChofer.cho_correoinstitucional.replace('@slepllanquihue.cl', '')}
-                                        onChange={e => {
-                                            const val = e.target.value.toLowerCase();
-                                            if (/^[a-z0-9.]*$/.test(val)) {
-                                                setNuevoChofer({ ...nuevoChofer, cho_correoinstitucional: val ? val + '@slepllanquihue.cl' : '' });
-                                            }
-                                        }}
-                                        required
-                                    />
-                                    <span className="inline-flex items-center px-4 border border-l-0 border-slate-200 bg-slate-50 text-slate-500 text-sm font-bold rounded-r-xl select-none">
-                                        @slepllanquihue.cl
-                                    </span>
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estado Inicial</label>
-                                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center gap-3">
-                                    <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white text-xs"><CheckCircle size={12} strokeWidth={4} /></div>
-                                    <span className="text-sm font-bold text-emerald-800">Activo (Predeterminado)</span>
-                                </div>
-                            </div>
-                            <div className="pt-6 flex gap-3 justify-end border-t border-slate-100">
-                                <button type="button" onClick={() => setCreando(false)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors">Cancelar</button>
-                                <button type="submit" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2" disabled={cargando}>
-                                    {cargando ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save size={18} />} Registrar Conductor
-                                </button>
-                            </div>
-                        </form>
+                        <FormularioChofer
+                            alEnviar={manejarGuardado}
+                            alCancelar={() => { setCreando(false); setChoferEditando(null); }}
+                            inicial={choferEditando}
+                            cargando={cargando}
+                        />
                     </div>
                 </div>
             )}
 
 
-            {choferEditando && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg overflow-hidden">
-                        <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                            <h3 className="font-bold text-slate-800 text-xl">Editar Conductor</h3>
-                            <button onClick={() => setChoferEditando(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
-                        </div>
-                        <form onSubmit={actualizarChofer} className="p-8 space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Correo Institucional (ID)</label>
-                                <input type="email" className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 text-slate-400 font-medium cursor-not-allowed" value={choferEditando.cho_correoinstitucional} disabled />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Nombre Completo</label>
-                                <input
-                                    type="text"
-                                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all font-medium text-slate-700"
-                                    value={choferEditando.cho_nombre}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        if (val.startsWith(' ')) return;
-                                        if (/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]*$/.test(val)) {
-                                            setChoferEditando({ ...choferEditando, cho_nombre: val });
-                                        }
-                                    }}
-                                    required
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Estado</label>
-                                <div className="relative">
-                                    <select className="w-full px-4 py-2.5 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all bg-white font-medium text-slate-700 appearance-none cursor-pointer" value={choferEditando.cho_activo ? 1 : 0} onChange={e => setChoferEditando({ ...choferEditando, cho_activo: parseInt(e.target.value) })}>
-                                        <option value={1}>🟢 Activo</option>
-                                        <option value={0}>🔴 Inactivo</option>
-                                    </select>
-                                    <ChevronDown size={14} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                                </div>
-                            </div>
-                            <div className="pt-6 flex gap-3 justify-end border-t border-slate-100">
-                                <button type="button" onClick={() => setChoferEditando(null)} className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors">Cancelar</button>
-                                <button type="submit" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"><Save size={18} /> Guardar Cambios</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-
-            {choferViajes && (
+            {viajesChofer && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
                         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <div>
                                 <h3 className="font-bold text-slate-800 text-xl">Próximos Viajes</h3>
-                                <p className="text-sm text-slate-500 font-medium">Asignaciones para {choferViajes.cho_nombre}</p>
+                                <p className="text-sm text-slate-500 font-medium">Asignaciones para {viajesChofer.cho_nombre}</p>
                             </div>
-                            <button onClick={() => setChoferViajes(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
+                            <button onClick={() => setViajesChofer(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
                         </div>
 
                         <div className="p-0 overflow-y-auto custom-scrollbar">
@@ -529,7 +417,7 @@ const DriverList = () => {
 
                         <div className="p-6 border-t border-slate-100 bg-slate-50 flex justify-end">
                             <button
-                                onClick={() => setChoferViajes(null)}
+                                onClick={() => setViajesChofer(null)}
                                 className="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold transition-colors"
                             >
                                 Cerrar
@@ -542,4 +430,4 @@ const DriverList = () => {
     );
 };
 
-export default DriverList;
+export default ListaChoferes;

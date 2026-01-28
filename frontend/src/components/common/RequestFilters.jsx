@@ -1,24 +1,33 @@
 import React from 'react';
-import { Search, ChevronDown } from 'lucide-react';
+import { Search, ChevronDown, Calendar, ArrowUpDown, Filter } from 'lucide-react';
 
 const RequestFilters = ({
     terminoBusqueda,
     setTerminoBusqueda,
     mesFiltro,
     setMesFiltro,
+    fechaInicio,
+    setFechaInicio,
+    fechaFin,
+    setFechaFin,
     estadoFiltro,
     setEstadoFiltro,
+    ordenarPor,
+    setOrdenarPor,
+    direccionOrden,
+    setDireccionOrden,
     alLimpiar,
     mostrarFiltroEstado = false,
+    mostrarOrdenamiento = false,
     customPlaceholder = "Buscar por solicitante, unidad o motivo...",
     estadosExcluidos = []
 }) => {
     return (
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6">
-            <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex flex-col xl:flex-row gap-4">
 
-
-                <div className="flex-1 relative">
+                {/* Buscador */}
+                <div className="flex-1 relative min-w-[250px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
                         type="text"
@@ -29,19 +38,41 @@ const RequestFilters = ({
                     />
                 </div>
 
+                {/* Filtros y Ordenamiento */}
+                <div className="flex flex-wrap gap-2 items-center">
 
-                <div className="flex gap-2 min-w-48 overflow-x-auto pb-2 lg:pb-0">
+                    {/* Rango de Fechas */}
+                    {(setFechaInicio && setFechaFin) ? (
+                        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                            <input
+                                type="date"
+                                className="bg-transparent text-xs font-medium text-slate-600 outline-none px-2 py-1.5 w-auto"
+                                value={fechaInicio}
+                                onChange={e => setFechaInicio(e.target.value)}
+                                title="Fecha Inicio"
+                            />
+                            <span className="text-slate-400 text-xs">A</span>
+                            <input
+                                type="date"
+                                className="bg-transparent text-xs font-medium text-slate-600 outline-none px-2 py-1.5 w-auto"
+                                value={fechaFin}
+                                onChange={e => setFechaFin(e.target.value)}
+                                title="Fecha Fin"
+                            />
+                        </div>
+                    ) : (
+                        // Fallback a mes si no se usan fechas especificas
+                        <div className="relative min-w-[160px]">
+                            <input
+                                type="month"
+                                className="w-full pl-3 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 focus:outline-none focus:border-blue-500 cursor-pointer"
+                                value={mesFiltro}
+                                onChange={(e) => setMesFiltro(e.target.value)}
+                            />
+                        </div>
+                    )}
 
-                    <div className="relative flex-1 min-w-[160px]">
-                        <input
-                            type="month"
-                            className="w-full pl-3 pr-3 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-600 focus:outline-none focus:border-blue-500 cursor-pointer"
-                            value={mesFiltro}
-                            onChange={(e) => setMesFiltro(e.target.value)}
-                        />
-                    </div>
-
-
+                    {/* Filtro Estado */}
                     {mostrarFiltroEstado && (
                         <div className="relative min-w-[160px]">
                             <select
@@ -61,7 +92,9 @@ const RequestFilters = ({
                     )}
 
 
-                    {(terminoBusqueda || mesFiltro || (mostrarFiltroEstado && estadoFiltro !== 'ALL')) && (
+
+                    {/* Botón Limpiar */}
+                    {(terminoBusqueda || mesFiltro || fechaInicio || fechaFin || (mostrarFiltroEstado && estadoFiltro !== 'ALL')) && (
                         <button
                             onClick={alLimpiar}
                             className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 rounded-xl text-sm font-bold border border-red-100 transition-colors whitespace-nowrap"

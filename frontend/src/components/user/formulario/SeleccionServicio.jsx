@@ -52,7 +52,7 @@ const SeleccionServicio = ({ datos, alCambiar }) => {
                         </div>
                         <div>
                             <div className="text-sm font-bold text-slate-900">Servicio de Conductor</div>
-                            <div className="text-xs text-slate-500">Habilita esta opción si necesitas chofer profesional.</div>
+                            <div className="text-xs text-slate-500">Habilita esta opción si necesitas chofer del servicio.</div>
                         </div>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">

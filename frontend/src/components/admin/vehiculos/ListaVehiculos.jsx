@@ -1,272 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import API_URL from '../../config/api';
-import { Truck, AlertCircle, CheckCircle, Pencil, Trash2, X, Save, Search, RefreshCw, ChevronDown, Info, FileText, ClipboardList } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import VehicleBitacora from './VehicleBitacora';
+import API_URL from '../../../config/api';
+import { Truck, AlertCircle, CheckCircle, Pencil, Trash2, X, Search, RefreshCw, ClipboardList } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
+import BitacoraVehiculo from './BitacoraVehiculo';
+import FormularioVehiculo from './FormularioVehiculo';
 
-const VehicleForm = ({ onSubmit, onCancel, inicial, cargando, onError }) => {
-    const [formData, setFormData] = useState(inicial || {
-        vehi_patente: '',
-        vehi_marca: '',
-        vehi_modelo: '',
-        vehi_tipo: '',
-        vehi_anio: '',
-        vehi_color: '',
-        vehi_motor: '',
-        vehi_chasis: '',
-        vehi_capacidad: '',
-        vehi_capacidad_carga: '',
-        vehi_inventario: '',
-        vehi_propietario: 'SERVICIO LOCAL DE EDUCACIÓN LLANQUIHUE',
-        vehi_resolucion: '',
-        vehi_lugaraparcamiento: '',
-        vehi_poliza: '',
-        vehi_multas: '',
-        vehi_estado: 'DISPONIBLE'
-    });
-
-    useEffect(() => {
-        if (inicial) {
-            setFormData(inicial);
-        }
-    }, [inicial]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-
-
-        if (name === 'vehi_patente') {
-
-            const upperVal = value.toUpperCase();
-            if (/^[A-Z0-9]*$/.test(upperVal) && upperVal.length <= 6) {
-                setFormData(prev => ({ ...prev, [name]: upperVal }));
-            }
-            return;
-        }
-
-        if (name === 'vehi_color') {
-
-            const upperVal = value.toUpperCase();
-            if (/^[A-Z\s]*$/.test(upperVal)) {
-                setFormData(prev => ({ ...prev, [name]: upperVal }));
-            }
-            return;
-        }
-
-        if (['vehi_capacidad_carga', 'vehi_anio', 'vehi_capacidad'].includes(name)) {
-
-            if (/^[0-9]*$/.test(value)) {
-                setFormData(prev => ({ ...prev, [name]: value }));
-            }
-            return;
-        }
-
-
-        if (['vehi_chasis', 'vehi_motor'].includes(name)) {
-            const upperVal = value.toUpperCase();
-            if (/^[A-Z0-9]*$/.test(upperVal)) {
-                setFormData(prev => ({ ...prev, [name]: upperVal }));
-            }
-            return;
-        }
-
-
-        const textFields = ['vehi_marca', 'vehi_modelo', 'vehi_tipo', 'vehi_inventario', 'vehi_propietario', 'vehi_resolucion', 'vehi_lugaraparcamiento', 'vehi_poliza'];
-
-        if (textFields.includes(name)) {
-            const upperVal = value.toUpperCase();
-
-            if (/^[A-Z0-9\s\-/\.ÁÉÍÓÚÑÜ¡¿?!]*$/.test(upperVal)) {
-                setFormData(prev => ({ ...prev, [name]: upperVal }));
-            }
-            return;
-        }
-
-        if (name === 'vehi_multas') {
-            if (value.startsWith(' ')) return;
-            if (/^[a-zA-Z0-9\s.,;:\-/"'?!¡¿@#&()ºáéíóúÁÉÍÓÚñÑüÜ]*$/.test(value)) {
-                setFormData(prev => ({ ...prev, [name]: value }));
-            }
-            return;
-        }
-
-
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-
-
-        const currentYear = new Date().getFullYear();
-        const yearInput = parseInt(formData.vehi_anio);
-
-        if (yearInput < 1980 || yearInput > currentYear + 1) {
-            onError(`El año del vehículo debe estar entre 1980 y ${currentYear + 1}.`);
-            return;
-        }
-
-        onSubmit(formData);
-    };
-
-    return (
-        <form onSubmit={handleSubmit} className="p-6 md:p-8 space-y-6 overflow-y-auto max-h-[85vh]">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center justify-between mb-2">
-                <div>
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Patente</label>
-                    <input
-                        type="text"
-                        name="vehi_patente"
-                        placeholder="ABCD12"
-                        className="bg-transparent text-xl font-bold text-slate-800 placeholder:text-slate-300 outline-none uppercase w-full"
-                        value={formData.vehi_patente}
-                        onChange={handleChange}
-                        disabled={!!inicial} // Si es edicion, no se edita patente
-                        required
-                    />
-                    {!!inicial && <p className="text-[10px] text-slate-400 italic">No editable</p>}
-                </div>
-                <div className="flex flex-col items-end">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide block mb-1">Estado</label>
-                    {!inicial ? (
-                        <div className="bg-emerald-100 text-emerald-700 px-3 py-1.5 rounded-lg text-sm font-bold border border-emerald-200 flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-emerald-500"></div> DISPONIBLE
-                        </div>
-                    ) : (
-                        <select
-                            name="vehi_estado"
-                            className="bg-white px-3 py-1.5 border border-slate-200 rounded-lg text-sm font-bold text-slate-700 outline-none focus:border-blue-500"
-                            value={formData.vehi_estado}
-                            onChange={handleChange}
-                        >
-                            <option value="DISPONIBLE">🟢 Disponible</option>
-                            <option value="MANTENCION">🟠 Mantenimiento</option>
-                            <option value="DE BAJA">⚫ De Baja</option>
-                        </select>
-                    )}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Tipo</label>
-                    <input type="text" name="vehi_tipo" placeholder="Ej: MINIBUS" className="input-std" value={formData.vehi_tipo || ''} onChange={handleChange} required />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Marca</label>
-                    <input type="text" name="vehi_marca" placeholder="Ej: MERCEDEZ BENZ" className="input-std" value={formData.vehi_marca} onChange={handleChange} required />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Modelo</label>
-                    <input type="text" name="vehi_modelo" placeholder="Ej: SPRINTER" className="input-std" value={formData.vehi_modelo} onChange={handleChange} required />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Año</label>
-                    <input type="text" inputMode="numeric" name="vehi_anio" placeholder="202X" className="input-std" value={formData.vehi_anio || ''} onChange={handleChange} maxLength={4} required />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Color</label>
-                    <input type="text" name="vehi_color" placeholder="Blanco" className="input-std" value={formData.vehi_color || ''} onChange={handleChange} required />
-                </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Capacidad Pax</label>
-                    <input type="text" inputMode="numeric" name="vehi_capacidad" placeholder="19" className="input-std" value={formData.vehi_capacidad} onChange={handleChange} required />
-                </div>
-            </div>
-
-
-            <div className="pt-4 border-t border-slate-100">
-                <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><Info size={16} /> Datos Técnicos</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">N° Motor</label>
-                        <input type="text" name="vehi_motor" className="input-std font-mono" value={formData.vehi_motor || ''} onChange={handleChange} required />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">N° Chasis</label>
-                        <input type="text" name="vehi_chasis" className="input-std font-mono" value={formData.vehi_chasis || ''} onChange={handleChange} required />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Capacidad (kg-mt3)</label>
-                        <input type="text" name="vehi_capacidad_carga" className="input-std" value={formData.vehi_capacidad_carga || ''} onChange={handleChange} required />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">N° Inventario</label>
-                        <input type="text" name="vehi_inventario" className="input-std font-mono" value={formData.vehi_inventario || ''} onChange={handleChange} required />
-                    </div>
-                </div>
-            </div>
-
-
-            <div className="pt-4 border-t border-slate-100">
-                <h4 className="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2"><FileText size={16} /> Datos Administrativos</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2 space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Propietario</label>
-                        <input type="text" name="vehi_propietario" className="input-std" value={formData.vehi_propietario || ''} onChange={handleChange} required />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Resolución Aparcamiento</label>
-                        <input type="text" name="vehi_resolucion" className="input-std" value={formData.vehi_resolucion || ''} onChange={handleChange} required />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Lugar Aparcamiento</label>
-                        <input type="text" name="vehi_lugaraparcamiento" className="input-std" value={formData.vehi_lugaraparcamiento || ''} onChange={handleChange} required />
-                    </div>
-                    <div className="md:col-span-2 space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">N° Póliza de Seguro</label>
-                        <input type="text" name="vehi_poliza" className="input-std" value={formData.vehi_poliza || ''} onChange={handleChange} />
-                    </div>
-                    <div className="md:col-span-2 space-y-1">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Multas / Observaciones</label>
-                        <textarea name="vehi_multas" className="input-std h-20" value={formData.vehi_multas || ''} onChange={handleChange}></textarea>
-                    </div>
-                </div>
-            </div>
-
-            <div className="pt-6 flex gap-3 justify-end border-t border-slate-100 mt-auto flex-shrink-0">
-                <button
-                    type="button"
-                    onClick={onCancel}
-                    className="px-5 py-2.5 text-slate-600 hover:bg-slate-100 rounded-xl font-bold transition-colors"
-                >
-                    Cancelar
-                </button>
-                <button
-                    type="submit"
-                    className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold shadow-lg shadow-blue-500/20 transition-all flex items-center gap-2"
-                    disabled={cargando}
-                >
-                    {cargando ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> : <Save size={18} />}
-                    Guardar
-                </button>
-            </div>
-            <style>{`
-                .input-std {
-                    width: 100%;
-                    padding: 0.6rem 1rem;
-                    border: 1px solid #e2e8f0;
-                    border-radius: 0.75rem;
-                    font-size: 0.875rem;
-                    line-height: 1.25rem;
-                    color: #334155;
-                    font-weight: 500;
-                    outline: none;
-                    transition: all 0.2s;
-                }
-                .input-std:focus {
-                     border-color: #3b82f6;
-                     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-                }
-            `}</style>
-        </form>
-    );
-};
-
-
-const VehicleList = () => {
-    const [vehiculoViajes, setVehiculoViajes] = useState(null);
+const ListaVehiculos = () => {
+    const [viajesVehiculo, setViajesVehiculo] = useState(null);
     const [viajes, setViajes] = useState([]);
     const [cargandoViajes, setCargandoViajes] = useState(false);
     const [vehiculos, setVehiculos] = useState([]);
@@ -276,9 +17,9 @@ const VehicleList = () => {
     const [mensajeError, setMensajeError] = useState(null);
     const [mensajeExito, setMensajeExito] = useState(null);
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
-    const [estadoFiltro, setEstadoFiltro] = useState('ALL');
+    const [filtroEstado, setFiltroEstado] = useState('ALL');
     const [creando, setCreando] = useState(false);
-    const [vehiculoBitacora, setVehiculoBitacora] = useState(null);
+    const [bitacoraVehiculo, setBitacoraVehiculo] = useState(null);
 
     const obtenerVehiculos = useCallback(async () => {
         setCargando(true);
@@ -291,7 +32,7 @@ const VehicleList = () => {
         } finally {
             setCargando(false);
         }
-    }, [API_URL]);
+    }, []);
 
     useEffect(() => {
         obtenerVehiculos();
@@ -308,11 +49,11 @@ const VehicleList = () => {
                 (v.vehi_tipo && v.vehi_tipo.toLowerCase().includes(terminoMinuscula))
             );
         }
-        if (estadoFiltro !== 'ALL') {
-            resultado = resultado.filter(v => v.vehi_estado === estadoFiltro);
+        if (filtroEstado !== 'ALL') {
+            resultado = resultado.filter(v => v.vehi_estado === filtroEstado);
         }
         setVehiculosFiltrados(resultado);
-    }, [vehiculos, terminoBusqueda, estadoFiltro]);
+    }, [vehiculos, terminoBusqueda, filtroEstado]);
 
     const eliminarVehiculo = async (patente) => {
         if (!window.confirm(`¿Estás seguro de eliminar el vehículo ${patente}?`)) return;
@@ -323,27 +64,27 @@ const VehicleList = () => {
             setTimeout(() => setMensajeExito(null), 3000);
         } catch (error) {
             console.error(error);
-            const errorMsg = error.response?.data?.error || 'Error al eliminar';
+            const msgError = error.response?.data?.error || 'Error al eliminar';
 
-            if (error.response?.status === 400 && errorMsg.includes('tiene historial')) {
+            if (error.response?.status === 400 && msgError.includes('tiene historial')) {
                 if (window.confirm(`El vehículo no puede eliminarse porque tiene historial de viajes.\n\n¿Deseas marcarlo como "DE BAJA" para que no aparezca en nuevas solicitudes?`)) {
                     try {
                         const vehiculoActual = vehiculos.find(v => v.vehi_patente === patente);
                         if (vehiculoActual) {
                             await axios.put(`${API_URL}/vehicles/${patente}`, { ...vehiculoActual, vehi_estado: 'DE BAJA' }, { withCredentials: true });
-                            obtenerVehiculos(); // Recargar lista
+                            obtenerVehiculos();
                             setMensajeExito("Vehículo marcado como DE BAJA correctamente.");
                             setTimeout(() => setMensajeExito(null), 3000);
                         }
                     } catch (updateError) {
                         console.error("Error al dar de baja:", updateError);
-                        const data = updateError.response?.data;
+                        const datos = updateError.response?.data;
                         let msg = "Error al intentar dar de baja el vehículo.";
 
-                        if (data?.error) {
-                            msg = data.error;
-                        } else if (data?.errors && Array.isArray(data.errors)) {
-                            msg = data.errors.map(e => `${e.msg} (${e.path})`).join(', ');
+                        if (datos?.error) {
+                            msg = datos.error;
+                        } else if (datos?.errors && Array.isArray(datos.errors)) {
+                            msg = datos.errors.map(e => `${e.msg} (${e.path})`).join(', ');
                         }
 
                         setMensajeError(msg);
@@ -351,7 +92,7 @@ const VehicleList = () => {
                     }
                 }
             } else {
-                setMensajeError(errorMsg);
+                setMensajeError(msgError);
                 setTimeout(() => setMensajeError(null), 3000);
             }
         }
@@ -360,11 +101,11 @@ const VehicleList = () => {
     const manejarGuardado = async (datos) => {
         try {
             if (vehiculoEditando) {
-                // Actualizar
+
                 await axios.put(`${API_URL}/vehicles/${datos.vehi_patente}`, datos, { withCredentials: true });
                 setVehiculoEditando(null);
             } else {
-                // Crear
+
                 await axios.post(`${API_URL}/vehicles`, { ...datos, vehi_capacidad: parseInt(datos.vehi_capacidad) }, { withCredentials: true });
                 setCreando(false);
             }
@@ -380,7 +121,7 @@ const VehicleList = () => {
 
 
     const verViajes = async (vehiculo) => {
-        setVehiculoViajes(vehiculo);
+        setViajesVehiculo(vehiculo);
         setCargandoViajes(true);
         try {
             const res = await axios.get(`${API_URL}/vehicles/${vehiculo.vehi_patente}/trips`, { withCredentials: true });
@@ -467,8 +208,8 @@ const VehicleList = () => {
                     <div className="w-full lg:w-48">
                         <select
                             className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
-                            value={estadoFiltro}
-                            onChange={(e) => setEstadoFiltro(e.target.value)}
+                            value={filtroEstado}
+                            onChange={(e) => setFiltroEstado(e.target.value)}
                         >
                             <option value="ALL">Todos los Estados</option>
                             <option value="DISPONIBLE">🟢 Disponible</option>
@@ -535,7 +276,7 @@ const VehicleList = () => {
                                         <td className="p-5 text-right">
                                             <div className="flex justify-end gap-2">
                                                 <button
-                                                    onClick={() => setVehiculoBitacora(v)}
+                                                    onClick={() => setBitacoraVehiculo(v)}
                                                     className="text-slate-400 hover:text-emerald-600 p-2 hover:bg-emerald-50 rounded-lg transition-colors border border-transparent hover:border-emerald-100"
                                                     title="Ver Bitácora / Historial"
                                                 >
@@ -566,12 +307,12 @@ const VehicleList = () => {
                                 <X size={20} />
                             </button>
                         </div>
-                        <VehicleForm
-                            onSubmit={manejarGuardado}
-                            onCancel={() => { setCreando(false); setVehiculoEditando(null); }}
+                        <FormularioVehiculo
+                            alEnviar={manejarGuardado}
+                            alCancelar={() => { setCreando(false); setVehiculoEditando(null); }}
                             inicial={vehiculoEditando}
                             cargando={cargando}
-                            onError={(msg) => {
+                            alError={(msg) => {
                                 setMensajeError(msg);
                                 setTimeout(() => setMensajeError(null), 3000);
                             }}
@@ -581,24 +322,24 @@ const VehicleList = () => {
             )}
 
             <AnimatePresence>
-                {vehiculoBitacora && (
-                    <VehicleBitacora
-                        vehiculo={vehiculoBitacora}
-                        onClose={() => setVehiculoBitacora(null)}
+                {bitacoraVehiculo && (
+                    <BitacoraVehiculo
+                        vehiculo={bitacoraVehiculo}
+                        alCerrar={() => setBitacoraVehiculo(null)}
                     />
                 )}
             </AnimatePresence>
 
-            {/* View Trips Modal */}
-            {vehiculoViajes && (
+
+            {viajesVehiculo && (
                 <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-3xl shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
                         <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                             <div>
                                 <h3 className="font-bold text-slate-800 text-xl">Próximos Viajes</h3>
-                                <p className="text-sm text-slate-500 font-medium">Asignaciones para {vehiculoViajes.vehi_marca} {vehiculoViajes.vehi_modelo} ({vehiculoViajes.vehi_patente})</p>
+                                <p className="text-sm text-slate-500 font-medium">Asignaciones para {viajesVehiculo.vehi_marca} {viajesVehiculo.vehi_modelo} ({viajesVehiculo.vehi_patente})</p>
                             </div>
-                            <button onClick={() => setVehiculoViajes(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
+                            <button onClick={() => setViajesVehiculo(null)} className="text-slate-400 hover:text-slate-600 p-2 rounded-full hover:bg-slate-100 transition-colors"><X size={20} /></button>
                         </div>
 
                         <div className="p-0 overflow-y-auto custom-scrollbar">
@@ -651,7 +392,7 @@ const VehicleList = () => {
                             )}
                         </div>
                         <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
-                            <button onClick={() => setVehiculoViajes(null)} className="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition-colors">Cerrar</button>
+                            <button onClick={() => setViajesVehiculo(null)} className="px-5 py-2 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-100 transition-colors">Cerrar</button>
                         </div>
                     </div>
                 </div>
@@ -660,4 +401,4 @@ const VehicleList = () => {
     );
 };
 
-export default VehicleList;
+export default ListaVehiculos;

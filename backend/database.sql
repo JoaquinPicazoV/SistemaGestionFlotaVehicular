@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS SOLICITUDES (
     sol_nombresolicitante VARCHAR(100) NOT NULL,
     sol_fechasalida DATETIME NOT NULL,
     sol_fechallegada DATETIME NOT NULL,
-    sol_estado ENUM('PENDIENTE', 'APROBADA', 'RECHAZADA', 'FINALIZADA') DEFAULT 'PENDIENTE',
+    sol_estado ENUM('PENDIENTE', 'APROBADA', 'RECHAZADA', 'FINALIZADA', 'CANCELADO') DEFAULT 'PENDIENTE',
     sol_unidad VARCHAR(100) NOT NULL,
     sol_motivo TEXT NOT NULL,
     sol_itinerario TEXT,

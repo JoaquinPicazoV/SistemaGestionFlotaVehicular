@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import API_URL from '../../config/api';
-import { RefreshCw, Filter, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
-import RequestFilters from '../common/RequestFilters';
-import RequestCard from '../common/RequestCard';
-import RequestDetailModal from '../common/RequestDetailModal';
+import API_URL from '../../../config/api';
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
+import { RefreshCw, Filter, AlertCircle, CheckCircle, XCircle, Download } from 'lucide-react';
+import FiltrosSolicitud from '../../common/RequestFilters';
+import TarjetaSolicitud from '../../common/RequestCard';
+import ModalDetalleSolicitud from '../../common/RequestDetailModal';
 
-
-
-const ProcessedRequests = () => {
+const SolicitudesProcesadas = () => {
 
     const [solicitudes, setSolicitudes] = useState([]);
     const [solicitudesFiltradas, setSolicitudesFiltradas] = useState([]);
@@ -16,16 +16,19 @@ const ProcessedRequests = () => {
     const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
     const [detallesSolicitud, setDetallesSolicitud] = useState({ pasajeros: [], destinos: [] });
     const [cargandoDetalles, setCargandoDetalles] = useState(false);
-
-
     const [mensajeExito, setMensajeExito] = useState('');
     const [mensajeError, setMensajeError] = useState('');
-
-
     const [terminoBusqueda, setTerminoBusqueda] = useState('');
-    const [mesFiltro, setMesFiltro] = useState(''); // YYYY-MM
-    const [estadoFiltro, setEstadoFiltro] = useState('ALL'); // 'ALL', 'APROBADA', 'FINALIZADA', 'RECHAZADA'
 
+
+    const [mesFiltro, setMesFiltro] = useState('');
+    const [fechaInicio, setFechaInicio] = useState('');
+    const [fechaFin, setFechaFin] = useState('');
+    const [estadoFiltro, setEstadoFiltro] = useState('ALL');
+
+
+    const [ordenarPor, setOrdenarPor] = useState('CRONOLOGICO'); // 'LLEGADA' (ID), 'CRONOLOGICO' (Fecha Salida)
+    const [direccionOrden, setDireccionOrden] = useState('DESC'); // 'ASC', 'DESC'
 
     const obtenerSolicitudes = useCallback(async () => {
         setCargando(true);
@@ -40,16 +43,14 @@ const ProcessedRequests = () => {
         }
     }, []);
 
-
     useEffect(() => {
         obtenerSolicitudes();
     }, [obtenerSolicitudes]);
 
-
     useEffect(() => {
-        let resultado = solicitudes;
+        let resultado = [...solicitudes];
 
-
+        // Filtrar por término de búsqueda
         if (terminoBusqueda) {
             const terminoMinuscula = terminoBusqueda.toLowerCase();
             resultado = resultado.filter(req =>
@@ -59,8 +60,22 @@ const ProcessedRequests = () => {
             );
         }
 
+        // Filtrar por estado
+        if (estadoFiltro !== 'ALL') {
+            resultado = resultado.filter(req => req.sol_estado === estadoFiltro);
+        }
 
-        if (mesFiltro) {
+        // Filtrar por fecha
+        if (fechaInicio && fechaFin) {
+            const inicio = new Date(fechaInicio);
+            const fin = new Date(fechaFin);
+            fin.setHours(23, 59, 59, 999); // Incluir todo el día final
+
+            resultado = resultado.filter(req => {
+                const fechaSalida = new Date(req.sol_fechasalida);
+                return fechaSalida >= inicio && fechaSalida <= fin;
+            });
+        } else if (mesFiltro) {
             resultado = resultado.filter(req => {
                 const fecha = new Date(req.sol_fechasalida);
                 const mesStr = `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}`;
@@ -68,14 +83,26 @@ const ProcessedRequests = () => {
             });
         }
 
+        // Ordenar resultados
+        resultado.sort((a, b) => {
+            let valorA, valorB;
 
-        if (estadoFiltro !== 'ALL') {
-            resultado = resultado.filter(req => req.sol_estado === estadoFiltro);
-        }
+            if (ordenarPor === 'LLEGADA') {
+                valorA = a.sol_id;
+                valorB = b.sol_id;
+            } else {
+                // CRONOLOGICO (Por fecha de salida del viaje)
+                valorA = new Date(a.sol_fechasalida).getTime();
+                valorB = new Date(b.sol_fechasalida).getTime();
+            }
+
+            if (valorA < valorB) return direccionOrden === 'ASC' ? -1 : 1;
+            if (valorA > valorB) return direccionOrden === 'ASC' ? 1 : -1;
+            return 0;
+        });
 
         setSolicitudesFiltradas(resultado);
-    }, [solicitudes, terminoBusqueda, mesFiltro, estadoFiltro]);
-
+    }, [solicitudes, terminoBusqueda, mesFiltro, fechaInicio, fechaFin, estadoFiltro, ordenarPor, direccionOrden]);
 
     const verDetalles = async (req) => {
         setSolicitudSeleccionada(req);
@@ -90,7 +117,6 @@ const ProcessedRequests = () => {
         }
     };
 
-
     const cancelarSolicitud = async () => {
         if (!solicitudSeleccionada) return;
         if (!window.confirm("¿Seguro que deseas cancelar esta solicitud? Esta acción liberará el vehículo y conductor asignados.")) return;
@@ -98,21 +124,130 @@ const ProcessedRequests = () => {
         try {
             await axios.put(`${API_URL}/requests/${solicitudSeleccionada.sol_id}/cancel`, {}, { withCredentials: true });
 
-            // Update UI
             setSolicitudSeleccionada(null);
             setMensajeExito("Solicitud cancelada correctamente.");
-            obtenerSolicitudes(); // Refresh list to show 'CANCELADO' status
+            obtenerSolicitudes();
         } catch (error) {
             console.error("Error cancelando solicitud:", error);
             setMensajeError("Error al cancelar la solicitud.");
         }
     };
 
-
     const limpiarFiltros = () => {
         setTerminoBusqueda('');
         setMesFiltro('');
         setEstadoFiltro('ALL');
+    };
+
+    const manejarDescargaExcel = async () => {
+        try {
+            // Fetch all data specifically for export
+            const response = await axios.get(`${API_URL}/requests/processed?limit=all`, { withCredentials: true });
+            const datosExportar = response.data;
+
+            if (!datosExportar || datosExportar.length === 0) {
+                setMensajeError("No hay registros para descargar.");
+                setTimeout(() => setMensajeError(''), 3000);
+                return;
+            }
+
+            const workbook = new ExcelJS.Workbook();
+            const worksheet = workbook.addWorksheet('Historial Solicitudes');
+
+            // Columnas
+            worksheet.columns = [
+                { header: 'FECHA SALIDA', key: 'salida', width: 20 },
+                { header: 'FECHA LLEGADA', key: 'llegada', width: 20 },
+                { header: 'ESTADO', key: 'estado', width: 15 },
+                { header: 'SOLICITANTE', key: 'solicitante', width: 25 },
+                { header: 'UNIDAD', key: 'unidad', width: 25 },
+                { header: 'TIPO VIAJE', key: 'tipo', width: 20 },
+                { header: 'ASUNTO / MOTIVO', key: 'motivo', width: 40 },
+                { header: 'ITINERARIO', key: 'itinerario', width: 40 },
+                { header: 'VEHÍCULO ASIGNADO', key: 'vehiculo', width: 30 },
+                { header: 'CONDUCTOR', key: 'conductor', width: 25 },
+                { header: 'KM ESTIMADO', key: 'km', width: 15 },
+                { header: 'MOTIVO RECHAZO', key: 'rechazo', width: 40 },
+                { header: 'ADMINISTRADOR', key: 'admin', width: 30 },
+            ];
+
+            // Estilo Header
+            const headerRow = worksheet.getRow(1);
+            headerRow.font = { bold: true, color: { argb: '000000' } };
+            headerRow.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC000' } };
+            headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+            headerRow.eachCell((cell) => {
+                cell.border = {
+                    top: { style: 'thin' },
+                    left: { style: 'thin' },
+                    bottom: { style: 'thin' },
+                    right: { style: 'thin' }
+                };
+            });
+
+            // Agregar Datos
+            datosExportar.forEach(req => {
+                let vehiculoTexto = 'Sin Asignar';
+                let conductorTexto = 'Sin Chofer';
+
+                if (req.sol_estado === 'RECHAZADA' || req.sol_estado === 'CANCELADO') {
+                    vehiculoTexto = 'NO APLICA';
+                    conductorTexto = 'NO APLICA';
+                } else {
+                    // Lógica Vehículo
+                    if (req.vehi_patente) {
+                        vehiculoTexto = `${req.vehi_modelo || 'Vehículo'} (${req.vehi_patente})`;
+                    } else if (req.sol_patentevehiculofk) {
+                        vehiculoTexto = req.sol_patentevehiculofk;
+                    }
+
+                    // Lógica Conductor
+                    if (req.nombre_chofer) {
+                        conductorTexto = req.nombre_chofer;
+                    } else if (req.sol_correochoferfk) {
+                        conductorTexto = req.sol_correochoferfk;
+                    } else if (req.sol_requierechofer) {
+                        conductorTexto = 'PENDIENTE ASIGNACIÓN';
+                    }
+                }
+
+                const row = worksheet.addRow({
+                    salida: new Date(req.sol_fechasalida).toLocaleString('es-CL'),
+                    llegada: new Date(req.sol_fechallegada).toLocaleString('es-CL'),
+                    estado: req.sol_estado,
+                    solicitante: req.sol_nombresolicitante,
+                    unidad: req.sol_unidad,
+                    tipo: req.sol_tipo || 'Salida Estándar',
+                    motivo: req.sol_motivo,
+                    itinerario: req.sol_itinerario || '-',
+                    vehiculo: vehiculoTexto,
+                    conductor: conductorTexto,
+                    km: req.sol_kmestimado || 0,
+                    rechazo: (req.sol_estado === 'RECHAZADA' || req.sol_estado === 'CANCELADO') ? (req.sol_observacionrechazo || 'Cancelada por el administrador') : '-',
+                    admin: req.admin_nombre || (req.sol_idadminfk ? 'Admin no encontrado' : 'Auto-gestión')
+                });
+
+                row.eachCell((cell) => {
+                    cell.alignment = { vertical: 'middle', horizontal: 'left', wrapText: true };
+                    cell.border = {
+                        top: { style: 'thin' },
+                        left: { style: 'thin' },
+                        bottom: { style: 'thin' },
+                        right: { style: 'thin' }
+                    };
+                });
+            });
+
+            const buffer = await workbook.xlsx.writeBuffer();
+            const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            saveAs(blob, `Historial_Solicitudes_SLEP_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+        } catch (error) {
+            console.error("Error al exportar Excel:", error);
+            setMensajeError("Hubo un error al generar el reporte.");
+            setTimeout(() => setMensajeError(''), 3000);
+        }
     };
 
     if (cargando) return (
@@ -131,6 +266,12 @@ const ProcessedRequests = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={manejarDescargaExcel}
+                        className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg font-bold shadow-md transition-all text-sm"
+                    >
+                        <Download size={18} /> Exportar Excel
+                    </button>
                     <button onClick={obtenerSolicitudes} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Actualizar">
                         <RefreshCw size={18} />
                     </button>
@@ -141,15 +282,24 @@ const ProcessedRequests = () => {
             </div>
 
 
-            <RequestFilters
+            <FiltrosSolicitud
                 terminoBusqueda={terminoBusqueda}
                 setTerminoBusqueda={setTerminoBusqueda}
                 mesFiltro={mesFiltro}
                 setMesFiltro={setMesFiltro}
+                fechaInicio={fechaInicio}
+                setFechaInicio={setFechaInicio}
+                fechaFin={fechaFin}
+                setFechaFin={setFechaFin}
                 estadoFiltro={estadoFiltro}
                 setEstadoFiltro={setEstadoFiltro}
+                ordenarPor={ordenarPor}
+                setOrdenarPor={setOrdenarPor}
+                direccionOrden={direccionOrden}
+                setDireccionOrden={setDireccionOrden}
                 alLimpiar={limpiarFiltros}
                 mostrarFiltroEstado={true}
+                mostrarOrdenamiento={true}
                 estadosExcluidos={['PENDIENTE']}
             />
 
@@ -182,7 +332,7 @@ const ProcessedRequests = () => {
             <div className="grid gap-4">
                 {solicitudesFiltradas.length > 0 ? (
                     solicitudesFiltradas.map((req) => (
-                        <RequestCard
+                        <TarjetaSolicitud
                             key={req.sol_id}
                             solicitud={req}
                             alAccionar={verDetalles}
@@ -214,7 +364,7 @@ const ProcessedRequests = () => {
             </div>
 
 
-            <RequestDetailModal
+            <ModalDetalleSolicitud
                 solicitud={solicitudSeleccionada}
                 detalles={detallesSolicitud}
                 cargandoDetalles={cargandoDetalles}
@@ -242,4 +392,4 @@ const ProcessedRequests = () => {
     );
 };
 
-export default ProcessedRequests;
+export default SolicitudesProcesadas;

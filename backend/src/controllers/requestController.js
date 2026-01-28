@@ -237,15 +237,22 @@ exports.cancelarSolicitud = async (req, res) => {
 
 exports.obtenerProcesadas = async (req, res) => {
     try {
-        const [solicitudes] = await pool.query(`
-            SELECT s.*, c.cho_nombre as nombre_chofer, v.vehi_marca, v.vehi_modelo, v.vehi_patente
+        const { limit } = req.query;
+        let query = `
+            SELECT s.*, c.cho_nombre as nombre_chofer, v.vehi_marca, v.vehi_modelo, v.vehi_patente, a.adm_correo as admin_nombre
             FROM SOLICITUDES s
             LEFT JOIN CHOFER c ON s.sol_correochoferfk = c.cho_correoinstitucional
             LEFT JOIN VEHICULO v ON s.sol_patentevehiculofk = v.vehi_patente
+            LEFT JOIN ADMINISTRADOR a ON s.sol_idadminfk = a.adm_id
             WHERE s.sol_estado IN ('APROBADA', 'FINALIZADA', 'RECHAZADA', 'CANCELADO') 
             ORDER BY s.sol_fechasalida DESC
-            LIMIT 100
-        `);
+        `;
+
+        if (limit !== 'all') {
+            query += ' LIMIT 100';
+        }
+
+        const [solicitudes] = await pool.query(query);
         res.json(solicitudes);
     } catch (error) {
         console.error("Error obteniendo solicitudes procesadas:", error);
@@ -635,85 +642,4 @@ exports.obtenerMisSolicitudes = async (req, res) => {
     }
 };
 
-exports.obtenerProcesadas = async (req, res) => {
-    try {
-        const [solicitudes] = await pool.query(`
-            SELECT * FROM SOLICITUDES 
-            WHERE sol_estado IN ('APROBADA', 'RECHAZADA', 'FINALIZADA')
-            ORDER BY sol_fechasalida DESC
-            LIMIT 500
-        `);
-        res.json(solicitudes);
-    } catch (error) {
-        console.error("Error obteniendo solicitudes procesadas:", error);
-        res.status(500).json({ error: 'Error al obtener historial' });
-    }
-};
 
-exports.rechazarSolicitud = async (req, res) => {
-    const { id } = req.params;
-    const { sol_observacionrechazo } = req.body;
-
-    try {
-        const [result] = await pool.query(
-            "UPDATE SOLICITUDES SET sol_estado = 'RECHAZADA', sol_observacionrechazo = ? WHERE sol_id = ?",
-            [sol_observacionrechazo, id]
-        );
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'Solicitud no encontrada' });
-        }
-
-        res.json({ message: 'Solicitud rechazada correctamente' });
-    } catch (error) {
-        console.error("Error rechazando solicitud:", error);
-        res.status(500).json({ error: 'Error al rechazar solicitud' });
-    }
-};
-
-exports.cancelarSolicitud = async (req, res) => {
-    const { id } = req.params;
-    const { id: usuarioId, rol } = req.usuario;
-
-    const conexion = await pool.getConnection();
-
-    try {
-        await conexion.beginTransaction();
-
-        const [solicitud] = await conexion.query("SELECT sol_idusuariofk, sol_estado FROM SOLICITUDES WHERE sol_id = ? FOR UPDATE", [id]);
-
-        if (solicitud.length === 0) {
-            await conexion.rollback();
-            return res.status(404).json({ error: 'Solicitud no encontrada' });
-        }
-
-        const { sol_idusuariofk, sol_estado } = solicitud[0];
-
-        // Verificar permisos
-        if (rol !== 'admin' && sol_idusuariofk !== usuarioId) {
-            await conexion.rollback();
-            return res.status(403).json({ error: 'No tienes permiso para cancelar esta solicitud.' });
-        }
-
-        // Si ya finalizó, no se puede cancelar
-        if (sol_estado === 'FINALIZADA') {
-            await conexion.rollback();
-            return res.status(400).json({ error: 'No se puede cancelar una solicitud finalizada.' });
-        }
-
-        await conexion.query(
-            "UPDATE SOLICITUDES SET sol_estado = 'RECHAZADA', sol_observacionrechazo = 'Cancelada por el usuario.' WHERE sol_id = ?",
-            [id]
-        );
-
-        await conexion.commit();
-        res.json({ message: 'Solicitud cancelada correctamente' });
-
-    } catch (error) {
-        await conexion.rollback();
-        console.error("Error cancelando solicitud:", error);
-        res.status(500).json({ error: 'Error al cancelar solicitud' });
-    } finally {
-        conexion.release();
-    }
-};

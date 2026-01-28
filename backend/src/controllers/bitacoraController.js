@@ -27,6 +27,20 @@ exports.crearEntrada = async (req, res) => {
     } = req.body;
 
     try {
+        // Validar que el kilometraje no sea menor al último registrado
+        const [ultimoRegistro] = await pool.query(
+            'SELECT MAX(bit_kilometraje) as max_km FROM BITACORA_VEHICULO WHERE bit_patentevehiculofk = ?',
+            [patente]
+        );
+
+        const maxKm = ultimoRegistro[0]?.max_km || 0;
+
+        if (parseInt(bit_kilometraje) < maxKm) {
+            return res.status(400).json({
+                error: `El kilometraje ingresado (${bit_kilometraje}) no puede ser menor al último registrado (${maxKm}).`
+            });
+        }
+
         await pool.query(
             `INSERT INTO BITACORA_VEHICULO (
                 bit_patentevehiculofk, bit_fecha, bit_funcionario_responsable, 

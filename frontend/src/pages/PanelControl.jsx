@@ -3,22 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import API_URL from '../config/api';
 import { useAuth } from '../context/AuthContext';
-import { ResponsiveContainer, PieChart as RechartsPie, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { ResponsiveContainer as ContenedorResponsivo, PieChart as GraficoPastel, Pie, Cell as Celda, Tooltip, Legend as Leyenda } from 'recharts';
 import { AlertCircle, TrendingUp, Menu, Users } from 'lucide-react';
 
-import StatisticsBI from '../components/admin/StatisticsBI';
-import VehicleList from '../components/admin/VehicleList';
-import DriverList from '../components/admin/DriverList';
-import PendingRequests from '../components/admin/PendingRequests';
-import ProcessedRequests from '../components/admin/ProcessedRequests';
-import AdminCalendar from '../components/admin/AdminCalendar';
-import AdminSidebar from '../components/admin/AdminSidebar';
-import LoadingScreen from '../components/common/LoadingScreen';
-import UserDashboard from './UserDashboard';
+import EstadisticasBI from '../components/admin/StatisticsBI';
+import ListaVehiculos from '../components/admin/vehiculos/ListaVehiculos';
+import ListaChoferes from '../components/admin/choferes/ListaChoferes';
+import SolicitudesPendientes from '../components/admin/solicitudes/SolicitudesPendientes';
+import SolicitudesProcesadas from '../components/admin/solicitudes/SolicitudesProcesadas';
+import CalendarioAdmin from '../components/admin/AdminCalendar';
+import BarraLateralAdmin from '../components/admin/layout/BarraLateralAdmin';
+import PantallaCarga from '../components/common/LoadingScreen';
+import PanelUsuario from './UserDashboard';
 
-const Dashboard = () => {
+const PanelControl = () => {
     const { usuario, cerrarSesion } = useAuth();
-    const navigate = useNavigate();
+    const navegar = useNavigate();
     const [cargando, setCargando] = useState(true);
     const [pestanaActiva, setPestanaActiva] = useState('resumen');
     const [menuLateralAbierto, setMenuLateralAbierto] = useState(false);
@@ -33,14 +33,14 @@ const Dashboard = () => {
 
     const obtenerEstadisticas = useCallback(async () => {
         try {
-            const res = await axios.get(`${API_URL}/stats/summary`, { withCredentials: true });
-            setEstadisticas(res.data);
+            const respuesta = await axios.get(`${API_URL}/stats/summary`, { withCredentials: true });
+            setEstadisticas(respuesta.data);
         } catch (error) {
             console.error("Error cargando estadísticas del panel:", error);
         } finally {
             setCargando(false);
         }
-    }, [API_URL]);
+    }, []);
 
     useEffect(() => {
         if (usuario) {
@@ -62,21 +62,21 @@ const Dashboard = () => {
 
 
 
-    if (cargando) return <LoadingScreen mensaje="Cargando Panel..." />;
+    if (cargando) return <PantallaCarga mensaje="Cargando Panel..." />;
 
     if (usuario && usuario.rol === 'funcionario') {
-        return <UserDashboard usuario={usuario} cerrarSesion={cerrarSesion} />;
+        return <PanelUsuario usuario={usuario} cerrarSesion={cerrarSesion} />;
     }
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] flex font-sans">
-            <AdminSidebar
+            <BarraLateralAdmin
                 pestanaActiva={pestanaActiva}
                 setPestanaActiva={setPestanaActiva}
                 usuario={usuario}
                 cerrarSesion={cerrarSesion}
-                isOpen={menuLateralAbierto}
-                onClose={() => setMenuLateralAbierto(false)}
+                abierto={menuLateralAbierto}
+                alCerrar={() => setMenuLateralAbierto(false)}
             />
 
             <main className="flex-1 overflow-y-auto h-screen relative">
@@ -157,8 +157,8 @@ const Dashboard = () => {
                                     <h3 className="font-bold text-slate-800 text-lg mb-6">Disponibilidad de Flota</h3>
                                     <div className="w-full h-64 md:h-80">
                                         {estadisticas.estadoFlota.length > 0 ? (
-                                            <ResponsiveContainer width="100%" height="100%">
-                                                <RechartsPie width="100%" height="100%">
+                                            <ContenedorResponsivo width="100%" height="100%">
+                                                <GraficoPastel width="100%" height="100%">
                                                     <Pie
                                                         data={estadisticas.estadoFlota}
                                                         cx="50%"
@@ -170,18 +170,18 @@ const Dashboard = () => {
                                                         nameKey="nombre"
                                                         stroke="none"
                                                     >
-                                                        {estadisticas.estadoFlota.map((entry, index) => {
-                                                            const colors = { 'DISPONIBLE': '#10b981', 'EN RUTA': '#3b82f6', 'MANTENCION': '#ef4444' };
-                                                            return <Cell key={`cell-${index}`} fill={colors[entry.nombre] || '#94a3b8'} />;
+                                                        {estadisticas.estadoFlota.map((entrada, indice) => {
+                                                            const colores = { 'DISPONIBLE': '#10b981', 'EN RUTA': '#3b82f6', 'MANTENCION': '#ef4444' };
+                                                            return <Celda key={`celda-${indice}`} fill={colores[entrada.nombre] || '#94a3b8'} />;
                                                         })}
                                                     </Pie>
                                                     <Tooltip
                                                         contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
                                                         itemStyle={{ color: '#1e293b', fontWeight: 'bold' }}
                                                     />
-                                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
-                                                </RechartsPie>
-                                            </ResponsiveContainer>
+                                                    <Leyenda verticalAlign="bottom" height={36} iconType="circle" />
+                                                </GraficoPastel>
+                                            </ContenedorResponsivo>
                                         ) : (
                                             <div className="h-full flex items-center justify-center text-slate-400 border-2 border-dashed border-slate-100 rounded-2xl">
                                                 <div className="text-center">
@@ -202,10 +202,10 @@ const Dashboard = () => {
                                         </h3>
                                         <div className="space-y-3">
                                             {estadisticas.unidadesTop && estadisticas.unidadesTop.length > 0 ? (
-                                                estadisticas.unidadesTop.map((u, i) => (
+                                                estadisticas.unidadesTop.map((unidad, i) => (
                                                     <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
-                                                        <span className="text-sm font-bold text-slate-700 truncate max-w-[150px]" title={u.sol_unidad}>{u.sol_unidad}</span>
-                                                        <span className="text-xs font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-lg">{u.viajes} viajes</span>
+                                                        <span className="text-sm font-bold text-slate-700 truncate max-w-[150px]" title={unidad.sol_unidad}>{unidad.sol_unidad}</span>
+                                                        <span className="text-xs font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-lg">{unidad.viajes} viajes</span>
                                                     </div>
                                                 ))
                                             ) : (
@@ -219,22 +219,22 @@ const Dashboard = () => {
                                         <h3 className="font-bold text-slate-800 text-sm uppercase tracking-wide mb-4">Próximos Viajes (72h)</h3>
                                         <div className="space-y-2 flex-1 overflow-y-auto custom-scrollbar pr-2 max-h-60">
                                             {estadisticas.proximosViajes.length > 0 ? (
-                                                estadisticas.proximosViajes.map((trip, i) => (
+                                                estadisticas.proximosViajes.map((viaje, i) => (
                                                     <div key={i} className="flex items-start gap-4 p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group cursor-default">
                                                         <div className="flex-shrink-0 w-12 flex flex-col items-center justify-center bg-blue-50/50 rounded-xl p-1 border border-blue-100">
                                                             <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wide">
-                                                                {new Date(trip.sol_fechasalida).toLocaleString('es-CL', { weekday: 'short' }).replace('.', '')}
+                                                                {new Date(viaje.sol_fechasalida).toLocaleString('es-CL', { weekday: 'short' }).replace('.', '')}
                                                             </div>
                                                             <div className="text-lg font-black text-slate-800 leading-none">
-                                                                {new Date(trip.sol_fechasalida).getDate()}
+                                                                {new Date(viaje.sol_fechasalida).getDate()}
                                                             </div>
                                                         </div>
                                                         <div className="flex-1 min-w-0">
-                                                            <h4 className="text-xs font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">{trip.sol_unidad}</h4>
-                                                            <p className="text-[10px] text-slate-500 truncate mt-0.5">{trip.sol_motivo}</p>
+                                                            <h4 className="text-xs font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">{viaje.sol_unidad}</h4>
+                                                            <p className="text-[10px] text-slate-500 truncate mt-0.5">{viaje.sol_motivo}</p>
                                                             <div className="flex items-center gap-2 mt-1">
                                                                 <span className="text-[10px] font-mono text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">
-                                                                    {new Date(trip.sol_fechasalida).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
+                                                                    {new Date(viaje.sol_fechasalida).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })}
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -253,12 +253,12 @@ const Dashboard = () => {
                     )}
 
                     <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
-                        {pestanaActiva === 'estadisticas' && <StatisticsBI />}
-                        {pestanaActiva === 'calendario' && <AdminCalendar />}
-                        {pestanaActiva === 'vehiculos' && <VehicleList />}
-                        {pestanaActiva === 'choferes' && <DriverList />}
-                        {pestanaActiva === 'solicitudes' && <PendingRequests />}
-                        {pestanaActiva === 'procesadas' && <ProcessedRequests />}
+                        {pestanaActiva === 'estadisticas' && <EstadisticasBI />}
+                        {pestanaActiva === 'calendario' && <CalendarioAdmin />}
+                        {pestanaActiva === 'vehiculos' && <ListaVehiculos />}
+                        {pestanaActiva === 'choferes' && <ListaChoferes />}
+                        {pestanaActiva === 'solicitudes' && <SolicitudesPendientes />}
+                        {pestanaActiva === 'procesadas' && <SolicitudesProcesadas />}
                     </div>
                 </div>
             </main>
@@ -266,4 +266,4 @@ const Dashboard = () => {
     );
 };
 
-export default Dashboard;
+export default PanelControl;
