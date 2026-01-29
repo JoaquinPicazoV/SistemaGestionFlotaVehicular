@@ -1,144 +1,403 @@
-CREATE DATABASE IF NOT EXISTS slep_flota_db;
-USE slep_flota_db;
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 29-01-2026 a las 14:39:48
+-- Versión del servidor: 10.4.32-MariaDB
+-- Versión de PHP: 8.2.12
 
--- Tabla de Usuarios (Funcionarios / Unidades)
-CREATE TABLE IF NOT EXISTS USUARIO (
-    usu_id INT AUTO_INCREMENT PRIMARY KEY,
-    usu_unidad VARCHAR(100) NOT NULL UNIQUE,
-    usu_password VARCHAR(255) NOT NULL
-);
-
--- Tabla de Administradores
-CREATE TABLE IF NOT EXISTS ADMINISTRADOR (
-    adm_id INT AUTO_INCREMENT PRIMARY KEY,
-    adm_correo VARCHAR(100) NOT NULL UNIQUE,
-    adm_password VARCHAR(255) NOT NULL
-);
-
--- Tabla de Choferes
-CREATE TABLE IF NOT EXISTS CHOFER (
-    cho_correoinstitucional VARCHAR(100) PRIMARY KEY,
-    cho_nombre VARCHAR(100) NOT NULL,
-    cho_activo BOOLEAN DEFAULT TRUE
-);
-
--- Tabla de Vehículos
-CREATE TABLE IF NOT EXISTS VEHICULO (
-    vehi_patente VARCHAR(10) PRIMARY KEY,
-    vehi_marca VARCHAR(50) NOT NULL,
-    vehi_modelo VARCHAR(50) NOT NULL,
-    vehi_anio INT,
-    vehi_color VARCHAR(30),
-    vehi_tipo VARCHAR(50) NOT NULL,
-    vehi_motor VARCHAR(50),
-    vehi_chasis VARCHAR(50),
-    vehi_capacidad INT NOT NULL COMMENT 'Capacidad Pasajeros',
-    vehi_capacidad_carga VARCHAR(50) COMMENT 'Capacidad kg-mt3',
-    vehi_inventario VARCHAR(50),
-    vehi_propietario VARCHAR(100) DEFAULT 'SERVICIO LOCAL DE LLANQUIHUE',
-    vehi_resolucion VARCHAR(100),
-    vehi_lugaraparcamiento VARCHAR(150),
-    vehi_poliza VARCHAR(100),
-    vehi_multas TEXT,
-    vehi_estado ENUM('DISPONIBLE', 'EN RUTA', 'MANTENCION', 'DE BAJA') DEFAULT 'DISPONIBLE'
-);
-
--- Tabla de Bitácora de Vehículo
-CREATE TABLE IF NOT EXISTS BITACORA_VEHICULO (
-    bit_id INT AUTO_INCREMENT PRIMARY KEY,
-    bit_patentevehiculofk VARCHAR(10) NOT NULL,
-    bit_fecha DATETIME NOT NULL,
-    bit_funcionario_responsable VARCHAR(100) NOT NULL,
-    bit_kilometraje INT NOT NULL,
-    bit_evento VARCHAR(100) NOT NULL,
-    bit_mecanico VARCHAR(100),
-    bit_valor_mantencion INT DEFAULT 0,
-    bit_observaciones TEXT,
-    FOREIGN KEY (bit_patentevehiculofk) REFERENCES VEHICULO(vehi_patente) ON DELETE CASCADE
-);
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
 
--- Tabla de Tipos de Pasajero
-CREATE TABLE IF NOT EXISTS TIPO_PASAJERO (
-    tip_id INT AUTO_INCREMENT PRIMARY KEY,
-    tip_nombre VARCHAR(50) NOT NULL
-);
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 
--- Tabla de Comunas
-CREATE TABLE IF NOT EXISTS COMUNA (
-    com_id INT AUTO_INCREMENT PRIMARY KEY,
-    com_nombre VARCHAR(100) NOT NULL
-);
+--
+-- Base de datos: `slep_flota_db`
+--
 
--- Tabla de Lugares
-CREATE TABLE IF NOT EXISTS LUGAR (
-    lug_id INT AUTO_INCREMENT PRIMARY KEY,
-    lug_nombre VARCHAR(150) NOT NULL,
-    lug_comunafk INT NOT NULL,
-    FOREIGN KEY (lug_comunafk) REFERENCES COMUNA(com_id)
-);
+-- --------------------------------------------------------
 
--- Tabla de Solicitudes
-CREATE TABLE IF NOT EXISTS SOLICITUDES (
-    sol_id VARCHAR(36) PRIMARY KEY,
-    sol_nombresolicitante VARCHAR(100) NOT NULL,
-    sol_fechasalida DATETIME NOT NULL,
-    sol_fechallegada DATETIME NOT NULL,
-    sol_estado ENUM('PENDIENTE', 'APROBADA', 'RECHAZADA', 'FINALIZADA', 'CANCELADO') DEFAULT 'PENDIENTE',
-    sol_unidad VARCHAR(100) NOT NULL,
-    sol_motivo TEXT NOT NULL,
-    sol_itinerario TEXT,
-    sol_tipo VARCHAR(50),
-    sol_requierechofer BOOLEAN DEFAULT FALSE,
-    sol_kmestimado INT DEFAULT 0,
-    sol_observacionrechazo TEXT,
-    
-    -- Foreign Keys
-    sol_idusuariofk INT,
-    sol_patentevehiculofk VARCHAR(10),
-    sol_correochoferfk VARCHAR(100),
-    sol_idadminfk INT,
-    
-    FOREIGN KEY (sol_idusuariofk) REFERENCES USUARIO(usu_id),
-    FOREIGN KEY (sol_patentevehiculofk) REFERENCES VEHICULO(vehi_patente),
-    FOREIGN KEY (sol_correochoferfk) REFERENCES CHOFER(cho_correoinstitucional),
-    FOREIGN KEY (sol_idadminfk) REFERENCES ADMINISTRADOR(adm_id)
-);
+--
+-- Estructura de tabla para la tabla `administrador`
+--
 
--- Tabla de Pasajeros de Solicitud
-CREATE TABLE IF NOT EXISTS PASAJEROS (
-    pas_id INT AUTO_INCREMENT PRIMARY KEY,
-    pas_nombre VARCHAR(100) NOT NULL,
-    pas_idsolicitudfk VARCHAR(36) NOT NULL,
-    pas_idtipofk INT,
-    FOREIGN KEY (pas_idsolicitudfk) REFERENCES SOLICITUDES(sol_id) ON DELETE CASCADE,
-    FOREIGN KEY (pas_idtipofk) REFERENCES TIPO_PASAJERO(tip_id)
-);
+CREATE TABLE `administrador` (
+  `adm_id` int(11) NOT NULL,
+  `adm_correo` varchar(200) DEFAULT NULL,
+  `adm_password` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
 
--- Tabla de Establecimientos (Colegios Oficiales)
-CREATE TABLE IF NOT EXISTS ESTABLECIMIENTO (
-    est_id INT PRIMARY KEY COMMENT 'RBD o ID Oficial',
-    est_nombre VARCHAR(150) NOT NULL,
-    est_comunafk INT NOT NULL,
-    FOREIGN KEY (est_comunafk) REFERENCES COMUNA(com_id)
-);
+-- --------------------------------------------------------
 
--- Tabla de Destinos de Solicitud
-CREATE TABLE IF NOT EXISTS SOLICITUD_DESTINO (
-    sde_id INT AUTO_INCREMENT PRIMARY KEY,
-    sde_solicitudfk VARCHAR(36) NOT NULL,
-    sde_lugarfk INT,
-    sde_establecimientofk INT,
-    FOREIGN KEY (sde_solicitudfk) REFERENCES SOLICITUDES(sol_id) ON DELETE CASCADE,
-    FOREIGN KEY (sde_lugarfk) REFERENCES LUGAR(lug_id),
-    FOREIGN KEY (sde_establecimientofk) REFERENCES ESTABLECIMIENTO(est_id)
-);
+--
+-- Estructura de tabla para la tabla `bitacora_vehiculo`
+--
+
+CREATE TABLE `bitacora_vehiculo` (
+  `bit_id` int(11) NOT NULL,
+  `bit_patentevehiculofk` varchar(10) NOT NULL,
+  `bit_fecha` datetime NOT NULL,
+  `bit_funcionario_responsable` varchar(100) NOT NULL,
+  `bit_kilometraje` int(11) NOT NULL,
+  `bit_evento` varchar(100) NOT NULL,
+  `bit_mecanico` varchar(100) DEFAULT NULL,
+  `bit_valor_mantencion` int(11) DEFAULT 0,
+  `bit_observaciones` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `chofer`
+--
+
+CREATE TABLE `chofer` (
+  `cho_correoinstitucional` varchar(200) NOT NULL,
+  `cho_nombre` varchar(200) NOT NULL,
+  `cho_activo` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `comuna`
+--
+
+CREATE TABLE `comuna` (
+  `com_id` int(11) NOT NULL,
+  `com_nombre` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `establecimiento`
+--
+
+CREATE TABLE `establecimiento` (
+  `est_id` int(11) NOT NULL COMMENT 'RBD o ID Oficial',
+  `est_nombre` varchar(150) NOT NULL,
+  `est_comunafk` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `lugar`
+--
+
+CREATE TABLE `lugar` (
+  `lug_id` int(11) NOT NULL,
+  `lug_nombre` varchar(150) NOT NULL,
+  `lug_comunafk` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `pasajeros`
+--
+
+CREATE TABLE `pasajeros` (
+  `pas_id` int(11) NOT NULL,
+  `pas_nombre` varchar(100) NOT NULL,
+  `pas_idsolicitudfk` char(36) NOT NULL,
+  `pas_idtipofk` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `solicitudes`
+--
+
+CREATE TABLE `solicitudes` (
+  `sol_id` char(36) NOT NULL,
+  `sol_nombresolicitante` varchar(100) DEFAULT NULL,
+  `sol_fechasalida` datetime DEFAULT NULL,
+  `sol_fechallegada` datetime DEFAULT NULL,
+  `sol_estado` varchar(20) DEFAULT 'PENDIENTE',
+  `sol_kmestimado` int(11) DEFAULT NULL,
+  `sol_unidad` varchar(100) DEFAULT NULL,
+  `sol_motivo` text DEFAULT NULL,
+  `sol_observacionrechazo` text DEFAULT NULL,
+  `sol_requierechofer` tinyint(1) DEFAULT 0,
+  `sol_solicitanteasiste` tinyint(1) DEFAULT 1,
+  `sol_idusuariofk` int(11) DEFAULT NULL,
+  `sol_idadminfk` int(11) DEFAULT NULL,
+  `sol_patentevehiculofk` varchar(8) DEFAULT NULL,
+  `sol_correochoferfk` varchar(200) DEFAULT NULL,
+  `sol_itinerario` text DEFAULT NULL,
+  `sol_tipo` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `solicitud_destino`
+--
+
+CREATE TABLE `solicitud_destino` (
+  `sde_id` int(11) NOT NULL,
+  `sde_solicitudfk` char(36) NOT NULL,
+  `sde_lugarfk` int(11) DEFAULT NULL,
+  `sde_establecimientofk` int(11) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `tipo_pasajero`
+--
+
+CREATE TABLE `tipo_pasajero` (
+  `tip_id` int(11) NOT NULL,
+  `tip_nombre` varchar(50) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `usuario`
+--
+
+CREATE TABLE `usuario` (
+  `usu_id` int(11) NOT NULL,
+  `usu_unidad` varchar(100) DEFAULT NULL,
+  `usu_password` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `vehiculo`
+--
+
+CREATE TABLE `vehiculo` (
+  `vehi_patente` varchar(8) NOT NULL,
+  `vehi_marca` varchar(50) DEFAULT NULL,
+  `vehi_modelo` varchar(50) DEFAULT NULL,
+  `vehi_capacidad` int(11) DEFAULT NULL,
+  `vehi_estado` enum('DISPONIBLE','EN RUTA','MANTENCION','DE BAJA') DEFAULT 'DISPONIBLE',
+  `vehi_anio` int(11) DEFAULT NULL,
+  `vehi_color` varchar(30) DEFAULT NULL,
+  `vehi_tipo` varchar(50) NOT NULL DEFAULT 'Vehículo',
+  `vehi_motor` varchar(50) DEFAULT NULL,
+  `vehi_chasis` varchar(50) DEFAULT NULL,
+  `vehi_capacidad_carga` varchar(50) DEFAULT NULL,
+  `vehi_inventario` varchar(50) DEFAULT NULL,
+  `vehi_propietario` varchar(100) DEFAULT 'SERVICIO LOCAL DE LLANQUIHUE',
+  `vehi_resolucion` varchar(100) DEFAULT NULL,
+  `vehi_lugaraparcamiento` varchar(150) DEFAULT NULL,
+  `vehi_poliza` varchar(100) DEFAULT NULL,
+  `vehi_multas` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_spanish_ci;
+
+--
+-- Índices para tablas volcadas
+--
+
+--
+-- Indices de la tabla `administrador`
+--
+ALTER TABLE `administrador`
+  ADD PRIMARY KEY (`adm_id`),
+  ADD UNIQUE KEY `adm_correo` (`adm_correo`);
+
+--
+-- Indices de la tabla `bitacora_vehiculo`
+--
+ALTER TABLE `bitacora_vehiculo`
+  ADD PRIMARY KEY (`bit_id`),
+  ADD KEY `bit_patentevehiculofk` (`bit_patentevehiculofk`);
+
+--
+-- Indices de la tabla `chofer`
+--
+ALTER TABLE `chofer`
+  ADD PRIMARY KEY (`cho_correoinstitucional`);
+
+--
+-- Indices de la tabla `comuna`
+--
+ALTER TABLE `comuna`
+  ADD PRIMARY KEY (`com_id`);
+
+--
+-- Indices de la tabla `establecimiento`
+--
+ALTER TABLE `establecimiento`
+  ADD PRIMARY KEY (`est_id`),
+  ADD KEY `est_comunafk` (`est_comunafk`);
+
+--
+-- Indices de la tabla `lugar`
+--
+ALTER TABLE `lugar`
+  ADD PRIMARY KEY (`lug_id`),
+  ADD KEY `lug_comunafk` (`lug_comunafk`);
+
+--
+-- Indices de la tabla `pasajeros`
+--
+ALTER TABLE `pasajeros`
+  ADD PRIMARY KEY (`pas_id`),
+  ADD KEY `pas_idsolicitudfk` (`pas_idsolicitudfk`),
+  ADD KEY `pas_idtipofk` (`pas_idtipofk`);
+
+--
+-- Indices de la tabla `solicitudes`
+--
+ALTER TABLE `solicitudes`
+  ADD PRIMARY KEY (`sol_id`),
+  ADD KEY `sol_idusuariofk` (`sol_idusuariofk`),
+  ADD KEY `sol_idadminfk` (`sol_idadminfk`),
+  ADD KEY `sol_patentevehiculofk` (`sol_patentevehiculofk`),
+  ADD KEY `sol_correochoferfk` (`sol_correochoferfk`);
+
+--
+-- Indices de la tabla `solicitud_destino`
+--
+ALTER TABLE `solicitud_destino`
+  ADD PRIMARY KEY (`sde_id`),
+  ADD KEY `sde_solicitudfk` (`sde_solicitudfk`),
+  ADD KEY `sde_lugarfk` (`sde_lugarfk`),
+  ADD KEY `sde_establecimientofk` (`sde_establecimientofk`);
+
+--
+-- Indices de la tabla `tipo_pasajero`
+--
+ALTER TABLE `tipo_pasajero`
+  ADD PRIMARY KEY (`tip_id`);
+
+--
+-- Indices de la tabla `usuario`
+--
+ALTER TABLE `usuario`
+  ADD PRIMARY KEY (`usu_id`);
+
+--
+-- Indices de la tabla `vehiculo`
+--
+ALTER TABLE `vehiculo`
+  ADD PRIMARY KEY (`vehi_patente`);
+
+--
+-- AUTO_INCREMENT de las tablas volcadas
+--
+
+--
+-- AUTO_INCREMENT de la tabla `administrador`
+--
+ALTER TABLE `administrador`
+  MODIFY `adm_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `bitacora_vehiculo`
+--
+ALTER TABLE `bitacora_vehiculo`
+  MODIFY `bit_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `comuna`
+--
+ALTER TABLE `comuna`
+  MODIFY `com_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `lugar`
+--
+ALTER TABLE `lugar`
+  MODIFY `lug_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `pasajeros`
+--
+ALTER TABLE `pasajeros`
+  MODIFY `pas_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `solicitud_destino`
+--
+ALTER TABLE `solicitud_destino`
+  MODIFY `sde_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `tipo_pasajero`
+--
+ALTER TABLE `tipo_pasajero`
+  MODIFY `tip_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de la tabla `usuario`
+--
+ALTER TABLE `usuario`
+  MODIFY `usu_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Restricciones para tablas volcadas
+--
+
+--
+-- Filtros para la tabla `bitacora_vehiculo`
+--
+ALTER TABLE `bitacora_vehiculo`
+  ADD CONSTRAINT `bitacora_vehiculo_ibfk_1` FOREIGN KEY (`bit_patentevehiculofk`) REFERENCES `vehiculo` (`vehi_patente`) ON DELETE CASCADE;
+
+--
+-- Filtros para la tabla `establecimiento`
+--
+ALTER TABLE `establecimiento`
+  ADD CONSTRAINT `establecimiento_ibfk_1` FOREIGN KEY (`est_comunafk`) REFERENCES `comuna` (`com_id`);
+
+--
+-- Filtros para la tabla `lugar`
+--
+ALTER TABLE `lugar`
+  ADD CONSTRAINT `lugar_ibfk_1` FOREIGN KEY (`lug_comunafk`) REFERENCES `comuna` (`com_id`);
+
+--
+-- Filtros para la tabla `pasajeros`
+--
+ALTER TABLE `pasajeros`
+  ADD CONSTRAINT `pasajeros_ibfk_1` FOREIGN KEY (`pas_idsolicitudfk`) REFERENCES `solicitudes` (`sol_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `pasajeros_ibfk_2` FOREIGN KEY (`pas_idtipofk`) REFERENCES `tipo_pasajero` (`tip_id`);
+
+--
+-- Filtros para la tabla `solicitudes`
+--
+ALTER TABLE `solicitudes`
+  ADD CONSTRAINT `solicitudes_ibfk_1` FOREIGN KEY (`sol_idusuariofk`) REFERENCES `usuario` (`usu_id`),
+  ADD CONSTRAINT `solicitudes_ibfk_2` FOREIGN KEY (`sol_idadminfk`) REFERENCES `administrador` (`adm_id`),
+  ADD CONSTRAINT `solicitudes_ibfk_3` FOREIGN KEY (`sol_patentevehiculofk`) REFERENCES `vehiculo` (`vehi_patente`),
+  ADD CONSTRAINT `solicitudes_ibfk_4` FOREIGN KEY (`sol_correochoferfk`) REFERENCES `chofer` (`cho_correoinstitucional`);
+
+--
+-- Filtros para la tabla `solicitud_destino`
+--
+ALTER TABLE `solicitud_destino`
+  ADD CONSTRAINT `solicitud_destino_ibfk_1` FOREIGN KEY (`sde_solicitudfk`) REFERENCES `solicitudes` (`sol_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `solicitud_destino_ibfk_2` FOREIGN KEY (`sde_lugarfk`) REFERENCES `lugar` (`lug_id`),
+  ADD CONSTRAINT `solicitud_destino_ibfk_3` FOREIGN KEY (`sde_establecimientofk`) REFERENCES `establecimiento` (`est_id`);
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
 
 -- Insertar Datos Iniciales (Seeders)
 -- Tipos de Pasajero
-INSERT INTO TIPO_PASAJERO (tip_nombre) VALUES ('Estudiante') ON DUPLICATE KEY UPDATE tip_nombre=tip_nombre;
 INSERT INTO TIPO_PASAJERO (tip_nombre) VALUES ('Funcionario') ON DUPLICATE KEY UPDATE tip_nombre=tip_nombre;
-INSERT INTO TIPO_PASAJERO (tip_nombre) VALUES ('Apoderado') ON DUPLICATE KEY UPDATE tip_nombre=tip_nombre;
+INSERT INTO TIPO_PASAJERO (tip_nombre) VALUES ('Alumno') ON DUPLICATE KEY UPDATE tip_nombre=tip_nombre;
+INSERT INTO TIPO_PASAJERO (tip_nombre) VALUES ('Docente') ON DUPLICATE KEY UPDATE tip_nombre=tip_nombre;
+INSERT INTO TIPO_PASAJERO (tip_nombre) VALUES ('Otro') ON DUPLICATE KEY UPDATE tip_nombre=tip_nombre;
 
 -- Comunas Base
 INSERT INTO COMUNA (com_nombre) VALUES ('Llanquihue') ON DUPLICATE KEY UPDATE com_nombre=com_nombre;
@@ -147,7 +406,7 @@ INSERT INTO COMUNA (com_nombre) VALUES ('Frutillar') ON DUPLICATE KEY UPDATE com
 INSERT INTO COMUNA (com_nombre) VALUES ('Fresia') ON DUPLICATE KEY UPDATE com_nombre=com_nombre;
 INSERT INTO COMUNA (com_nombre) VALUES ('Los Muermos') ON DUPLICATE KEY UPDATE com_nombre=com_nombre;
 
--- Establecimientos (Ejemplos)
+-- Establecimientos 
 INSERT INTO ESTABLECIMIENTO (est_id, est_nombre, est_comunafk) VALUES 
 -- FRESIA (4)
 (7924, 'ESCUELA RURAL SAN ANDRES TEGUALDA', 4),
@@ -229,13 +488,13 @@ INSERT INTO ESTABLECIMIENTO (est_id, est_nombre, est_comunafk) VALUES
 (7756, 'ESCUELA RURAL CRISTO REY', 2),
 (7761, 'ESCUELA RURAL LAS CAMELIAS', 2),
 (7765, 'ESCUELA RURAL LA PENINSULA', 2),
-(8000, 'ESCUELA RURAL COLONIA TRES PUENTES', 2),
 (22101, 'ESCUELA DIFERENCIAL ASPADEP', 2),
 (22519, 'COLEGIO MIRADOR DEL LAGO', 2),
 (35153, 'JARDÍN INFANTIL Y SALA CUNA ARCOIRIS', 2),
 (35154, 'JARDÍN INFANTIL Y SALA CUNA MURTITAS DE ENSENADA', 2),
 (35155, 'JARDÍN INFANTIL Y SALA CUNA MI NUEVA AVENTURA', 2),
 (35156, 'SALA CUNA PRINCESA LICARAYEN', 2)
+(7732, '(Anexo) ESCUELA RURAL COLONIA TRES PUENTES', 2)
 ON DUPLICATE KEY UPDATE est_nombre=est_nombre;
 -- Índices para optimizar búsquedas frecuentes
 CREATE INDEX idx_solicitudes_estado ON SOLICITUDES(sol_estado);
