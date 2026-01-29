@@ -43,7 +43,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 
-// Logger personalizado simple (para producción/desarrollo)
+// Logger de respuestas
 app.use((req, res, next) => {
     const start = Date.now();
     res.on('finish', () => {
@@ -63,7 +63,7 @@ app.use('/api/requests', requestRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api', referenceRoutes);
 
-// Servir archivos estáticos en producción
+// Producción
 if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
@@ -72,7 +72,7 @@ if (process.env.NODE_ENV === 'production') {
     });
 }
 
-// Middleware de manejo de errores global (Debe ir al final)
+// Manejo de errores
 app.use(errorHandler);
 
 

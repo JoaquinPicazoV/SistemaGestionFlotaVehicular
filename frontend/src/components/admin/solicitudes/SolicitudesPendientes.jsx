@@ -37,8 +37,8 @@ const SolicitudesPendientes = () => {
 
 
 
-    const obtenerSolicitudes = useCallback(async () => {
-        setCargando(true);
+    const obtenerSolicitudes = useCallback(async (enSegundoPlano = false) => {
+        if (!enSegundoPlano) setCargando(true);
         try {
             const respuesta = await axios.get(`${API_URL}/requests/pending`, { withCredentials: true });
             setSolicitudes(respuesta.data);
@@ -46,12 +46,14 @@ const SolicitudesPendientes = () => {
         } catch (error) {
             console.error("Error cargando solicitudes:", error);
         } finally {
-            setCargando(false);
+            if (!enSegundoPlano) setCargando(false);
         }
     }, []);
 
     useEffect(() => {
         obtenerSolicitudes();
+        const intervalo = setInterval(() => obtenerSolicitudes(true), 15000);
+        return () => clearInterval(intervalo);
     }, [obtenerSolicitudes]);
 
     useEffect(() => {

@@ -27,11 +27,11 @@ const SolicitudesProcesadas = () => {
     const [estadoFiltro, setEstadoFiltro] = useState('ALL');
 
 
-    const [ordenarPor, setOrdenarPor] = useState('CRONOLOGICO'); // 'LLEGADA' (ID), 'CRONOLOGICO' (Fecha Salida)
-    const [direccionOrden, setDireccionOrden] = useState('DESC'); // 'ASC', 'DESC'
+    const [ordenarPor, setOrdenarPor] = useState('CRONOLOGICO');
+    const [direccionOrden, setDireccionOrden] = useState('DESC');
 
-    const obtenerSolicitudes = useCallback(async () => {
-        setCargando(true);
+    const obtenerSolicitudes = useCallback(async (enSegundoPlano = false) => {
+        if (!enSegundoPlano) setCargando(true);
         try {
             const respuesta = await axios.get(`${API_URL}/requests/processed`, { withCredentials: true });
             setSolicitudes(respuesta.data);
@@ -39,18 +39,19 @@ const SolicitudesProcesadas = () => {
         } catch (error) {
             console.error("Error cargando solicitudes procesadas:", error);
         } finally {
-            setCargando(false);
+            if (!enSegundoPlano) setCargando(false);
         }
     }, []);
 
     useEffect(() => {
         obtenerSolicitudes();
+        const intervalo = setInterval(() => obtenerSolicitudes(true), 15000);
+        return () => clearInterval(intervalo);
     }, [obtenerSolicitudes]);
 
     useEffect(() => {
         let resultado = [...solicitudes];
 
-        // Filtrar por término de búsqueda
         if (terminoBusqueda) {
             const terminoMinuscula = terminoBusqueda.toLowerCase();
             resultado = resultado.filter(req =>
@@ -60,16 +61,14 @@ const SolicitudesProcesadas = () => {
             );
         }
 
-        // Filtrar por estado
         if (estadoFiltro !== 'ALL') {
             resultado = resultado.filter(req => req.sol_estado === estadoFiltro);
         }
 
-        // Filtrar por fecha
         if (fechaInicio && fechaFin) {
             const inicio = new Date(fechaInicio);
             const fin = new Date(fechaFin);
-            fin.setHours(23, 59, 59, 999); // Incluir todo el día final
+            fin.setHours(23, 59, 59, 999);
 
             resultado = resultado.filter(req => {
                 const fechaSalida = new Date(req.sol_fechasalida);
@@ -83,7 +82,6 @@ const SolicitudesProcesadas = () => {
             });
         }
 
-        // Ordenar resultados
         resultado.sort((a, b) => {
             let valorA, valorB;
 
@@ -91,7 +89,6 @@ const SolicitudesProcesadas = () => {
                 valorA = a.sol_id;
                 valorB = b.sol_id;
             } else {
-                // CRONOLOGICO (Por fecha de salida del viaje)
                 valorA = new Date(a.sol_fechasalida).getTime();
                 valorB = new Date(b.sol_fechasalida).getTime();
             }

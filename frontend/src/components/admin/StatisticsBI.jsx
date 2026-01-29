@@ -33,6 +33,8 @@ const StatisticsBI = () => {
             }
         };
         cargarBI();
+        const intervalo = setInterval(cargarBI, 15000);
+        return () => clearInterval(intervalo);
     }, []);
 
     if (cargando) return <div className="p-10 text-center text-slate-400">Cargando Tableros BI...</div>;
@@ -47,23 +49,20 @@ const StatisticsBI = () => {
 
         const workbook = new ExcelJS.Workbook();
 
-        // Estilo Común Header
+        // Estilos de cabecera
         const headerStyle = {
             font: { bold: true, color: { argb: '000000' } },
             fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFC000' } },
             alignment: { vertical: 'middle', horizontal: 'center' }
         };
 
-        // Función auxiliar para estilar solo las celdas usadas de la cabecera
         const estilarCabecera = (ws) => {
             const row = ws.getRow(1);
-            // Iterar solo hasta la cantidad de columnas definidas
             for (let i = 1; i <= ws.columns.length; i++) {
                 const cell = row.getCell(i);
                 cell.font = headerStyle.font;
                 cell.fill = headerStyle.fill;
                 cell.alignment = headerStyle.alignment;
-                // Opcional: Agregar bordes a la cabecera también
                 cell.border = {
                     top: { style: 'thin' },
                     left: { style: 'thin' },
@@ -73,7 +72,7 @@ const StatisticsBI = () => {
             }
         };
 
-        // 1. FLOTA DETALLADA
+        // 1. Flota Detallada
         const wsFlota = workbook.addWorksheet('Flota Detallada');
         wsFlota.columns = [
             { header: 'PATENTE', key: 'vehi_patente', width: 15 },
@@ -86,7 +85,7 @@ const StatisticsBI = () => {
         estilarCabecera(wsFlota);
         datos.reporte?.flota?.forEach(v => wsFlota.addRow(v));
 
-        // 2. GESTIÓN UNIDADES
+        // 2. Gestión Unidades
         const wsUnidades = workbook.addWorksheet('Gestión Unidades');
         wsUnidades.columns = [
             { header: 'UNIDAD', key: 'sol_unidad', width: 35 },
@@ -98,7 +97,7 @@ const StatisticsBI = () => {
         datos.reporte?.unidades?.forEach(u => wsUnidades.addRow(u));
 
 
-        // 3. ESTABLECIMIENTOS
+        // 3. Establecimientos
         const wsTerritorio = workbook.addWorksheet('Establecimientos');
         wsTerritorio.columns = [
             { header: 'ESTABLECIMIENTO', key: 'nombre', width: 50 },
@@ -109,7 +108,7 @@ const StatisticsBI = () => {
         datos.territorio.todos_establecimientos.forEach(d => wsTerritorio.addRow(d));
 
 
-        // 4. CHOFERES
+        // 4. Choferes
         const wsChoferes = workbook.addWorksheet('Choferes');
         wsChoferes.columns = [
             { header: 'CONDUCTOR', key: 'nombre', width: 30 },
@@ -119,7 +118,7 @@ const StatisticsBI = () => {
         datos.operaciones.choferes.forEach(c => wsChoferes.addRow(c));
 
 
-        // 5. TENDENCIA MENSUAL
+        // 5. Tendencia Mensual
         const wsTendencia = workbook.addWorksheet('Tendencia Mensual');
         wsTendencia.columns = [
             { header: 'MES / AÑO', key: 'mes', width: 20 },
@@ -129,7 +128,7 @@ const StatisticsBI = () => {
         datos.operaciones.tendencia.forEach(t => wsTendencia.addRow(t));
 
 
-        // 6. RESUMEN GLOBAL
+        // 6. Resumen Global
         const wsGlobal = workbook.addWorksheet('Resumen Global');
         wsGlobal.columns = [
             { header: 'ESTADO SOLICITUD', key: 'estado', width: 25 },
@@ -147,7 +146,6 @@ const StatisticsBI = () => {
         }
 
 
-        // GENERAR ARCHIVO
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         saveAs(blob, `INFORME_GESTION_SLEPLLANQUIHUE_${new Date().toISOString().slice(0, 10)}.xlsx`);

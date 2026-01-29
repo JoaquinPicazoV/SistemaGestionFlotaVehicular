@@ -15,20 +15,22 @@ const UserDashboard = ({ usuario, cerrarSesion }) => {
 
 
 
-    const obtenerSolicitudes = useCallback(async () => {
-        setCargando(true);
+    const obtenerSolicitudes = useCallback(async (enSegundoPlano = false) => {
+        if (!enSegundoPlano) setCargando(true);
         try {
             const res = await axios.get(`${API_URL}/requests/my`, { withCredentials: true });
             setSolicitudes(res.data);
         } catch (error) {
             console.error(error);
         } finally {
-            setCargando(false);
+            if (!enSegundoPlano) setCargando(false);
         }
     }, [API_URL]);
 
     useEffect(() => {
         obtenerSolicitudes();
+        const intervalo = setInterval(() => obtenerSolicitudes(true), 15000);
+        return () => clearInterval(intervalo);
     }, [obtenerSolicitudes]);
 
     return (

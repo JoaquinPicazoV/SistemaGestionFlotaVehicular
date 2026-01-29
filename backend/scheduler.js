@@ -2,7 +2,6 @@ const cron = require('node-cron');
 const pool = require('./db');
 
 const initScheduler = () => {
-    // Ejecutar cada minuto
     cron.schedule('* * * * *', async () => {
         const conexion = await pool.getConnection();
 
@@ -50,7 +49,7 @@ const initScheduler = () => {
                 const patentesEnRuta = [...new Set(solicitudesActivas.map(r => r.sol_patentevehiculofk))].filter(p => p);
 
                 if (patentesEnRuta.length > 0) {
-                    // Actualizar a EN RUTA solo si están DISPONIBLES o ya asignados (evitar tocar mantenciones)
+                    // Solo actualizamos si no están en mantención
                     await conexion.query(
                         `UPDATE VEHICULO 
                          SET vehi_estado = 'EN RUTA' 
@@ -92,7 +91,7 @@ const initScheduler = () => {
         }
     });
 
-    console.log('Servicio de Planificación iniciado (Sync con DB NOW())');
+    console.log('Scheduler iniciado.');
 };
 
 module.exports = initScheduler;

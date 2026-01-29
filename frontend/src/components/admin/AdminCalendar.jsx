@@ -38,7 +38,7 @@ const AdminCalendar = () => {
                     start: new Date(req.sol_fechasalida),
                     end: new Date(req.sol_fechallegada),
                     resource: req,
-                    isFinalized: req.sol_estado === 'FINALIZADA'
+                    estaFinalizada: req.sol_estado === 'FINALIZADA'
                 }));
 
                 setEventos(eventosCalendario);
@@ -48,6 +48,8 @@ const AdminCalendar = () => {
         };
 
         obtenerEventos();
+        const intervalo = setInterval(obtenerEventos, 15000);
+        return () => clearInterval(intervalo);
     }, []);
 
     const alNavegar = (nuevaFecha) => {
@@ -128,7 +130,7 @@ const AdminCalendar = () => {
 
     const ComponenteEvento = ({ event }) => (
         <div
-            className="px-2 py-1 h-full flex flex-col justify-center overflow-hidden"
+            className="px-2 py-0.5 h-full flex flex-col justify-center overflow-hidden"
             title={`${event.resource.sol_unidad} - ${event.resource.sol_motivo}`}
         >
             <div className="font-bold truncate text-[11px] leading-tight">{event.resource.sol_unidad}</div>
@@ -137,15 +139,15 @@ const AdminCalendar = () => {
     );
 
     const obtenerEstiloEvento = (event) => {
-        const isFinalized = event.isFinalized;
+        const estaFinalizada = event.estaFinalizada;
         return {
             style: {
-                backgroundColor: isFinalized ? '#64748b' : '#2563eb',
+                backgroundColor: estaFinalizada ? '#64748b' : '#2563eb',
                 borderRadius: '6px',
                 opacity: 0.95,
                 color: 'white',
                 border: 'none',
-                borderLeft: isFinalized ? '4px solid #334155' : '4px solid #1e3a8a',
+                borderLeft: estaFinalizada ? '4px solid #334155' : '4px solid #1e3a8a',
                 display: 'block',
                 boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }
@@ -153,7 +155,7 @@ const AdminCalendar = () => {
     };
 
     return (
-        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-[calc(100vh-12rem)] min-h-[600px] flex flex-col overflow-hidden">
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm h-[calc(100vh-12rem)] min-h-[1100px] flex flex-col overflow-hidden">
             <BarraHerramientas />
 
             <div className="flex-1 bg-white relative overflow-hidden">
@@ -205,7 +207,7 @@ const AdminCalendar = () => {
                     letter-spacing: 0.05em;
                     border-bottom: 1px solid #f1f5f9;
                 }
-                .rbc-month-row { border-bottom: 1px solid #f1f5f9; overflow: visible; }
+                .rbc-month-row { border-bottom: 1px solid #f1f5f9; overflow: visible; min-height: 140px; }
                 .rbc-day-bg { border-left: 1px solid #f1f5f9; }
                 .rbc-day-bg + .rbc-day-bg { border-left: 1px solid #f1f5f9; }
                 .rbc-off-range-bg { background-color: #f8fafc; }
@@ -222,9 +224,12 @@ const AdminCalendar = () => {
                     border-radius: 6px;
                     box-shadow: 0 2px 4px rgba(37, 99, 235, 0.1);
                     border: none !important;
-                    padding: 1px 3px;
-                    margin: 1px 2px;
-                    min-height: 24px;
+                    padding: 2px 4px;
+                    margin: 2px 4px;
+                    min-height: 34px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
                     transition: all 0.2s;
                 }
                 .rbc-event:hover { transform: translateY(-1px); box-shadow: 0 4px 6px rgba(37, 99, 235, 0.15); z-index: 10; }
@@ -260,7 +265,7 @@ const AdminCalendar = () => {
             {eventoSeleccionado && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
-                        <div className={`p-5 ${eventoSeleccionado.isFinalized ? 'bg-slate-700' : 'bg-blue-600'} text-white flex justify-between items-start`}>
+                        <div className={`p-5 ${eventoSeleccionado.estaFinalizada ? 'bg-slate-700' : 'bg-blue-600'} text-white flex justify-between items-start`}>
                             <div>
                                 <h3 className="text-xl font-bold">{eventoSeleccionado.resource.sol_unidad}</h3>
                                 <div className="flex items-center gap-2 mt-1">

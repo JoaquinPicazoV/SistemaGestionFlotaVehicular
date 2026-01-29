@@ -21,9 +21,7 @@ const RequestCard = ({
     return (
         <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow flex flex-col md:flex-row gap-4 md:gap-5 md:items-center group">
 
-            {/* Agrupamos Fecha y Detalles para que siempre estén en fila, incluso en móvil */}
             <div className="flex flex-row gap-4 md:gap-5 flex-1 items-start min-w-0">
-                {/* Fecha (Desktop) */}
                 <div className={`hidden md:flex flex-shrink-0 flex-col items-center justify-center bg-slate-50 p-2 md:p-3 rounded-xl border border-slate-100 w-16 h-16 md:w-20 md:h-20 transition-colors ${colorCajaFecha}`}>
                     <span className={`text-[9px] md:text-[10px] font-bold text-slate-400 uppercase tracking-widest ${colorEtiquetaFecha}`}>
                         {esPendiente ? 'Salida' : 'Mes'}
@@ -36,10 +34,8 @@ const RequestCard = ({
                     </span>
                 </div>
 
-                {/* Detalles Principales */}
                 <div className="flex-1 space-y-3 md:space-y-2 min-w-0">
 
-                    {/* Mobile Header: Date & Status */}
                     <div className="flex md:hidden items-center justify-between mb-2 pb-2 border-b border-slate-50">
                         <div className="flex items-center gap-2">
                             <div className={`p-1.5 rounded-lg ${esPendiente ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>
@@ -59,7 +55,6 @@ const RequestCard = ({
                         <StatusBadge estado={solicitud.sol_estado} />
                     </div>
 
-                    {/* Desktop Status & ID */}
                     <div className="hidden md:flex items-center gap-2 mb-1 flex-wrap">
                         <StatusBadge estado={solicitud.sol_estado} />
                         {mostrarId && <span className="text-xs font-mono text-slate-400">ID: {solicitud.sol_id.substring(0, 8)}</span>}
@@ -78,7 +73,6 @@ const RequestCard = ({
                             <div className="p-1 rounded bg-slate-100 text-slate-400 flex-shrink-0"><User size={14} /></div>
                             <span className="truncate">{solicitud.sol_nombresolicitante}</span>
                         </div>
-                        {/* Clock displayed in header on mobile, only show on desktop here */}
                         {esPendiente && (
                             <div className="hidden md:flex items-center gap-1.5">
                                 <div className="p-1 rounded bg-slate-100 text-slate-400"><Clock size={14} /></div>
@@ -91,7 +85,6 @@ const RequestCard = ({
                 </div>
             </div>
 
-            {/* Acciones & Extra Content */}
             <div className="w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 flex md:flex-col gap-2 pl-0 md:pl-6 md:border-l flex-shrink-0">
                 {contenidoExtra}
 

@@ -55,7 +55,8 @@ const PanelControl = () => {
     useEffect(() => {
         let intervalo;
         if (usuario?.rol === 'admin') {
-            intervalo = setInterval(obtenerEstadisticas, 3600000);
+            obtenerEstadisticas();
+            intervalo = setInterval(obtenerEstadisticas, 15000);
         }
         return () => clearInterval(intervalo);
     }, [usuario, obtenerEstadisticas]);

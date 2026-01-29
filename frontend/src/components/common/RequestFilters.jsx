@@ -26,7 +26,6 @@ const RequestFilters = ({
         <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm mb-6">
             <div className="flex flex-col xl:flex-row gap-4">
 
-                {/* Buscador */}
                 <div className="flex-1 relative min-w-[250px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                     <input
@@ -38,30 +37,26 @@ const RequestFilters = ({
                     />
                 </div>
 
-                {/* Filtros y Ordenamiento */}
                 <div className="flex flex-wrap gap-2 items-center">
-
-                    {/* Rango de Fechas */}
                     {(setFechaInicio && setFechaFin) ? (
-                        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                        <div className="flex items-center gap-2 bg-slate-50 p-1.5 rounded-xl border border-slate-200 shadow-sm">
                             <input
                                 type="date"
-                                className="bg-transparent text-xs font-medium text-slate-600 outline-none px-2 py-1.5 w-auto"
+                                className="bg-transparent text-sm font-bold text-slate-700 outline-none px-3 py-2 cursor-pointer hover:bg-slate-100 rounded-lg transition-colors"
                                 value={fechaInicio}
                                 onChange={e => setFechaInicio(e.target.value)}
                                 title="Fecha Inicio"
                             />
-                            <span className="text-slate-400 text-xs">A</span>
+                            <span className="text-slate-400 font-bold px-1 text-sm">➜</span>
                             <input
                                 type="date"
-                                className="bg-transparent text-xs font-medium text-slate-600 outline-none px-2 py-1.5 w-auto"
+                                className="bg-transparent text-sm font-bold text-slate-700 outline-none px-3 py-2 cursor-pointer hover:bg-slate-100 rounded-lg transition-colors"
                                 value={fechaFin}
                                 onChange={e => setFechaFin(e.target.value)}
                                 title="Fecha Fin"
                             />
                         </div>
                     ) : (
-                        // Fallback a mes si no se usan fechas especificas
                         <div className="relative min-w-[160px]">
                             <input
                                 type="month"
@@ -72,7 +67,6 @@ const RequestFilters = ({
                         </div>
                     )}
 
-                    {/* Filtro Estado */}
                     {mostrarFiltroEstado && (
                         <div className="relative min-w-[160px]">
                             <select
@@ -93,7 +87,6 @@ const RequestFilters = ({
 
 
 
-                    {/* Botón Limpiar */}
                     {(terminoBusqueda || mesFiltro || fechaInicio || fechaFin || (mostrarFiltroEstado && estadoFiltro !== 'ALL')) && (
                         <button
                             onClick={alLimpiar}
