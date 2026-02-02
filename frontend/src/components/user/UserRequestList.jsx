@@ -156,10 +156,46 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                 ) : (
                     <div className="divide-y divide-slate-100">
                         {solicitudesFiltradas.map(req => (
-                            <div key={req.sol_id} className="p-6 hover:bg-slate-50 transition-all duration-200 group relative">
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                            <div key={req.sol_id} className="p-4 md:p-6 hover:bg-slate-50 transition-all duration-200 group relative border-b border-slate-100 last:border-0 md:border-0 md:border-b-0">
+                                <div className="md:hidden flex flex-col gap-3">
+                                    <div className="flex justify-between items-start">
+                                        <StatusBadge estado={req.sol_estado} />
+                                        <div className="flex flex-col items-end">
+                                            <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg mb-1">
+                                                {new Date(req.sol_fechasalida).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
 
+                                    <div onClick={() => verDetalles(req)} className="active:opacity-70 transition-opacity">
+                                        <h3 className="text-base font-bold text-slate-800 leading-tight mb-2 line-clamp-2">{req.sol_motivo}</h3>
+                                        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-2">
+                                            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded border border-blue-100 uppercase text-[10px]">{req.sol_tipo || 'GENÉRICO'}</span>
+                                            {req.sol_nombresolicitante && (
+                                                <span className="flex items-center gap-1 truncate max-w-[150px]"><User size={10} /> {req.sol_nombresolicitante}</span>
+                                            )}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-sm text-slate-600 font-medium">
+                                            <Clock size={14} className="text-slate-400" />
+                                            {new Date(req.sol_fechasalida).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {' - '}
+                                            {req.sol_fechallegada ? new Date(req.sol_fechallegada).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '?'}
+                                        </div>
+                                    </div>
 
+                                    {req.sol_estado === 'RECHAZADA' && req.sol_observacionrechazo && (
+                                        <div className="bg-red-50 p-3 rounded-lg border border-red-100 text-xs mt-1">
+                                            <strong className="text-red-700 block mb-1">Rechazo:</strong>
+                                            <p className="text-red-600/80 leading-snug">"{req.sol_observacionrechazo}"</p>
+                                        </div>
+                                    )}
+
+                                    <button onClick={() => verDetalles(req)} className="w-full py-2.5 bg-white border border-slate-200 text-slate-600 font-bold text-sm rounded-xl shadow-sm hover:bg-slate-50 flex items-center justify-center gap-2 transition-colors mt-1">
+                                        <Eye size={16} /> Ver Detalle
+                                    </button>
+                                </div>
+
+                                <div className="hidden md:flex flex-row items-center justify-between gap-6">
                                     <div className="flex-shrink-0 flex flex-col gap-2 min-w-[120px]">
                                         <StatusBadge estado={req.sol_estado} />
                                         <div className="text-xs text-slate-500 text-center font-bold truncate max-w-[120px] flex items-center justify-center gap-1" title={req.sol_nombresolicitante}>
@@ -167,7 +203,6 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                             {req.sol_nombresolicitante || 'Usuario'}
                                         </div>
                                     </div>
-
 
                                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => verDetalles(req)}>
                                         <div className="flex items-center gap-2 mb-1">
@@ -202,16 +237,13 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                         >
                                             <Eye size={16} /> Ver Detalle
                                         </button>
+                                        {req.sol_estado === 'RECHAZADA' && req.sol_observacionrechazo && (
+                                            <div className="w-64 bg-red-50 p-3 rounded-lg border border-red-100 text-xs mt-1">
+                                                <strong className="text-red-700 block mb-1">Motivo Rechazo:</strong>
+                                                <p className="text-red-600/80 leading-snug">"{req.sol_observacionrechazo}"</p>
+                                            </div>
+                                        )}
                                     </div>
-
-
-                                    {req.sol_estado === 'RECHAZADA' && req.sol_observacionrechazo && (
-                                        <div className="md:w-64 bg-red-50 p-3 rounded-lg border border-red-100 text-xs">
-                                            <strong className="text-red-700 block mb-1">Motivo Rechazo:</strong>
-                                            <p className="text-red-600/80 leading-snug">"{req.sol_observacionrechazo}"</p>
-                                        </div>
-                                    )}
-
                                 </div>
                             </div>
                         ))}

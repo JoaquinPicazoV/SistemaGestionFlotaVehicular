@@ -45,8 +45,6 @@ const SolicitudesProcesadas = () => {
 
     useEffect(() => {
         obtenerSolicitudes();
-        const intervalo = setInterval(() => obtenerSolicitudes(true), 15000);
-        return () => clearInterval(intervalo);
     }, [obtenerSolicitudes]);
 
     useEffect(() => {
@@ -134,6 +132,8 @@ const SolicitudesProcesadas = () => {
         setTerminoBusqueda('');
         setMesFiltro('');
         setEstadoFiltro('ALL');
+        setFechaInicio('');
+        setFechaFin('');
     };
 
     const manejarDescargaExcel = async () => {

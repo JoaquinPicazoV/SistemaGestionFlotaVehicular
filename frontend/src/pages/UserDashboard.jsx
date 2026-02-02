@@ -29,8 +29,6 @@ const UserDashboard = ({ usuario, cerrarSesion }) => {
 
     useEffect(() => {
         obtenerSolicitudes();
-        const intervalo = setInterval(() => obtenerSolicitudes(true), 15000);
-        return () => clearInterval(intervalo);
     }, [obtenerSolicitudes]);
 
     return (

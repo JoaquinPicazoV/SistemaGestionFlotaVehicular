@@ -27,7 +27,6 @@ exports.crearEntrada = async (req, res) => {
     } = req.body;
 
     try {
-        // Validar que el kilometraje no sea menor al último registrado
         const [ultimoRegistro] = await pool.query(
             'SELECT MAX(bit_kilometraje) as max_km FROM BITACORA_VEHICULO WHERE bit_patentevehiculofk = ?',
             [patente]
@@ -71,6 +70,54 @@ exports.actualizarEntrada = async (req, res) => {
     } = req.body;
 
     try {
+        const [registroActual] = await pool.query('SELECT bit_patentevehiculofk FROM BITACORA_VEHICULO WHERE bit_id = ?', [id]);
+
+        if (registroActual.length === 0) {
+            return res.status(404).json({ error: 'Registro no encontrado' });
+        }
+
+        const patente = registroActual[0].bit_patentevehiculofk;
+        const kmNuevo = parseInt(bit_kilometraje);
+
+        const [previo] = await pool.query(
+            `SELECT bit_kilometraje, bit_fecha 
+             FROM BITACORA_VEHICULO 
+             WHERE bit_patentevehiculofk = ? 
+             AND bit_id != ? 
+             AND bit_fecha <= ? 
+             ORDER BY bit_fecha DESC, bit_kilometraje DESC 
+             LIMIT 1`,
+            [patente, id, bit_fecha]
+        );
+
+        if (previo.length > 0) {
+            const kmPrevio = parseInt(previo[0].bit_kilometraje);
+            if (kmNuevo < kmPrevio) {
+                return res.status(400).json({
+                    error: `Incoherencia: El kilometraje (${kmNuevo}) no puede ser menor al registro previo del ${new Date(previo[0].bit_fecha).toLocaleDateString()} (${kmPrevio} km).`
+                });
+            }
+        }
+
+        const [posterior] = await pool.query(
+            `SELECT bit_kilometraje, bit_fecha 
+             FROM BITACORA_VEHICULO 
+             WHERE bit_patentevehiculofk = ? 
+             AND bit_id != ? 
+             AND bit_fecha >= ? 
+             ORDER BY bit_fecha ASC, bit_kilometraje ASC 
+             LIMIT 1`,
+            [patente, id, bit_fecha]
+        );
+
+        if (posterior.length > 0) {
+            const kmPosterior = parseInt(posterior[0].bit_kilometraje);
+            if (kmNuevo > kmPosterior) {
+                return res.status(400).json({
+                    error: `Incoherencia: El kilometraje (${kmNuevo}) no puede ser mayor al registro posterior del ${new Date(posterior[0].bit_fecha).toLocaleDateString()} (${kmPosterior} km).`
+                });
+            }
+        }
         await pool.query(
             `UPDATE BITACORA_VEHICULO SET 
                 bit_fecha=?, bit_funcionario_responsable=?, bit_kilometraje=?, 

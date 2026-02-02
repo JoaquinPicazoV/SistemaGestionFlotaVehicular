@@ -4,7 +4,7 @@ import axios from 'axios';
 import API_URL from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { ResponsiveContainer as ContenedorResponsivo, PieChart as GraficoPastel, Pie, Cell as Celda, Tooltip, Legend as Leyenda } from 'recharts';
-import { AlertCircle, TrendingUp, Menu, Users } from 'lucide-react';
+import { AlertCircle, TrendingUp, Menu, Users, RefreshCw } from 'lucide-react';
 
 import EstadisticasBI from '../components/admin/StatisticsBI';
 import ListaVehiculos from '../components/admin/vehiculos/ListaVehiculos';
@@ -53,12 +53,9 @@ const PanelControl = () => {
     }, [usuario, obtenerEstadisticas]);
 
     useEffect(() => {
-        let intervalo;
         if (usuario?.rol === 'admin') {
             obtenerEstadisticas();
-            intervalo = setInterval(obtenerEstadisticas, 15000);
         }
-        return () => clearInterval(intervalo);
     }, [usuario, obtenerEstadisticas]);
 
 
@@ -104,6 +101,15 @@ const PanelControl = () => {
                             </p>
                         </div>
                     </div>
+                    {pestanaActiva === 'resumen' && (
+                        <button
+                            onClick={obtenerEstadisticas}
+                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+                            title="Actualizar Resumen"
+                        >
+                            <RefreshCw size={20} />
+                        </button>
+                    )}
                 </header>
 
                 <div className="p-4 md:p-8">

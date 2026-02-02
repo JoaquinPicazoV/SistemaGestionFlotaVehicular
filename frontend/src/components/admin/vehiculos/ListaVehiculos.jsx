@@ -222,6 +222,73 @@ const ListaVehiculos = () => {
             </div>
 
 
+            {/* Mobile View */}
+            <div className="md:hidden space-y-4">
+                {vehiculosFiltrados.length > 0 ? (
+                    vehiculosFiltrados.map((v) => (
+                        <div key={v.vehi_patente} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div className="flex justify-between items-start mb-3">
+                                <div className="flex gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400">
+                                        <Truck size={20} />
+                                    </div>
+                                    <div>
+                                        <div className="font-bold text-slate-800">{v.vehi_marca} {v.vehi_modelo}</div>
+                                        <span className="text-xs font-mono font-bold bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 border border-slate-200">{v.vehi_patente}</span>
+                                    </div>
+                                </div>
+                                <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border flex items-center gap-1 w-fit ${obtenerColorEstado(v.vehi_estado)}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${v.vehi_estado === 'DISPONIBLE' ? 'bg-emerald-500' : v.vehi_estado === 'EN RUTA' ? 'bg-blue-500' : v.vehi_estado === 'MANTENCION' ? 'bg-orange-500' : 'bg-white'}`}></span>
+                                    {v.vehi_estado}
+                                </span>
+                            </div>
+
+                            <div className="flex items-center gap-4 text-xs text-slate-500 font-medium mb-4 pl-1">
+                                <div>📅 {v.vehi_anio || 'N/A'}</div>
+                                <div>👥 {v.vehi_capacidad} PAX</div>
+                                <div>📝 {v.vehi_tipo || 'Vehículo'}</div>
+                            </div>
+
+                            <div className="flex flex-col gap-2">
+                                <button
+                                    onClick={() => verViajes(v)}
+                                    className="w-full py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold hover:bg-blue-100 transition-colors border border-blue-100 flex items-center justify-center gap-2"
+                                >
+                                    <ClipboardList size={14} /> Ver Próximos Viajes
+                                </button>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => setBitacoraVehiculo(v)}
+                                        className="py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl flex items-center justify-center hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-200 transition-colors"
+                                        title="Bitácora"
+                                    >
+                                        <ClipboardList size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => setVehiculoEditando(v)}
+                                        className="py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 transition-colors"
+                                        title="Editar"
+                                    >
+                                        <Pencil size={16} />
+                                    </button>
+                                    <button
+                                        onClick={() => eliminarVehiculo(v.vehi_patente)}
+                                        className="py-2 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl flex items-center justify-center hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                                        title="Eliminar"
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ))
+                ) : (
+                    <div className="p-8 text-center text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                        No se encontraron vehículos.
+                    </div>
+                )}
+            </div>
+
             <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse min-w-[700px]">

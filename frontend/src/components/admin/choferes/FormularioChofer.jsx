@@ -10,7 +10,6 @@ const FormularioChofer = ({ alEnviar, alCancelar, inicial, cargando, alError }) 
 
     useEffect(() => {
         if (inicial) {
-            // Ensure activo is treated consistently (0 or 1)
             setDatosFormulario({
                 ...inicial,
                 cho_activo: inicial.cho_activo ? 1 : 0
@@ -40,7 +39,6 @@ const FormularioChofer = ({ alEnviar, alCancelar, inicial, cargando, alError }) 
 
     const manejarEnvio = (e) => {
         e.preventDefault();
-        // Basic validation if needed
         alEnviar(datosFormulario);
     };
 

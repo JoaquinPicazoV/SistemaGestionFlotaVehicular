@@ -5,7 +5,7 @@ import { es } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import axios from 'axios';
 import API_URL from '../../config/api';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, RefreshCw } from 'lucide-react';
 
 const locales = {
     'es': es,
@@ -24,32 +24,30 @@ const AdminCalendar = () => {
     const [eventoSeleccionado, setEventoSeleccionado] = useState(null);
     const [fechaActual, setFechaActual] = useState(new Date());
 
+    const obtenerEventos = async () => {
+        try {
+            const res = await axios.get(`${API_URL}/requests/processed`, { withCredentials: true });
+            const solicitudesAceptadas = res.data.filter(req =>
+                req.sol_estado === 'APROBADA' || req.sol_estado === 'FINALIZADA'
+            );
+
+            const eventosCalendario = solicitudesAceptadas.map(req => ({
+                id: req.sol_id,
+                title: `${req.sol_unidad} - ${req.sol_motivo}`,
+                start: new Date(req.sol_fechasalida),
+                end: new Date(req.sol_fechallegada),
+                resource: req,
+                estaFinalizada: req.sol_estado === 'FINALIZADA'
+            }));
+
+            setEventos(eventosCalendario);
+        } catch (error) {
+            console.error("Error cargando eventos:", error);
+        }
+    };
+
     useEffect(() => {
-        const obtenerEventos = async () => {
-            try {
-                const res = await axios.get(`${API_URL}/requests/processed`, { withCredentials: true });
-                const solicitudesAceptadas = res.data.filter(req =>
-                    req.sol_estado === 'APROBADA' || req.sol_estado === 'FINALIZADA'
-                );
-
-                const eventosCalendario = solicitudesAceptadas.map(req => ({
-                    id: req.sol_id,
-                    title: `${req.sol_unidad} - ${req.sol_motivo}`,
-                    start: new Date(req.sol_fechasalida),
-                    end: new Date(req.sol_fechallegada),
-                    resource: req,
-                    estaFinalizada: req.sol_estado === 'FINALIZADA'
-                }));
-
-                setEventos(eventosCalendario);
-            } catch (error) {
-                console.error("Error cargando eventos:", error);
-            }
-        };
-
         obtenerEventos();
-        const intervalo = setInterval(obtenerEventos, 15000);
-        return () => clearInterval(intervalo);
     }, []);
 
     const alNavegar = (nuevaFecha) => {
@@ -112,6 +110,13 @@ const AdminCalendar = () => {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={obtenerEventos}
+                        className="p-2 text-slate-400 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+                        title="Actualizar Calendario"
+                    >
+                        <RefreshCw size={20} />
+                    </button>
                     <div className="relative group">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <CalendarIcon size={16} className="text-slate-400" />

@@ -52,8 +52,6 @@ const SolicitudesPendientes = () => {
 
     useEffect(() => {
         obtenerSolicitudes();
-        const intervalo = setInterval(() => obtenerSolicitudes(true), 15000);
-        return () => clearInterval(intervalo);
     }, [obtenerSolicitudes]);
 
     useEffect(() => {
@@ -112,7 +110,7 @@ const SolicitudesPendientes = () => {
                 axios.get(`${API_URL}/drivers`, { withCredentials: true })
             ]);
 
-            setVehiculos(resVehiculos.data.filter(v => v.vehi_estado === 'DISPONIBLE' && parseInt(v.vehi_capacidad) >= (detallesSolicitud.pasajeros.length + 1)));
+            setVehiculos(resVehiculos.data.filter(v => (v.vehi_estado === 'DISPONIBLE' || v.vehi_estado === 'EN RUTA') && parseInt(v.vehi_capacidad) >= (detallesSolicitud.pasajeros.length + 1)));
             setChoferes(resChoferes.data.filter(d => d.cho_activo === 1));
             setModalAccion('APROBAR');
         } catch (error) {

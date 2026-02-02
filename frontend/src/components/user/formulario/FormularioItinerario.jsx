@@ -1,4 +1,5 @@
 import React from 'react';
+import { AlertCircle } from 'lucide-react';
 
 const FormularioItinerario = ({ datos, alCambiar }) => {
     return (
@@ -70,18 +71,18 @@ const FormularioItinerario = ({ datos, alCambiar }) => {
                                     required
                                     className="w-full bg-white p-3 rounded-xl border border-red-100 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none transition-all shadow-sm text-center"
                                     value={datos.sol_timeallegada}
-                                    onChange={e => {
-                                        const val = e.target.value;
-                                        // Validar consistencia temporal
-                                        if (datos.sol_fechasalida === datos.sol_fechallegada && datos.sol_timesalida && val <= datos.sol_timesalida) {
-                                            alert("La hora de regreso debe ser posterior a la de salida.");
-                                            return;
-                                        }
-                                        alCambiar({ ...datos, sol_timeallegada: val });
-                                    }}
+                                    onChange={e => alCambiar({ ...datos, sol_timeallegada: e.target.value })}
                                 />
                             </div>
                         </div>
+                        {datos.sol_fechasalida === datos.sol_fechallegada &&
+                            datos.sol_timesalida &&
+                            datos.sol_timeallegada &&
+                            datos.sol_timeallegada <= datos.sol_timesalida && (
+                                <div className="mt-2 text-xs font-bold text-red-500 flex items-center gap-1 animate-in fade-in slide-in-from-top-1">
+                                    <AlertCircle size={12} /> Hora de regreso debe ser posterior a la salida
+                                </div>
+                            )}
                     </div>
                 </div>
 

@@ -5,7 +5,7 @@ import StatusBadge from './StatusBadge';
 
 const RequestDetailModal = ({
     solicitud,
-    detalles, // { pasajeros: [], destinos: [] }
+    detalles,
     cargandoDetalles,
     alCerrar,
     titulo = "Detalle de Solicitud",
@@ -123,7 +123,6 @@ const RequestDetailModal = ({
                         </div>
                     </div>
 
-                    {/* DETALLES EXTRA: Itinerario y Pasajeros */}
                     <div className="space-y-6">
                         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                             <div className="bg-slate-50 px-4 py-2 border-b border-slate-100">

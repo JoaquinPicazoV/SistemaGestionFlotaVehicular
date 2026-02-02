@@ -5,7 +5,7 @@ import {
     PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts';
 import {
-    Truck, Users, Map, ClipboardList, Activity, AlertTriangle, CheckCircle2, TrendingUp, Download
+    Truck, Users, Map, ClipboardList, Activity, AlertTriangle, CheckCircle2, TrendingUp, Download, RefreshCw
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import ExcelJS from 'exceljs';
@@ -21,20 +21,20 @@ const StatisticsBI = () => {
     const [cargando, setCargando] = useState(true);
 
 
+    const cargarBI = async () => {
+        setCargando(true);
+        try {
+            const res = await axios.get(`${API_URL}/stats/bi`, { withCredentials: true });
+            setDatos(res.data);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setCargando(false);
+        }
+    };
+
     useEffect(() => {
-        const cargarBI = async () => {
-            try {
-                const res = await axios.get(`${API_URL}/stats/bi`, { withCredentials: true });
-                setDatos(res.data);
-            } catch (err) {
-                console.error(err);
-            } finally {
-                setCargando(false);
-            }
-        };
         cargarBI();
-        const intervalo = setInterval(cargarBI, 15000);
-        return () => clearInterval(intervalo);
     }, []);
 
     if (cargando) return <div className="p-10 text-center text-slate-400">Cargando Tableros BI...</div>;
@@ -72,7 +72,6 @@ const StatisticsBI = () => {
             }
         };
 
-        // 1. Flota Detallada
         const wsFlota = workbook.addWorksheet('Flota Detallada');
         wsFlota.columns = [
             { header: 'PATENTE', key: 'vehi_patente', width: 15 },
@@ -85,7 +84,6 @@ const StatisticsBI = () => {
         estilarCabecera(wsFlota);
         datos.reporte?.flota?.forEach(v => wsFlota.addRow(v));
 
-        // 2. Gestión Unidades
         const wsUnidades = workbook.addWorksheet('Gestión Unidades');
         wsUnidades.columns = [
             { header: 'UNIDAD', key: 'sol_unidad', width: 35 },
@@ -96,8 +94,6 @@ const StatisticsBI = () => {
         estilarCabecera(wsUnidades);
         datos.reporte?.unidades?.forEach(u => wsUnidades.addRow(u));
 
-
-        // 3. Establecimientos
         const wsTerritorio = workbook.addWorksheet('Establecimientos');
         wsTerritorio.columns = [
             { header: 'ESTABLECIMIENTO', key: 'nombre', width: 50 },
@@ -107,8 +103,6 @@ const StatisticsBI = () => {
         estilarCabecera(wsTerritorio);
         datos.territorio.todos_establecimientos.forEach(d => wsTerritorio.addRow(d));
 
-
-        // 4. Choferes
         const wsChoferes = workbook.addWorksheet('Choferes');
         wsChoferes.columns = [
             { header: 'CONDUCTOR', key: 'nombre', width: 30 },
@@ -117,8 +111,6 @@ const StatisticsBI = () => {
         estilarCabecera(wsChoferes);
         datos.operaciones.choferes.forEach(c => wsChoferes.addRow(c));
 
-
-        // 5. Tendencia Mensual
         const wsTendencia = workbook.addWorksheet('Tendencia Mensual');
         wsTendencia.columns = [
             { header: 'MES / AÑO', key: 'mes', width: 20 },
@@ -127,8 +119,6 @@ const StatisticsBI = () => {
         estilarCabecera(wsTendencia);
         datos.operaciones.tendencia.forEach(t => wsTendencia.addRow(t));
 
-
-        // 6. Resumen Global
         const wsGlobal = workbook.addWorksheet('Resumen Global');
         wsGlobal.columns = [
             { header: 'ESTADO SOLICITUD', key: 'estado', width: 25 },
@@ -326,6 +316,13 @@ const StatisticsBI = () => {
                     className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl font-bold transition-all shadow-lg shadow-green-600/20 text-sm"
                 >
                     <Download size={18} /> Descargar Reporte Completo
+                </button>
+                <button
+                    onClick={cargarBI}
+                    className="p-2.5 bg-white hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-xl transition-all shadow-sm border border-slate-200"
+                    title="Actualizar Datos"
+                >
+                    <RefreshCw size={20} />
                 </button>
             </div>
 

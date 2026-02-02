@@ -85,7 +85,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                 ]);
                 setComunas(resComunas.data);
                 setTiposPasajero(resTipos.data);
-                setVehiculos(resVehiculos.data.filter(v => v.vehi_estado === 'DISPONIBLE'));
+                setVehiculos(resVehiculos.data.filter(v => v.vehi_estado === 'DISPONIBLE' || v.vehi_estado === 'EN RUTA'));
                 setChoferes(resChoferes.data.filter(d => d.cho_activo === 1));
                 setUnidades(resUnidades.data);
             } catch (error) {
