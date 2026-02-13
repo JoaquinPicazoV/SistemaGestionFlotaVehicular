@@ -178,7 +178,6 @@ exports.cancelarSolicitud = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        // 1. Obtener datos de la solicitud
         const [requests] = await connection.query(
             "SELECT sol_idusuariofk, sol_estado, sol_patentevehiculofk FROM SOLICITUDES WHERE sol_id = ?",
             [id]
@@ -190,32 +189,25 @@ exports.cancelarSolicitud = async (req, res) => {
         }
         const solicitud = requests[0];
 
-        // 2. Control de Acceso (IDOR)
         if (req.usuario.rol !== 'admin') {
-            // Si no es admin, debe ser el dueño
             if (solicitud.sol_idusuariofk !== req.usuario.id) {
                 await connection.rollback();
                 return res.status(403).json({ error: 'Acceso denegado: No tienes permiso para cancelar esta solicitud.' });
             }
         }
 
-        // 3. Validación de Estado
         if (['FINALIZADA', 'RECHAZADA', 'CANCELADO'].includes(solicitud.sol_estado)) {
             await connection.rollback();
             return res.status(400).json({ error: `No se puede cancelar una solicitud en estado: ${solicitud.sol_estado}` });
         }
 
-        // 4. Consistencia de Flota: Liberar vehículo si estaba asignado/en ruta
         if (solicitud.sol_estado === 'APROBADA' && solicitud.sol_patentevehiculofk) {
-            // Si el vehículo quedó marcado como EN RUTA por esta solicitud, lo devolvemos a DISPONIBLE
-            // (Solo si está EN RUTA, si estaba en MANTENCION no lo tocamos)
             await connection.query(
                 "UPDATE VEHICULO SET vehi_estado = 'DISPONIBLE' WHERE vehi_patente = ? AND vehi_estado = 'EN RUTA'",
                 [solicitud.sol_patentevehiculofk]
             );
         }
 
-        // 5. Ejecutar Cancelación y liberar recursos
         await connection.query(
             `UPDATE SOLICITUDES 
              SET sol_estado = 'CANCELADO', sol_patentevehiculofk = NULL, sol_correochoferfk = NULL
@@ -410,7 +402,7 @@ exports.crearSolicitudAdmin = async (req, res) => {
 
         const ahora = new Date();
         const fechaFinViaje = new Date(sol_fechallegada);
-        const estadoInicial = fechaFinViaje < ahora ? 'FINALIZADA' : 'APROBADA'; // Auto-finalizar si es pasado
+        const estadoInicial = fechaFinViaje < ahora ? 'FINALIZADA' : 'APROBADA';
 
         let idUsuarioAsignado = req.usuario.id;
         if (sol_unidad) {

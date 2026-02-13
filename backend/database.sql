@@ -3,7 +3,7 @@ START TRANSACTION;
 SET time_zone = "+00:00";
 
 -- --------------------------------------------------------
--- 1. Estructura de Tablas
+
 -- --------------------------------------------------------
 
 CREATE TABLE `administrador` (
@@ -21,7 +21,7 @@ CREATE TABLE `comuna` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
 CREATE TABLE `establecimiento` (
-  `est_id` int(11) NOT NULL COMMENT 'RBD o ID Oficial',
+  `est_id` int(11) NOT NULL,
   `est_nombre` varchar(150) NOT NULL,
   `est_comunafk` int(11) NOT NULL,
   PRIMARY KEY (`est_id`),
@@ -43,6 +43,7 @@ CREATE TABLE `vehiculo` (
   `vehi_marca` varchar(50) DEFAULT NULL,
   `vehi_modelo` varchar(50) DEFAULT NULL,
   `vehi_capacidad` varchar(50) DEFAULT NULL,
+  `vehi_capacidad_carga` int(11),
   `vehi_estado` enum('DISPONIBLE','EN RUTA','MANTENCION','DE BAJA') DEFAULT 'DISPONIBLE',
   `vehi_anio` int(11) DEFAULT NULL,
   `vehi_color` varchar(30) DEFAULT NULL,
@@ -142,7 +143,7 @@ CREATE TABLE `pasajeros` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_spanish_ci;
 
 -- --------------------------------------------------------
--- 2. Carga de Datos (Seeders)
+
 -- --------------------------------------------------------
 
 INSERT INTO tipo_pasajero (tip_nombre) VALUES ('Funcionario'), ('Alumno'), ('Docente'), ('Otro');
@@ -150,7 +151,7 @@ INSERT INTO tipo_pasajero (tip_nombre) VALUES ('Funcionario'), ('Alumno'), ('Doc
 INSERT INTO comuna (com_id, com_nombre) VALUES 
 (1, 'Llanquihue'), (2, 'Puerto Varas'), (3, 'Frutillar'), (4, 'Fresia'), (5, 'Los Muermos');
 
--- Establecimientos: FRESIA
+
 INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES 
 (7924, 'ESCUELA RURAL SAN ANDRES TEGUALDA', 4),
 (7927, 'ESCUELA RURAL CAU-CAU', 4),
@@ -168,7 +169,7 @@ INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES
 (35132, 'JARDÍN INFANTIL CORAZON DE ANGEL', 4),
 (35133, 'JARDÍN INFANTIL Y SALA CUNA EL RINCON DEL SABER', 4);
 
--- Establecimientos: FRUTILLAR
+
 INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES 
 (7973, 'LICEO INDUSTRIAL CHILENO ALEMAN (LICHAF)', 3),
 (7975, 'ESCUELA ARTURO ALESSANDRI PALMA', 3),
@@ -186,7 +187,7 @@ INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES
 (35135, 'JARDÍN INFANTIL Y SALA CUNA PEQUEÑOS ANGELITOS', 3),
 (35136, 'JARDÍN INFANTIL Y SALA CUNA MANITOS DE COLORES', 3);
 
--- Establecimientos: LLANQUIHUE
+
 INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES 
 (7956, 'LICEO BICENTENARIO POLITECNICO HOLANDA', 1),
 (7958, 'ESCUELA INES GALLARDO ALVARADO', 1),
@@ -198,7 +199,7 @@ INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES
 (7968, 'ESCUELA RURAL COLIGUAL SAN JUAN', 1),
 (35145, 'JARDÍN INFANTIL Y SALA CUNA MI PEQUEÑO PARAISO', 1);
 
--- Establecimientos: LOS MUERMOS
+
 INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES 
 (7872, 'COLEGIO BICENTENARIO DE DIFUSION ARTISTICA LOS ULMOS', 5),
 (7874, 'ESCUELA RURAL CAÑITAS', 5),
@@ -218,7 +219,7 @@ INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES
 (35139, 'JARDÍN INFANTIL Y SALA CUNA BROTECITOS DEL MELI', 5),
 (35140, 'JARDÍN INFANTIL Y SALA CUNA VENTANITAS DE COLORES', 5);
 
--- Establecimientos: PUERTO VARAS
+
 INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES 
 (7720, 'LICEO BICENTENARIO DE EXCELENCIA PEDRO AGUIRRE CERDA', 2),
 (7722, 'COLEGIO ROSITA NOVARO DE NOVARO', 2),
@@ -243,26 +244,24 @@ INSERT INTO establecimiento (est_id, est_nombre, est_comunafk) VALUES
 (35156, 'SALA CUNA PRINCESA LICARAYEN', 2),
 (7733, '(Anexo) ESCUELA RURAL COLONIA TRES PUENTES', 2);
 
--- Vehículos: Total 7
-INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza) 
-VALUES ('DDWR23', 'MINIBUS', 'MERCEDEZ BENZ', 'SPRINTER 313 CDI', 2012, 'BLANCO', '61198170131227', '8AC903672CE054590', 'PG01-VEHIC-011', 'SERVICIO LOCAL DE LLANQUIHUE', '2539/03-08-2021', 'ESCUELA RURAL PARAGUAY', '58095949');
 
-INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza) 
-VALUES ('FVJF20', 'CAMIONETA', 'SSANGYONG', 'ACTYON SPORT MT 4X2 SEMI FULL', 2013, 'GRIS GRAFITO', '67196010513783', 'KPACA1ETSDP161001', '2.740 KG', 'PG01-VEHIC-007', 'SERVICIO LOCAL DE LLANQUIHUE', '2539/03-08-2021', 'COLEGIO DE DIFUSION ARTISTICO LOS ULTIMOS', '58096525');
+INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga, vehi_estado, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza, vehi_multas) 
+VALUES ('DDWR23', 'MINIBUS', 'MERCEDEZ BENZ', 'SPRINTER 313 CDI', 2012, 'BLANCO', '61198170131227', '8AC903672CE054590', '4', 1000, 'DISPONIBLE', 'PG01-VEHIC-011', 'SERVICIO LOCAL DE EDUCACIÓN LLANQUIHUE', '2539/03-08-2021', 'ESCUELA RURAL PARAGUAY', '58095949', 'Sin registros.');
 
-INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza) 
-VALUES ('GBHL72', 'CAMIONETA', 'GREAT WALL', 'WINGLE 5 4X4 2.0', 2015, 'BLANCO TITANIO', '140539963', 'LGWDBE175FB604149', '2.885', 'PG01-VEHIC-012', 'SERVICIO LOCAL DE LLANQUIHUE', '2539/03-08-2021', 'LICEO CHILENO ALEMAN', '58090741');
+INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga, vehi_estado, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza, vehi_multas) 
+VALUES ('FVJF20', 'CAMIONETA', 'SSANGYONG', 'ACTYON SPORT MT 4X2 SEMI FULL', 2013, 'GRIS GRAFITO', '67196010513783', 'KPACA1ETSDP161001', '4', 1000, 'DISPONIBLE', 'PG01-VEHIC-007', 'SERVICIO LOCAL DE EDUCACIÓN LLANQUIHUE', '2539/03-08-2021', 'COLEGIO DE DIFUSION ARTISTICO LOS ULTIMOS', '58096525', 'Sin registros.');
 
-INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza) 
-VALUES ('JJLL11', 'CAMIONETA', 'NISSAN', 'NP300 DCAB 4X4 2.3', 2018, 'PLATEADO PLATA', 'YS23-01199988C', '3N6BD33B1JK826679', 'PG01-VEHIC-23', 'SERVICIO LOCAL DE LLANQUIHUE', '2539/03-08-2021', 'LICEO INDUSTRIAL CHILENO ALEMAN', '58096362');
+INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga, vehi_estado, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza, vehi_multas) 
+VALUES ('GBHL72', 'CAMIONETA', 'GREAT WALL', 'WINGLE 5 4X4 2.0', 2015, 'BLANCO TITANIO', '140539963', 'LGWDBE175FB604149', '4', 1000, 'DISPONIBLE', 'PG01-VEHIC-012', 'SERVICIO LOCAL DE EDUCACIÓN LLANQUIHUE', '2539/03-08-2021', 'LICEO CHILENO ALEMAN', '58090741', 'Sin registros.');
 
-INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza) 
-VALUES ('LGJX76', 'BUS', 'MERCEDES BENZ', 'SPRINTER 515 CDI', 2019, 'BLANCO', '651955W0092534', '8AC906657LE166994', '5.000', 'PG01-VEHIC-013', 'SERVICIO LOCAL DE LLANQUIHUE', '2539/03-08-2021', 'LICEO INDUSTRIAL CHILENO ALEMAN', '121431056-9');
+INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga, vehi_estado, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza, vehi_multas) 
+VALUES ('JJLL11', 'CAMIONETA', 'NISSAN', 'NP300 DCAB 4X4 2.3', 2018, 'PLATEADO PLATA', 'YS23-01199988C', '3N6BD33B1JK826679', '4', 1000, 'DISPONIBLE', 'PG01-VEHIC-23', 'SERVICIO LOCAL DE EDUCACIÓN LLANQUIHUE', '2539/03-08-2021', 'LICEO INDUSTRIAL CHILENO ALEMAN', '58096362', 'Sin registros.');
 
-INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza) 
-VALUES ('LGJX77', 'BUS', 'MERCEDES BENZ', 'SPRINTER 515 CDI', 2019, 'BLANCO', '651955W0092604', '8AC906657LE166996', '5.000', 'PG01-VEHIC-014', 'SERVICIO LOCAL DE LLANQUIHUE', '2539/03-08-2021', 'LICEO INDUSTRIAL CHILENO ALEMAN', '121403549-5');
+INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga, vehi_estado, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza, vehi_multas) 
+VALUES ('LGJX76', 'BUS', 'MERCEDES BENZ', 'SPRINTER 515 CDI', 2019, 'BLANCO', '651955W0092534', '8AC906657LE166994', '4', 1000, 'DISPONIBLE', 'PG01-VEHIC-013', 'SERVICIO LOCAL DE EDUCACIÓN LLANQUIHUE', '2539/03-08-2021', 'LICEO INDUSTRIAL CHILENO ALEMAN', '121431056-9', 'Sin registros.');
 
-INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_inventario, vehi_propietario, vehi_poliza) 
-VALUES ('RHYD94', 'CAMIONETA', 'GREAT WALL', 'WINGLE 7 ELITE', 2022, 'BLANCO TITANIO', 'GW4D20D2170081188', 'LGWDBE191NB658919', '2.967 KG', 'PG01-VEHIC-025', 'SERVICIO LOCAL DE LLANQUIHUE', 'N° 8400266');
+INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga, vehi_estado, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza, vehi_multas) 
+VALUES ('LGJX77', 'BUS', 'MERCEDES BENZ', 'SPRINTER 515 CDI', 2019, 'BLANCO', '651955W0092604', '8AC906657LE166996', '4', 1000, 'DISPONIBLE', 'PG01-VEHIC-014', 'SERVICIO LOCAL DE EDUCACIÓN LLANQUIHUE', '2539/03-08-2021', 'LICEO INDUSTRIAL CHILENO ALEMAN', '121403549-5', 'Sin registros.');
 
-COMMIT;
+INSERT INTO vehiculo (vehi_patente, vehi_tipo, vehi_marca, vehi_modelo, vehi_anio, vehi_color, vehi_motor, vehi_chasis, vehi_capacidad, vehi_capacidad_carga, vehi_estado, vehi_inventario, vehi_propietario, vehi_resolucion, vehi_lugaraparcamiento, vehi_poliza, vehi_multas) 
+VALUES ('RHYD94', 'CAMIONETA', 'GREAT WALL', 'WINGLE 7 ELITE', 2022, 'BLANCO TITANIO', 'GW4D20D2170081188', 'LGWDBE191NB658919', '4', 1000, 'DISPONIBLE', 'PG01-VEHIC-025', 'SERVICIO LOCAL DE EDUCACIÓN LLANQUIHUE', 'N/A', 'N/A', 'N° 8400266', 'Sin registros.');

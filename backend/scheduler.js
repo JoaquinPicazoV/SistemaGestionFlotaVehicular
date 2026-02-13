@@ -49,12 +49,9 @@ const initScheduler = () => {
                 const patentesEnRuta = [...new Set(solicitudesActivas.map(r => r.sol_patentevehiculofk))].filter(p => p);
 
                 if (patentesEnRuta.length > 0) {
-                    // Solo actualizamos si no están en mantención
                     await conexion.query(
-                        `UPDATE VEHICULO 
-                         SET vehi_estado = 'EN RUTA' 
-                         WHERE vehi_patente IN (?) 
-                         AND vehi_estado IN ('DISPONIBLE', 'EN RUTA')`,
+                        `UPDATE VEHICULO SET vehi_estado = 'EN RUTA' 
+                         WHERE vehi_patente IN (?) AND vehi_estado IN ('DISPONIBLE', 'EN RUTA')`,
                         [patentesEnRuta]
                     );
                 }
@@ -91,7 +88,7 @@ const initScheduler = () => {
         }
     });
 
-    console.log('Scheduler iniciado.');
+    console.log('Scheduler started');
 };
 
 module.exports = initScheduler;
