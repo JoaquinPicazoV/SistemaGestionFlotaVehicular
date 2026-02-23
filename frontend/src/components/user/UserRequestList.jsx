@@ -168,7 +168,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                     </div>
 
                                     <div onClick={() => verDetalles(req)} className="active:opacity-70 transition-opacity">
-                                        <h3 className="text-base font-bold text-slate-800 leading-tight mb-2 line-clamp-2">{req.sol_motivo}</h3>
+                                        <h3 className="text-base font-bold text-slate-800 leading-tight mb-2 line-clamp-2 break-words">{req.sol_motivo}</h3>
                                         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-2">
                                             <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold rounded border border-blue-100 uppercase text-[10px]">{req.sol_tipo || 'GENÉRICO'}</span>
                                             {req.sol_nombresolicitante && (
@@ -186,7 +186,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                     {req.sol_estado === 'RECHAZADA' && req.sol_observacionrechazo && (
                                         <div className="bg-red-50 p-3 rounded-lg border border-red-100 text-xs mt-1">
                                             <strong className="text-red-700 block mb-1">Rechazo:</strong>
-                                            <p className="text-red-600/80 leading-snug">"{req.sol_observacionrechazo}"</p>
+                                            <p className="text-red-600/80 leading-snug break-words whitespace-pre-wrap">"{req.sol_observacionrechazo}"</p>
                                         </div>
                                     )}
 
@@ -209,7 +209,7 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                                                 {req.sol_tipo || 'GENÉRICO'}
                                             </span>
-                                            <h3 className="text-lg font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">
+                                            <h3 className="text-lg font-bold text-slate-800 line-clamp-2 break-words group-hover:text-blue-600 transition-colors" title={req.sol_motivo}>
                                                 {req.sol_motivo}
                                             </h3>
                                         </div>
@@ -238,9 +238,9 @@ const UserRequestList = ({ solicitudes, obtenerSolicitudes, cargando, nuevaSolic
                                             <Eye size={16} /> Ver Detalle
                                         </button>
                                         {req.sol_estado === 'RECHAZADA' && req.sol_observacionrechazo && (
-                                            <div className="w-64 bg-red-50 p-3 rounded-lg border border-red-100 text-xs mt-1">
+                                            <div className="w-full max-w-[280px] bg-red-50 p-3 rounded-lg border border-red-100 text-xs mt-1">
                                                 <strong className="text-red-700 block mb-1">Motivo Rechazo:</strong>
-                                                <p className="text-red-600/80 leading-snug">"{req.sol_observacionrechazo}"</p>
+                                                <p className="text-red-600/80 leading-snug break-words whitespace-pre-wrap">"{req.sol_observacionrechazo}"</p>
                                             </div>
                                         )}
                                     </div>

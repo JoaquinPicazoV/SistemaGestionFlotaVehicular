@@ -380,6 +380,7 @@ const SolicitudesPendientes = () => {
                                     <textarea
                                         className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none h-32 resize-none"
                                         placeholder="Indique la razón del rechazo..."
+                                        maxLength={500}
                                         value={motivoRechazo}
                                         onChange={e => {
                                             const val = e.target.value;
@@ -389,6 +390,9 @@ const SolicitudesPendientes = () => {
                                             }
                                         }}
                                     ></textarea>
+                                    <div className="mt-1 text-[10px] font-bold text-slate-400 text-right uppercase tracking-wider">
+                                        {motivoRechazo.length} / 500 caracteres
+                                    </div>
                                 </div>
                             )}
 

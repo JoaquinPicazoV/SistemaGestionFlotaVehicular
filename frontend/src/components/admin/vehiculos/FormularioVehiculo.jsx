@@ -207,7 +207,16 @@ const FormularioVehiculo = ({ alEnviar, alCancelar, inicial, cargando, alError }
                     </div>
                     <div className="md:col-span-2 space-y-1">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">Multas / Observaciones</label>
-                        <textarea name="vehi_multas" className="input-std h-20" value={datosFormulario.vehi_multas || ''} onChange={manejarCambio}></textarea>
+                        <textarea
+                            name="vehi_multas"
+                            className="input-std h-20"
+                            maxLength={1000}
+                            value={datosFormulario.vehi_multas || ''}
+                            onChange={manejarCambio}
+                        ></textarea>
+                        <div className="mt-1 text-[10px] font-bold text-slate-400 text-right uppercase tracking-wider">
+                            {(datosFormulario.vehi_multas || '').length} / 1000 caracteres
+                        </div>
                     </div>
                 </div>
             </div>

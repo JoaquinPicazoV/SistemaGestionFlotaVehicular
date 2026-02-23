@@ -384,7 +384,10 @@ const BitacoraVehiculo = ({ vehiculo, alCerrar }) => {
 
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase block mb-1">Observaciones</label>
-                                <textarea name="bit_observaciones" className="input-field h-20 resize-none" placeholder="Detalles adicionales..." value={datosFormulario.bit_observaciones || ''} onChange={manejarCambioEntrada} required></textarea>
+                                <textarea name="bit_observaciones" className="input-field h-20 resize-none" placeholder="Detalles adicionales..." maxLength={1000} value={datosFormulario.bit_observaciones || ''} onChange={manejarCambioEntrada} required></textarea>
+                                <div className="mt-1 text-[10px] font-bold text-slate-400 text-right uppercase tracking-wider">
+                                    {(datosFormulario.bit_observaciones || '').length} / 1000 caracteres
+                                </div>
                             </div>
 
                             <div className="flex gap-2 pt-2">

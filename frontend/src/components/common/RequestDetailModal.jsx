@@ -79,7 +79,7 @@ const RequestDetailModal = ({
                         <div className="space-y-6">
                             <div>
                                 <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Motivo del Viaje</h4>
-                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-600 text-sm font-medium leading-relaxed italic">
+                                <div className="p-3 bg-slate-50 rounded-xl border border-slate-100 text-slate-600 text-sm font-medium leading-relaxed italic break-words whitespace-pre-wrap">
                                     "{solicitud.sol_motivo}"
                                 </div>
                             </div>
@@ -187,6 +187,15 @@ const RequestDetailModal = ({
                             </div>
                         </div>
                     </div>
+
+                    {solicitud.sol_estado === 'RECHAZADA' && solicitud.sol_observacionrechazo && (
+                        <div className="mt-8 bg-red-50 p-4 rounded-2xl border border-red-100">
+                            <h4 className="text-[10px] font-bold text-red-700 uppercase tracking-widest mb-2">Motivo de Rechazo</h4>
+                            <p className="text-red-600 text-sm font-medium leading-relaxed break-words whitespace-pre-wrap">
+                                "{solicitud.sol_observacionrechazo}"
+                            </p>
+                        </div>
+                    )}
 
                     {accionesPie && (
                         <div className="mt-8 flex flex-col sm:flex-row gap-4 border-t border-slate-100 pt-6">

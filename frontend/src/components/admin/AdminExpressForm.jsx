@@ -404,7 +404,7 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                     type="text"
                                     required
                                     minLength={5}
-                                    maxLength={100}
+                                    maxLength={500}
                                     placeholder="Describe el motivo principal del viaje..."
                                     className="w-full p-4 bg-white border border-slate-300 rounded-xl outline-none font-medium text-slate-800"
                                     value={datosFormulario.sol_motivo}
@@ -414,6 +414,9 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                         if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:\-/"'?!¡¿@#&()º]*$/.test(val)) setDatosFormulario({ ...datosFormulario, sol_motivo: val });
                                     }}
                                 />
+                                <div className="mt-1 mr-2 text-[10px] font-bold text-slate-400 text-right uppercase tracking-wider">
+                                    {datosFormulario.sol_motivo.length} / 500 caracteres
+                                </div>
                             </div>
                             <div className="relative group"><label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Detalle del Itinerario</label>
                                 <textarea
@@ -429,6 +432,9 @@ const AdminExpressForm = ({ alCancelar, alCompletar }) => {
                                         if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:\-/"'?!¡¿@#&()º\n]*$/.test(val)) setDatosFormulario({ ...datosFormulario, sol_itinerario: val });
                                     }}
                                 />
+                                <div className="mt-1 mr-2 text-[10px] font-bold text-slate-400 text-right uppercase tracking-wider">
+                                    {datosFormulario.sol_itinerario.length} / 1000 caracteres
+                                </div>
                             </div>
                             <div className="relative group"><label className="absolute -top-2.5 left-3 bg-white px-1 text-xs font-bold text-blue-600 uppercase tracking-widest z-10">Kilometraje Estimado</label>
                                 <input

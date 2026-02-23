@@ -43,7 +43,7 @@ function Landing() {
             <nav className="fixed w-full z-50 border-b border-white/10 bg-slate-900/60 backdrop-blur-xl transition-all duration-300">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 md:h-20 flex justify-between items-center">
                     <div className="flex items-center gap-2 sm:gap-3">
-                        <img src={LogoSlep} alt="Logo SLEP" className="h-16 md:h-20 w-auto object-contain" />
+                        <img src={LogoSlep} alt="Logo SLEP" className="h-12 md:h-16 w-auto object-contain" />
                     </div>
 
                     <button
@@ -58,7 +58,7 @@ function Landing() {
             </nav>
 
 
-            <main className="relative z-10 flex flex-col items-center justify-start md:justify-center min-h-screen px-4 text-center pt-24 pb-12 md:py-0">
+            <main className="relative z-10 flex flex-col items-center justify-start md:justify-center min-h-screen px-4 text-center pt-32 pb-12 md:pt-40 md:pb-20">
 
                 <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border mb-6 md:mb-8 backdrop-blur-md transition-all ${enLinea
                     ? "bg-green-900/30 border-green-800 text-green-400"

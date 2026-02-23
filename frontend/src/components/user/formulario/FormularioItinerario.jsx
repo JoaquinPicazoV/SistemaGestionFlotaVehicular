@@ -152,7 +152,7 @@ const FormularioItinerario = ({ datos, alCambiar }) => {
                             type="text"
                             required
                             minLength={5}
-                            maxLength={100}
+                            maxLength={500}
                             placeholder="Describe el motivo principal del viaje..."
                             className="w-full p-4 bg-white border border-slate-300 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none transition-all font-medium text-slate-800 placeholder:text-slate-300 text-base"
                             value={datos.sol_motivo}
@@ -162,6 +162,9 @@ const FormularioItinerario = ({ datos, alCambiar }) => {
                                 if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:\-/"'?!¡¿@#&()º]*$/.test(val)) alCambiar({ ...datos, sol_motivo: val });
                             }}
                         />
+                        <div className="mt-1 mr-2 text-[10px] font-bold text-slate-400 text-right uppercase tracking-wider">
+                            {datos.sol_motivo.length} / 500 caracteres
+                        </div>
                     </div>
 
                     <div className="relative group">
@@ -179,6 +182,9 @@ const FormularioItinerario = ({ datos, alCambiar }) => {
                                 if (/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.,;:\-/"'?!¡¿@#&()º\n]*$/.test(val)) alCambiar({ ...datos, sol_itinerario: val });
                             }}
                         />
+                        <div className="mt-1 mr-2 text-[10px] font-bold text-slate-400 text-right uppercase tracking-wider">
+                            {datos.sol_itinerario.length} / 1000 caracteres
+                        </div>
                     </div>
 
                     <div className="relative group">

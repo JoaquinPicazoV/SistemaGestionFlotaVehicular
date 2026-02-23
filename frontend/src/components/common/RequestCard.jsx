@@ -84,7 +84,7 @@ const RequestCard = ({
                             {mostrarId && <span className="text-xs font-mono text-slate-400">ID: {solicitud.sol_id.substring(0, 8)}</span>}
                         </div>
 
-                        <h3 className="font-bold text-lg text-slate-800 leading-tight truncate">
+                        <h3 className="font-bold text-lg text-slate-800 leading-tight line-clamp-2 break-words" title={solicitud.sol_motivo}>
                             {solicitud.sol_motivo}
                         </h3>
 
